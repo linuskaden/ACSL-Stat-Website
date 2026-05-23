@@ -31,6 +31,21 @@ function getPositionFields(pos: string[]): { fields: readonly string[]; headers:
   return { fields: DEF_FIELDS, headers: DEF_HEADERS }
 }
 
+function calcTeamScore(stats: AllStats, players: Player[]): number {
+  let score = 0
+  players.forEach(p => {
+    QUARTERS.forEach(q => {
+      const s = stats[q]?.[p.id] ?? {}
+      const pos = p.positions as string[]
+      if (pos.includes('QB')) score += ((s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0)) * 6
+      else if (pos.includes('RB')) score += (s.rush_tds ?? 0) * 6
+      else if (pos.some((pp: string) => ['WR','TE'].includes(pp))) score += (s.rec_tds ?? 0) * 6
+      else if (pos.some((pp: string) => ['K','P'].includes(pp))) score += (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0)
+    })
+  })
+  return score
+}
+
 function calcTotals(allStats: AllStats, playerId: string) {
   const totals: StatRow = {}
   QUARTERS.forEach(q => {
@@ -78,6 +93,19 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
   const [homeScore, setHomeScore] = useState(game.home_score ?? 0)
   const [awayScore, setAwayScore] = useState(game.away_score ?? 0)
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const scoreTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Auto-calculate score from TDs and kicker stats
+  useEffect(() => {
+    const newHome = calcTeamScore(allStats, homePlayers)
+    const newAway = calcTeamScore(allStats, awayPlayers)
+    setHomeScore(newHome)
+    setAwayScore(newAway)
+    if (scoreTimer.current) clearTimeout(scoreTimer.current)
+    scoreTimer.current = setTimeout(() => {
+      supabase.from('games').update({ home_score: newHome, away_score: newAway }).eq('id', game.id)
+    }, 1000)
+  }, [allStats])
 
   const activePlayers = activeTeam === 'home' ? homePlayers : awayPlayers
   const activeTeamData = activeTeam === 'home' ? game.home_team : game.away_team
@@ -167,13 +195,19 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
           <span style={{ color: game.away_team.primary_color }}>{game.away_team.short_name}</span>
         </div>
 
-        {/* Score inputs */}
+        {/* Score inputs — auto-calculated from stats, manually editable for safeties/2pt */}
         <div className="flex items-center gap-2">
-          <input value={homeScore} onChange={e => setHomeScore(Number(e.target.value))} onBlur={updateScore}
-            type="number" className="w-12 bg-[#0a0a0a] border border-white/10 rounded px-2 py-1 text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
+          <div className="flex flex-col items-center">
+            <input value={homeScore} onChange={e => { setHomeScore(Number(e.target.value)) }} onBlur={updateScore}
+              type="number" className="w-12 bg-[#0a0a0a] border border-white/10 rounded px-2 py-1 text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
+            <span className="text-[10px] text-[#ff1d25] leading-none mt-0.5">auto</span>
+          </div>
           <span className="text-[#7a7a7a]">–</span>
-          <input value={awayScore} onChange={e => setAwayScore(Number(e.target.value))} onBlur={updateScore}
-            type="number" className="w-12 bg-[#0a0a0a] border border-white/10 rounded px-2 py-1 text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
+          <div className="flex flex-col items-center">
+            <input value={awayScore} onChange={e => { setAwayScore(Number(e.target.value)) }} onBlur={updateScore}
+              type="number" className="w-12 bg-[#0a0a0a] border border-white/10 rounded px-2 py-1 text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
+            <span className="text-[10px] text-[#ff1d25] leading-none mt-0.5">auto</span>
+          </div>
         </div>
 
         {/* Quarter tabs */}
