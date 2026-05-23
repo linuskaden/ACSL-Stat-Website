@@ -102,8 +102,8 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
     setHomeScore(newHome)
     setAwayScore(newAway)
     if (scoreTimer.current) clearTimeout(scoreTimer.current)
-    scoreTimer.current = setTimeout(() => {
-      supabase.from('games').update({ home_score: newHome, away_score: newAway }).eq('id', game.id)
+    scoreTimer.current = setTimeout(async () => {
+      await supabase.from('games').update({ home_score: newHome, away_score: newAway }).eq('id', game.id)
     }, 1000)
   }, [allStats])
 
