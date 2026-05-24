@@ -85,11 +85,10 @@ export default async function AdminDashboard() {
           icon="🏈"
         />
         <AdminCard
-          title="vMix Overlays"
-          desc="Open overlay pages for use in vMix as browser sources."
-          href="/overlay"
+          title="vMix Overlay Control"
+          desc="Select players, toggle live/career stats, show or hide the lower-third graphic."
+          href="/admin/overlay"
           icon="📺"
-          external
         />
       </div>
     </div>
