@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 /* ─── Types ─── */
 type Team = { id: string; name: string; short_name: string; slug: string; primary_color: string; secondary_color: string; logo_url: string | null }
 type Player = { id: string; first_name: string; last_name: string; nickname: string | null; jersey_number: string | null; positions: string[]; team_id: string; is_active: boolean; height_cm: number | null; weight_kg: number | null; country: string | null; hometown: string | null; field_of_study: string | null; semester: string | null; acsl_since: string | null; fun_fact: string | null; football_experience: string | null }
-type Game = { id: string; status: 'scheduled' | 'live' | 'final'; game_type: string; season: number; home_score: number | null; away_score: number | null; scheduled_at: string | null; home_team: Team; away_team: Team }
+type Game = { id: string; status: 'scheduled' | 'live' | 'final'; game_type: string; season: number; home_score: number | null; away_score: number | null; scheduled_at: string | null; home_team: Team; away_team: Team | null }
 type OverlayState = { active_player_id: string | null; game_id: string | null; mode: 'live' | 'career'; visible: boolean }
 
 const POSITIONS = ['Alle', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
@@ -48,10 +48,11 @@ export default function OverlayControlPage() {
 
   async function loadPlayers(game: Game) {
     const supabase = createClient()
-    const { data } = await supabase.from('players').select('*').in('team_id', [game.home_team.id, game.away_team.id]).eq('is_active', true).order('jersey_number', { nullsFirst: false })
+    const teamIds = [game.home_team.id, game.away_team?.id].filter(Boolean) as string[]
+    const { data } = await supabase.from('players').select('*').in('team_id', teamIds).eq('is_active', true).order('jersey_number', { nullsFirst: false })
     if (data) {
       setHomePlayers((data as Player[]).filter(p => p.team_id === game.home_team.id))
-      setAwayPlayers((data as Player[]).filter(p => p.team_id === game.away_team.id))
+      setAwayPlayers(game.away_team ? (data as Player[]).filter(p => p.team_id === game.away_team!.id) : [])
     }
   }
 
@@ -200,7 +201,7 @@ export default function OverlayControlPage() {
       {/* ══ Active player banner ══ */}
       {activePlayer && (
         <div className="bg-[#0f1420] border-b border-white/5 px-5 py-3 flex items-center gap-3">
-          <div className="w-2 h-8 rounded-full" style={{ background: [...homePlayers].find(p => p.id === activePlayer.id) ? selectedGame?.home_team.primary_color : selectedGame?.away_team.primary_color ?? '#ff1d25' }} />
+          <div className="w-2 h-8 rounded-full" style={{ background: [...homePlayers].find(p => p.id === activePlayer.id) ? selectedGame?.home_team.primary_color : selectedGame?.away_team?.primary_color ?? '#ff1d25' }} />
           <div>
             <div className="text-[10px] text-[#555] font-bold tracking-widest uppercase mb-0.5">Now on Overlay</div>
             <div className="font-black text-white text-sm">
@@ -491,20 +492,29 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
    Team Column
 ───────────────────────────────── */
 function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter, onFilter, activeId, onSelect, selectedId }: {
-  team: Team; players: Player[]; allPlayers: Player[]; label: string
+  team: Team | null; players: Player[]; allPlayers: Player[]; label: string
   search: string; onSearch: (v: string) => void; filter: string; onFilter: (v: string) => void
   activeId: string | null; onSelect: (p: Player) => void; selectedId: string | null
 }) {
+  const color = team?.primary_color ?? '#444'
+  if (!team) {
+    return (
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden items-center justify-center" style={{ minHeight: 200 }}>
+        <div className="text-[#333] text-xs font-bold tracking-widest uppercase">TBD</div>
+        <div className="text-[#222] text-[11px] mt-1">Gegner noch nicht festgelegt</div>
+      </div>
+    )
+  }
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       {/* Team header */}
-      <div className="px-4 py-3 border-b border-white/5 flex-shrink-0" style={{ background: `${team.primary_color}0d` }}>
+      <div className="px-4 py-3 border-b border-white/5 flex-shrink-0" style={{ background: `${color}0d` }}>
         <div className="flex items-center gap-3 mb-3">
           {team.logo_url
-            ? <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={{ background: team.primary_color }}>
+            ? <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={{ background: color }}>
                 <img src={team.logo_url} alt="" className="w-5 h-5 object-contain" />
               </div>
-            : <div className="w-7 h-7 rounded flex items-center justify-center text-[9px] font-black text-white flex-shrink-0" style={{ background: team.primary_color }}>{team.short_name.slice(0,2)}</div>
+            : <div className="w-7 h-7 rounded flex items-center justify-center text-[9px] font-black text-white flex-shrink-0" style={{ background: color }}>{team.short_name.slice(0,2)}</div>
           }
           <div>
             <div className="text-[10px] font-bold tracking-widest text-[#555] uppercase">{label}</div>
@@ -522,7 +532,7 @@ function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter
           {POSITIONS.map(pos => (
             <button key={pos} onClick={() => onFilter(pos)}
               className="px-2 py-0.5 rounded text-[10px] font-bold transition-all"
-              style={{ background: filter === pos ? team.primary_color : 'rgba(255,255,255,0.05)', color: filter === pos ? 'white' : '#666' }}>
+              style={{ background: filter === pos ? color : 'rgba(255,255,255,0.05)', color: filter === pos ? 'white' : '#666' }}>
               {pos}
             </button>
           ))}
@@ -541,8 +551,8 @@ function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter
               return (
                 <button key={p.id} onClick={() => onSelect(p)}
                   style={{
-                    background: isActive ? `${team.primary_color}25` : isSelected ? 'rgba(255,255,255,0.08)' : '#171c2e',
-                    border: `1px solid ${isActive ? team.primary_color : isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                    background: isActive ? `${color}25` : isSelected ? 'rgba(255,255,255,0.08)' : '#171c2e',
+                    border: `1px solid ${isActive ? color : isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)'}`,
                     borderRadius: 10,
                     padding: 10,
                     cursor: 'pointer',
@@ -559,13 +569,13 @@ function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter
                     <span style={{
                       fontSize: 34, fontWeight: 900,
                       fontFamily: '"Arial Black", Impact, sans-serif',
-                      color: isActive ? team.primary_color : 'rgba(255,255,255,0.65)',
+                      color: isActive ? color : 'rgba(255,255,255,0.65)',
                       lineHeight: 1,
                     }}>
                       {p.jersey_number ?? '—'}
                     </span>
                     <span style={{
-                      background: team.primary_color,
+                      background: color,
                       color: 'white', fontSize: 8, fontWeight: 800,
                       padding: '3px 5px', borderRadius: 4,
                       letterSpacing: 0.3, lineHeight: 1.4,
@@ -583,7 +593,7 @@ function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
                       {p.is_active && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#04a550', boxShadow: '0 0 4px #04a550' }} />}
-                      {isActive && <div style={{ fontSize: 7, fontWeight: 800, letterSpacing: 0.5, color: team.primary_color }}>AIR</div>}
+                      {isActive && <div style={{ fontSize: 7, fontWeight: 800, letterSpacing: 0.5, color: color }}>AIR</div>}
                     </div>
                   </div>
                 </button>
