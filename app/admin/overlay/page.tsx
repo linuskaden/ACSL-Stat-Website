@@ -422,7 +422,7 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
             }}>
               <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 16, background: 'linear-gradient(to right, transparent, rgba(0,0,0,0.2))' }} />
               {team.logo_url ? (
-                <img src={team.logo_url} alt="" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.5))' }} />
+                <img src={team.logo_url} alt="" style={{ width: 34, height: 34, objectFit: 'contain', mixBlendMode: 'multiply', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.5))' }} />
               ) : (
                 <div style={{ width: 34, height: 34, background: 'rgba(255,255,255,0.2)', borderRadius: 3 }} />
               )}
