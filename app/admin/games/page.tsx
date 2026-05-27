@@ -104,12 +104,14 @@ export default async function AdminGamesPage() {
       currentRound === 'wildcard' ? 'away_team_id'
       : posIdx === 0 ? 'home_team_id' : 'away_team_id'
 
-    // 5. Find next-round game (same index for wildcard→semi, always index 0 for semi→final)
+    // 5. Find next-round game (REVERSED index for wildcard→semi, always index 0 for semi→final)
+    //    wildcard #0 → semifinal #1, wildcard #1 → semifinal #0
     const { data: nextRoundGames } = await supabase
       .from('games').select('id')
       .eq('season', game.season).eq('game_type', nextRound)
       .order('scheduled_at', { nullsFirst: false })
-    const nextGameIdx = currentRound === 'wildcard' ? posIdx : 0
+    const totalWildcards = (sameRound ?? []).length
+    const nextGameIdx = currentRound === 'wildcard' ? (totalWildcards - 1 - posIdx) : 0
     const nextGameId = (nextRoundGames ?? [])[nextGameIdx]?.id
 
     if (nextGameId) {
