@@ -23,6 +23,7 @@ export default function OverlayControlPage() {
   const [searchAway, setSearchAway] = useState('')
   const [filterHome, setFilterHome] = useState('Alle')
   const [filterAway, setFilterAway] = useState('Alle')
+  const [previewStats, setPreviewStats] = useState<any>(null)
   const [overlayUrl, setOverlayUrl] = useState('')
   const [copied, setCopied] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -54,7 +55,7 @@ export default function OverlayControlPage() {
     }
   }
 
-  // Load career stats when player selected
+  // Load career stats when player selected (for modal)
   useEffect(() => {
     if (!selectedPlayer) { setCareerStats(null); return }
     setLoadingStats(true)
@@ -62,6 +63,36 @@ export default function OverlayControlPage() {
     supabase.from('career_stats').select('*').eq('player_id', selectedPlayer.id).order('season', { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => { setCareerStats(data); setLoadingStats(false) })
   }, [selectedPlayer?.id])
+
+  // Load preview stats for the ACTIVE overlay player (realtime)
+  useEffect(() => {
+    if (!overlay.active_player_id) { setPreviewStats(null); return }
+    const supabase = createClient()
+
+    async function loadPreview() {
+      if (overlay.mode === 'live' && overlay.game_id) {
+        const { data } = await supabase.from('game_stats').select('*')
+          .eq('game_id', overlay.game_id).eq('player_id', overlay.active_player_id)
+        if (data && data.length > 0) {
+          const totals: Record<string, number> = {}
+          data.forEach((row: any) => Object.entries(row).forEach(([k, v]) => { if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v }))
+          setPreviewStats(totals)
+        } else setPreviewStats({})
+      } else {
+        const { data } = await supabase.from('career_stats').select('*')
+          .eq('player_id', overlay.active_player_id).order('season', { ascending: false }).limit(1).maybeSingle()
+        setPreviewStats(data ?? {})
+      }
+    }
+
+    loadPreview()
+
+    // Subscribe so preview updates in real-time as stats come in
+    const ch = supabase.channel('preview-stats')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_stats' }, loadPreview)
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [overlay.active_player_id, overlay.game_id, overlay.mode])
 
   const pushOverlay = useCallback(async (patch: Partial<OverlayState>) => {
     const supabase = createClient()
@@ -187,6 +218,17 @@ export default function OverlayControlPage() {
         </div>
       )}
 
+      {/* ══ Operator Preview ══ */}
+      <OperatorPreview
+        player={activePlayer ?? null}
+        team={activePlayer
+          ? (homePlayers.find(p => p.id === activePlayer.id) ? selectedGame?.home_team ?? null : selectedGame?.away_team ?? null)
+          : null}
+        stats={previewStats}
+        mode={overlay.mode}
+        visible={overlay.visible}
+      />
+
       {/* ══ Player grid – two columns ══ */}
       {selectedGame ? (
         <div className="flex gap-0 flex-1" style={{ minHeight: 'calc(100vh - 120px)' }}>
@@ -246,6 +288,201 @@ export default function OverlayControlPage() {
           onHide={() => pushOverlay({ visible: false })}
         />
       )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────
+   Stat builder (shared)
+───────────────────────────────── */
+function buildStatItems(positions: string[], s: any): { label: string; value: string | number }[] {
+  if (!s) return []
+  if (positions.includes('QB')) return [
+    { label: 'PASS YDS', value: s.pass_yards ?? 0 },
+    { label: 'TDs', value: (s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0) },
+    { label: 'INT', value: s.interceptions_thrown ?? 0 },
+    { label: 'C/ATT', value: `${s.pass_completions ?? 0}/${s.pass_attempts ?? 0}` },
+    { label: 'RUSH', value: s.qb_rush_yards ?? 0 },
+  ]
+  if (positions.includes('RB')) return [
+    { label: 'RUSH YDS', value: s.rush_yards ?? 0 },
+    { label: 'TDs', value: s.rush_tds ?? 0 },
+    { label: 'CAR', value: s.rush_carries ?? 0 },
+    { label: 'REC YDS', value: s.rb_rec_yards ?? 0 },
+    { label: 'REC', value: s.rb_receptions ?? 0 },
+  ]
+  if (positions.some((p: string) => ['WR', 'TE'].includes(p))) return [
+    { label: 'REC YDS', value: s.rec_yards ?? 0 },
+    { label: 'TDs', value: s.rec_tds ?? 0 },
+    { label: 'REC', value: s.receptions ?? 0 },
+    { label: 'TAR', value: s.rec_targets ?? 0 },
+  ]
+  if (positions.some((p: string) => ['K', 'P'].includes(p))) return [
+    { label: 'FG', value: `${s.fg_made ?? 0}/${s.fg_attempts ?? 0}` },
+    { label: 'EP', value: `${s.ep_made ?? 0}/${s.ep_attempts ?? 0}` },
+    { label: 'PTS', value: (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0) },
+  ]
+  return [
+    { label: 'SACKS', value: s.sacks ?? 0 },
+    { label: 'INT', value: s.def_interceptions ?? 0 },
+  ]
+}
+
+/* ─────────────────────────────────
+   Operator Preview
+───────────────────────────────── */
+function OperatorPreview({ player, team, stats, mode, visible }: {
+  player: Player | null
+  team: Team | null | undefined
+  stats: any
+  mode: 'live' | 'career'
+  visible: boolean
+}) {
+  const primaryColor = team?.primary_color ?? '#ff1d25'
+  const secondaryColor = team?.secondary_color ?? 'rgba(255,255,255,0.12)'
+  const statItems = player ? buildStatItems(player.positions, stats) : []
+  const modeLabel = mode === 'career' ? '2026 SEASON' : 'GAME STATS'
+
+  return (
+    <div style={{
+      background: '#080b14',
+      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      padding: '14px 20px',
+    }}>
+      {/* Section label */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
+          Overlay Vorschau
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: visible ? '#04a550' : '#333',
+            boxShadow: visible ? '0 0 6px #04a550' : 'none',
+            transition: 'all 0.3s',
+          }} />
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: visible ? '#04a550' : '#444', textTransform: 'uppercase' }}>
+            {visible ? 'On Air' : 'Hidden'}
+          </span>
+        </div>
+      </div>
+
+      {/* Broadcast mock frame */}
+      <div style={{
+        background: '#1a1a2e',
+        borderRadius: 8,
+        padding: '24px 20px',
+        position: 'relative',
+        overflow: 'hidden',
+        minHeight: 90,
+        display: 'flex',
+        alignItems: 'flex-end',
+      }}>
+        {/* Fake broadcast background texture */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.015) 0%, transparent 60%)',
+        }} />
+
+        {/* "ACSL BROADCAST" watermark */}
+        <div style={{
+          position: 'absolute', top: 8, right: 12,
+          fontSize: 9, fontWeight: 700, letterSpacing: 3,
+          color: 'rgba(255,255,255,0.08)', textTransform: 'uppercase',
+        }}>
+          ACSL Broadcast
+        </div>
+
+        {player && team ? (
+          /* ── Lower-third card preview ── */
+          <div style={{
+            display: 'flex',
+            alignItems: 'stretch',
+            overflow: 'hidden',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+            height: 80,
+            width: '100%',
+            maxWidth: 780,
+            opacity: visible ? 1 : 0.35,
+            transition: 'opacity 0.4s ease',
+            filter: visible ? 'none' : 'grayscale(0.5)',
+          }}>
+            {/* Left: team color block */}
+            <div style={{
+              background: primaryColor,
+              width: 80,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              flexShrink: 0,
+              position: 'relative',
+            }}>
+              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 16, background: 'linear-gradient(to right, transparent, rgba(0,0,0,0.2))' }} />
+              {team.logo_url ? (
+                <img src={team.logo_url} alt="" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.5))' }} />
+              ) : (
+                <div style={{ width: 34, height: 34, background: 'rgba(255,255,255,0.2)', borderRadius: 3 }} />
+              )}
+              {player.jersey_number != null && (
+                <span style={{ color: 'white', fontSize: 13, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
+                  #{player.jersey_number}
+                </span>
+              )}
+            </div>
+
+            {/* Accent line */}
+            <div style={{ width: 3, background: secondaryColor, flexShrink: 0 }} />
+
+            {/* Right: dark info section */}
+            <div style={{ background: '#0d1117', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 16px', gap: 5 }}>
+              {/* Name row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1 }}>
+                <span style={{ color: 'white', fontSize: 17, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.3, whiteSpace: 'nowrap' }}>
+                  {player.first_name.toUpperCase()} {player.last_name.toUpperCase()}
+                </span>
+                <span style={{ color: primaryColor, fontSize: 9, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase' }}>
+                  {player.positions.join(' · ')}
+                </span>
+                <span style={{ marginLeft: 'auto', color: '#2a2a2a', fontSize: 8, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' }}>
+                  {modeLabel}
+                </span>
+              </div>
+
+              {/* Stats row */}
+              {statItems.length > 0 ? (
+                <div style={{ display: 'flex', gap: 0, alignItems: 'flex-end' }}>
+                  {statItems.map((item, i) => (
+                    <div key={item.label} style={{ textAlign: 'center', paddingRight: 14, paddingLeft: i === 0 ? 0 : 14, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                      <div style={{ color: 'white', fontSize: 19, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1 }}>
+                        {item.value}
+                      </div>
+                      <div style={{ color: '#3a3a3a', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2 }}>
+                        {item.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ color: '#222', fontSize: 9, letterSpacing: 1 }}>KEINE STATS</div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* ── Placeholder when no player selected ── */
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, opacity: 0.25 }}>
+            <div style={{ width: 80, height: 80, background: 'rgba(255,255,255,0.05)', borderRadius: 2 }} />
+            <div style={{ width: 3, height: 80, background: 'rgba(255,255,255,0.05)' }} />
+            <div style={{ flex: 1, height: 80, background: 'rgba(255,255,255,0.03)', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 11, color: '#444', letterSpacing: 2, textTransform: 'uppercase' }}>
+                Kein Spieler ausgewählt
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
