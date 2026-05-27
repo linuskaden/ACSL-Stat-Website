@@ -2,12 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-const GAME_TYPES = ['regular_season', 'wildcard', 'semifinal', 'final']
+const GAME_TYPES = ['regular_season', 'wildcard', 'semifinal', 'third_place', 'final']
 const STATUS_OPTIONS = ['scheduled', 'live', 'final']
 
 const ROUND_LABEL: Record<string, string> = {
   wildcard: 'Wildcard',
   semifinal: 'Semifinal',
+  third_place: 'Platz 3',
   final: 'Championship',
 }
 
@@ -60,82 +61,84 @@ export default async function AdminGamesPage() {
   }
 
   /**
-   * Advance winner of a wildcard or semifinal game to the next round.
+   * Advance results of a wildcard or semifinal game.
    *
-   * Works entirely from the games table (sorted by scheduled_at):
-   *   wildcard  game #0 → semifinal game #0, away slot
-   *   wildcard  game #1 → semifinal game #1, away slot
-   *   semifinal game #0 → final game #0, home slot
-   *   semifinal game #1 → final game #0, away slot
+   * Wildcard (sorted by date):
+   *   #0 → semifinal #1 (AWAY slot)   ← reversed cross-bracket
+   *   #1 → semifinal #0 (AWAY slot)
    *
-   * Also updates playoff_bracket entries if they exist.
+   * Semifinal (sorted by date):
+   *   #0 winner → final HOME,      loser → 3rd place HOME
+   *   #1 winner → final AWAY,      loser → 3rd place AWAY
+   *
+   * Also syncs playoff_bracket rows when linked via game_id.
    */
   async function advanceWinner(formData: FormData) {
     'use server'
     const supabase = await createClient()
     const gameId = formData.get('game_id') as string
 
-    // 1. Load current game
-    const { data: game } = await supabase
-      .from('games').select('*').eq('id', gameId).single()
+    const { data: game } = await supabase.from('games').select('*').eq('id', gameId).single()
     if (!game || game.status !== 'final') { redirect('/admin/games'); return }
 
     const currentRound = game.game_type as string
     if (!['wildcard', 'semifinal'].includes(currentRound)) { redirect('/admin/games'); return }
 
-    // 2. Determine winner (higher score wins; tie → home team)
     const winnerId = (game.home_score ?? 0) >= (game.away_score ?? 0)
-      ? game.home_team_id
-      : game.away_team_id
+      ? game.home_team_id : game.away_team_id
     if (!winnerId) { redirect('/admin/games'); return }
 
-    // 3. Find position of this game among all games of same round (sorted by date)
+    const loserId = winnerId === game.home_team_id ? game.away_team_id : game.home_team_id
+
+    // Position among same-round games sorted by date
     const { data: sameRound } = await supabase
       .from('games').select('id')
       .eq('season', game.season).eq('game_type', currentRound)
       .order('scheduled_at', { nullsFirst: false })
     const posIdx = (sameRound ?? []).findIndex((g: any) => g.id === gameId)
+    const total = (sameRound ?? []).length
 
-    // 4. Determine next round + target slot
-    const nextRound = currentRound === 'wildcard' ? 'semifinal' : 'final'
-    // wildcard games fill the AWAY slot of the corresponding semifinal
-    // semifinal #0 → final HOME; semifinal #1 → final AWAY
-    const nextSlot: 'home_team_id' | 'away_team_id' =
-      currentRound === 'wildcard' ? 'away_team_id'
-      : posIdx === 0 ? 'home_team_id' : 'away_team_id'
-
-    // 5. Find next-round game (REVERSED index for wildcard→semi, always index 0 for semi→final)
-    //    wildcard #0 → semifinal #1, wildcard #1 → semifinal #0
-    const { data: nextRoundGames } = await supabase
-      .from('games').select('id')
-      .eq('season', game.season).eq('game_type', nextRound)
-      .order('scheduled_at', { nullsFirst: false })
-    const totalWildcards = (sameRound ?? []).length
-    const nextGameIdx = currentRound === 'wildcard' ? (totalWildcards - 1 - posIdx) : 0
-    const nextGameId = (nextRoundGames ?? [])[nextGameIdx]?.id
-
-    if (nextGameId) {
-      await supabase.from('games').update({ [nextSlot]: winnerId }).eq('id', nextGameId)
+    // Helper: update a game + its bracket entry
+    async function setTeam(round: string, gameIdx: number, slot: 'home_team_id' | 'away_team_id', teamId: string | null) {
+      const { data: roundGames } = await supabase
+        .from('games').select('id')
+        .eq('season', game.season).eq('game_type', round)
+        .order('scheduled_at', { nullsFirst: false })
+      const targetGameId = (roundGames ?? [])[gameIdx]?.id
+      if (!targetGameId) return
+      await supabase.from('games').update({ [slot]: teamId }).eq('id', targetGameId)
+      const { data: bracketRow } = await supabase
+        .from('playoff_bracket').select('*').eq('game_id', targetGameId).maybeSingle()
+      if (bracketRow) {
+        await supabase.from('playoff_bracket').update({ [slot]: teamId }).eq('id', bracketRow.id)
+      }
     }
 
-    // 6. Also sync playoff_bracket if entries exist
-    const { data: bracketEntry } = await supabase
-      .from('playoff_bracket').select('*').eq('game_id', gameId).maybeSingle()
-    if (bracketEntry) {
-      await supabase.from('playoff_bracket').update({ winner_id: winnerId }).eq('id', bracketEntry.id)
-      if (nextGameId) {
-        const { data: nextBracket } = await supabase
-          .from('playoff_bracket').select('*').eq('game_id', nextGameId).maybeSingle()
-        if (nextBracket) {
-          await supabase.from('playoff_bracket').update({ [nextSlot]: winnerId }).eq('id', nextBracket.id)
-        }
-      }
+    if (currentRound === 'wildcard') {
+      // Cross-bracket: wildcard #0 → semi #1 away, wildcard #1 → semi #0 away
+      const semiIdx = total - 1 - posIdx
+      await setTeam('semifinal', semiIdx, 'away_team_id', winnerId)
+
+      // Mark winner on bracket entry
+      const { data: be } = await supabase.from('playoff_bracket').select('*').eq('game_id', gameId).maybeSingle()
+      if (be) await supabase.from('playoff_bracket').update({ winner_id: winnerId }).eq('id', be.id)
+
+    } else {
+      // Semifinal: slot based on position (0=home, 1=away)
+      const slot: 'home_team_id' | 'away_team_id' = posIdx === 0 ? 'home_team_id' : 'away_team_id'
+
+      await setTeam('final', 0, slot, winnerId)
+      await setTeam('third_place', 0, slot, loserId)
+
+      // Mark winner on bracket entry
+      const { data: be } = await supabase.from('playoff_bracket').select('*').eq('game_id', gameId).maybeSingle()
+      if (be) await supabase.from('playoff_bracket').update({ winner_id: winnerId }).eq('id', be.id)
     }
 
     redirect('/admin/games')
   }
 
-  const playoffRounds = ['wildcard', 'semifinal', 'final']
+  const playoffRounds = ['wildcard', 'semifinal', 'third_place', 'final']
   const regularGames = (games ?? []).filter((g: any) => g.game_type === 'regular_season')
   const playoffGames = (games ?? []).filter((g: any) => playoffRounds.includes(g.game_type))
 
@@ -205,7 +208,7 @@ export default async function AdminGamesPage() {
             {playoffGames.map((game: any) => {
               const bEntry = bracketByGameId[game.id]
               const alreadyAdvanced = !!bEntry?.winner_id
-              const canAdvance = game.status === 'final' && !alreadyAdvanced && game.game_type !== 'final'
+              const canAdvance = game.status === 'final' && !alreadyAdvanced && !['final', 'third_place'].includes(game.game_type)
               const isFinal = game.status === 'final'
               const isLive = game.status === 'live'
               const winnerTeamId = bEntry?.winner_id

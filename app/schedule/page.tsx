@@ -14,6 +14,7 @@ const GAME_TYPE_LABELS: Record<string, string> = {
   regular_season: 'Regular Season',
   wildcard: 'Wildcard',
   semifinal: 'Semifinal',
+  third_place: 'Spiel um Platz 3',
   final: 'Championship',
 }
 

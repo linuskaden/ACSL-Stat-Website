@@ -1,99 +1,182 @@
 import { createClient } from '@/lib/supabase/server'
-import TeamBadge from '@/components/TeamBadge'
 
 export const revalidate = 30
 
-export default async function PlayoffsPage() {
-  const supabase = await createClient()
-  const { data: bracket } = await supabase
-    .from('playoff_bracket')
-    .select('*, home_team:teams!playoff_bracket_home_team_id_fkey(*), away_team:teams!playoff_bracket_away_team_id_fkey(*), winner:teams!playoff_bracket_winner_id_fkey(*)')
-    .eq('season', 2026)
-    .order('round')
-    .order('match_order')
+const ROUND_ORDER = ['wildcard', 'semifinal', 'third_place', 'final']
 
-  const wildcardGames = bracket?.filter(b => b.round === 'wildcard') ?? []
-  const semifinalGames = bracket?.filter(b => b.round === 'semifinal') ?? []
-  const finalGames = bracket?.filter(b => b.round === 'final') ?? []
-
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-black mb-2">Playoff Bracket 2026</h1>
-      <p className="text-[#7a7a7a] text-sm mb-8">
-        Wildcard: #3 vs #6, #4 vs #5 → Semifinals: Winners vs #1 and #2 → Championship
-      </p>
-
-      {(!bracket || bracket.length === 0) && (
-        <div className="bg-[#111] border border-white/5 rounded-xl p-8 text-center text-[#7a7a7a]">
-          Playoff bracket will appear after the regular season.
-        </div>
-      )}
-
-      {bracket && bracket.length > 0 && (
-        <div className="flex flex-col lg:flex-row items-start gap-6 overflow-x-auto">
-          {/* Wildcard */}
-          <BracketRound title="Wildcard Round" games={wildcardGames} />
-
-          {/* Arrow */}
-          <div className="hidden lg:flex items-center self-center text-[#7a7a7a] text-2xl">→</div>
-
-          {/* Semifinals */}
-          <BracketRound title="Semifinals" games={semifinalGames} />
-
-          {/* Arrow */}
-          <div className="hidden lg:flex items-center self-center text-[#7a7a7a] text-2xl">→</div>
-
-          {/* Final */}
-          <BracketRound title="Championship" games={finalGames} highlight />
-        </div>
-      )}
-    </div>
-  )
+const ROUND_LABEL: Record<string, string> = {
+  wildcard:    'Playoffs',
+  semifinal:   'Semifinals',
+  third_place: '3rd Place',
+  final:       'Final',
 }
 
-function BracketRound({ title, games, highlight = false }: { title: string; games: any[]; highlight?: boolean }) {
+export default async function PlayoffsPage() {
+  const supabase = await createClient()
+
+  const [{ data: games }, { data: bracket }] = await Promise.all([
+    supabase
+      .from('games')
+      .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
+      .eq('season', 2026)
+      .in('game_type', ROUND_ORDER)
+      .order('scheduled_at', { nullsFirst: false }),
+    supabase
+      .from('playoff_bracket')
+      .select('*')
+      .eq('season', 2026),
+  ])
+
+  // Map game_id → bracket entry for seed + winner info
+  const bracketByGameId: Record<string, any> = {}
+  ;(bracket ?? []).forEach((b: any) => { if (b.game_id) bracketByGameId[b.game_id] = b })
+
+  // Group by round in order
+  const byRound: Record<string, any[]> = {}
+  ;(games ?? []).forEach((g: any) => {
+    if (!byRound[g.game_type]) byRound[g.game_type] = []
+    byRound[g.game_type].push(g)
+  })
+
+  const hasAnyGame = Object.keys(byRound).length > 0
+
   return (
-    <div className="flex-1 min-w-[220px]">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-[#7a7a7a] mb-3 text-center">{title}</h2>
-      <div className="space-y-3">
-        {games.length === 0 ? (
-          <div className="bg-[#111] border border-white/5 rounded-xl p-4 text-center text-[#7a7a7a] text-xs">TBD</div>
-        ) : games.map((game: any) => (
-          <BracketGame key={game.id} game={game} highlight={highlight} />
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-black mb-1">Playoff Bracket 2026</h1>
+      <p className="text-[#555] text-sm mb-8">
+        Wildcard → Semifinals → 3rd Place / ACSL Summer Bowl
+      </p>
+
+      {!hasAnyGame && (
+        <div className="bg-[#111] border border-white/5 rounded-xl p-8 text-center text-[#555]">
+          Playoff bracket wird nach der Regular Season angezeigt.
+        </div>
+      )}
+
+      <div className="space-y-8">
+        {ROUND_ORDER.filter(r => byRound[r]?.length).map((round, roundIdx) => (
+          <div key={round}>
+            {/* Section divider */}
+            {roundIdx > 0 && (
+              <div className="flex items-center gap-3 mb-4">
+                <div className="text-[#333] text-lg">↓</div>
+              </div>
+            )}
+
+            <h2 className="text-[10px] font-bold tracking-widest text-[#555] uppercase mb-3">
+              {ROUND_LABEL[round]}
+            </h2>
+
+            <div className="space-y-2">
+              {byRound[round].map((game: any) => {
+                const be = bracketByGameId[game.id]
+                const winnerId = be?.winner_id ?? null
+                const homeWon = winnerId === game.home_team_id
+                const awayWon = winnerId === game.away_team_id
+                const isFinal = game.status === 'final'
+                const isLive  = game.status === 'live'
+                const homeSeed: number | null = be?.home_seed ?? null
+                const awaySeed: number | null = be?.away_seed ?? null
+
+                return (
+                  <div key={game.id}
+                    className={`bg-[#111] border rounded-xl overflow-hidden ${
+                      round === 'final'       ? 'border-[#ff1d25]/30' :
+                      round === 'third_place' ? 'border-[#f5a623]/20' :
+                      isLive                  ? 'border-[#ff1d25]/40' :
+                                               'border-white/5'
+                    }`}>
+
+                    {/* Game name banner (for named games) */}
+                    {game.notes && (
+                      <div className={`px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase border-b ${
+                        round === 'final' ? 'bg-[#ff1d25]/10 border-[#ff1d25]/20 text-[#ff1d25]' : 'bg-white/[0.03] border-white/5 text-[#f5a623]'
+                      }`}>
+                        {game.notes}
+                      </div>
+                    )}
+
+                    {/* Home team row */}
+                    <TeamRow
+                      team={game.home_team}
+                      seed={homeSeed}
+                      score={isFinal || isLive ? game.home_score ?? 0 : null}
+                      won={homeWon}
+                      isTop
+                    />
+
+                    {/* Divider + meta */}
+                    <div className="flex items-center border-t border-b border-white/[0.04] px-4 py-1.5 bg-[#0d0d0d]">
+                      <span className="text-[10px] text-[#333] font-bold tracking-widest uppercase mr-auto">
+                        {isLive ? <span className="text-[#ff1d25] animate-pulse">● LIVE</span> :
+                         isFinal ? <span className="text-[#04a550]">Final</span> :
+                         'Upcoming'}
+                      </span>
+                      {game.scheduled_at && (
+                        <span className="text-[11px] text-[#444]">
+                          {new Date(game.scheduled_at).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          {' · '}
+                          {new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Away team row */}
+                    <TeamRow
+                      team={game.away_team}
+                      seed={awaySeed}
+                      score={isFinal || isLive ? game.away_score ?? 0 : null}
+                      won={awayWon}
+                      isTop={false}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         ))}
       </div>
     </div>
   )
 }
 
-function BracketGame({ game, highlight }: { game: any; highlight: boolean }) {
-  const homeWon = game.winner_id === game.home_team_id
-  const awayWon = game.winner_id === game.away_team_id
-
+function TeamRow({ team, seed, score, won, isTop }: {
+  team: any
+  seed: number | null
+  score: number | null
+  won: boolean
+  isTop: boolean
+}) {
   return (
-    <div className={`bg-[#111] rounded-xl overflow-hidden border ${highlight ? 'border-[#ff1d25]/40' : 'border-white/5'}`}>
-      {[
-        { team: game.home_team, seed: game.home_seed, won: homeWon },
-        { team: game.away_team, seed: game.away_seed, won: awayWon },
-      ].map((row, i) => (
-        <div key={i}
-          className={`flex items-center gap-3 px-3 py-2.5 ${i === 0 ? 'border-b border-white/5' : ''} ${row.won ? 'bg-white/[0.04]' : ''}`}>
-          {row.seed && (
-            <span className="text-xs text-[#7a7a7a] w-4 text-center font-mono">{row.seed}</span>
-          )}
-          {row.team ? (
-            <>
-              <TeamBadge team={row.team} size="sm" />
-              <span className={`text-sm flex-1 ${row.won ? 'font-bold text-white' : 'text-[#7a7a7a]'}`}>
-                {row.team.short_name}
-              </span>
-            </>
-          ) : (
-            <span className="text-sm text-[#7a7a7a] flex-1">TBD</span>
-          )}
-          {row.won && <span className="text-[#04a550] text-xs font-bold">✓</span>}
-        </div>
-      ))}
+    <div className={`flex items-center gap-3 px-4 py-3 ${won ? 'bg-white/[0.03]' : ''} ${!isTop ? '' : ''}`}>
+      {/* Seed */}
+      <span className="text-xs text-[#444] w-4 text-center font-mono shrink-0">
+        {seed ?? ''}
+      </span>
+
+      {/* Logo */}
+      {team?.logo_url ? (
+        <img src={team.logo_url} alt="" className="w-7 h-7 object-contain shrink-0" />
+      ) : (
+        <div className="w-7 h-7 rounded bg-white/5 shrink-0" />
+      )}
+
+      {/* Name */}
+      <span className={`flex-1 text-sm font-semibold ${won ? 'text-white font-bold' : team ? 'text-[#aaa]' : 'text-[#444]'}`}>
+        {team?.short_name ?? 'TBD'}
+      </span>
+
+      {/* Score */}
+      {score !== null && (
+        <span className={`text-lg font-black tabular-nums ${won ? 'text-white' : 'text-[#666]'}`}>
+          {score}
+        </span>
+      )}
+
+      {/* Winner check */}
+      {won && (
+        <span className="text-[#04a550] text-sm font-bold shrink-0">✓</span>
+      )}
     </div>
   )
 }
