@@ -173,10 +173,10 @@ export default function LowerThirdOverlay() {
                 <img
                   src={team.logo_url}
                   alt=""
-                  style={{ width: 54, height: 54, objectFit: 'contain' }}
+                  style={{ width: 66, height: 66, objectFit: 'contain' }}
                 />
               ) : (
-                <div style={{ width: 54, height: 54, borderRadius: 4, background: hairline }} />
+                <div style={{ width: 66, height: 66, borderRadius: 4, background: hairline }} />
               )}
             </div>
 
@@ -277,7 +277,7 @@ export default function LowerThirdOverlay() {
                     {item.value}
                   </div>
                   <div style={{
-                    color: '#3a3a5a',
+                    color: '#7a7a9a',
                     fontSize: 8,
                     fontWeight: 700,
                     letterSpacing: 1.5,
@@ -288,16 +288,6 @@ export default function LowerThirdOverlay() {
                   </div>
                 </div>
               ))}
-              <div style={{
-                marginLeft: 'auto',
-                color: '#2a2a3a',
-                fontSize: 8,
-                fontWeight: 700,
-                letterSpacing: 2,
-                textTransform: 'uppercase',
-              }}>
-                {modeLabel}
-              </div>
             </div>
           )}
 

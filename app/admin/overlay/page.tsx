@@ -415,8 +415,8 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
               {/* Logo */}
               <div style={{ width: 62, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, flexShrink: 0 }}>
                 {team.logo_url
-                  ? <img src={team.logo_url} alt="" style={{ width: 42, height: 42, objectFit: 'contain' }} />
-                  : <div style={{ width: 42, height: 42, borderRadius: 3, background: hairline }} />}
+                  ? <img src={team.logo_url} alt="" style={{ width: 50, height: 50, objectFit: 'contain' }} />
+                  : <div style={{ width: 50, height: 50, borderRadius: 3, background: hairline }} />}
               </div>
               {/* Divider */}
               <div style={{ width: 1, background: hairline, margin: '10px 0', flexShrink: 0 }} />
@@ -459,10 +459,9 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
                 {statItems.map((item, i) => (
                   <div key={item.label} style={{ textAlign: 'center', paddingRight: 14, paddingLeft: i === 0 ? 0 : 14, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
                     <div style={{ color: '#fff', fontSize: 16, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1 }}>{item.value}</div>
-                    <div style={{ color: '#3a3a5a', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2 }}>{item.label}</div>
+                    <div style={{ color: '#7a7a9a', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2 }}>{item.label}</div>
                   </div>
                 ))}
-                <div style={{ marginLeft: 'auto', color: '#2a2a3a', fontSize: 7, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' }}>{modeLabel}</div>
               </div>
             )}
           </div>
