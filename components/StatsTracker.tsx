@@ -39,7 +39,7 @@ function calcTeamScore(stats: AllStats, players: Player[]): number {
       const pos = p.positions as string[]
       if (pos.includes('QB')) score += ((s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0)) * 6
       else if (pos.includes('RB')) score += (s.rush_tds ?? 0) * 6
-      else if (pos.some((pp: string) => ['WR','TE'].includes(pp))) score += (s.rec_tds ?? 0) * 6
+      // WR/TE rec_tds = selbe TDs wie QB pass_tds → nicht nochmal zählen
       else if (pos.some((pp: string) => ['K','P'].includes(pp))) score += (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0)
     })
   })
