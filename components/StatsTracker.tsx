@@ -65,12 +65,22 @@ function teamTotals(allStats: AllStats, players: Player[], quarter: string) {
       : allStats[quarter]?.[p.id]) ?? {}
     const pos = p.positions
 
-    if (pos.includes('QB')) { totalYds += (qs.pass_yards ?? 0) + (qs.qb_rush_yards ?? 0); totalTDs += (qs.pass_tds ?? 0) + (qs.qb_rush_tds ?? 0); totalINTs += qs.interceptions_thrown ?? 0 }
-    else if (pos.includes('RB')) { totalYds += (qs.rush_yards ?? 0) + (qs.rb_rec_yards ?? 0); totalTDs += qs.rush_tds ?? 0; totalFumbles += qs.rb_fumbles ?? 0 }
-    else if (pos.some(pp => ['WR','TE'].includes(pp))) { totalYds += qs.rec_yards ?? 0; totalTDs += qs.rec_tds ?? 0; totalFumbles += qs.rec_fumbles ?? 0 }
-    else if (pos.some(pp => ['K','P'].includes(pp))) { totalPoints += (qs.fg_made ?? 0) * 3 + (qs.ep_made ?? 0) }
-    totalTDs && (totalPoints += totalTDs * 6)
+    if (pos.includes('QB')) {
+      totalYds   += (qs.pass_yards ?? 0) + (qs.qb_rush_yards ?? 0)
+      totalTDs   += (qs.pass_tds  ?? 0) + (qs.qb_rush_tds  ?? 0)
+      totalINTs  += qs.interceptions_thrown ?? 0
+    } else if (pos.includes('RB')) {
+      totalYds   += qs.rush_yards ?? 0            // rb_rec_yards weggelassen – selbe Yards wie QB pass_yards
+      totalTDs   += qs.rush_tds   ?? 0
+      totalFumbles += qs.rb_fumbles ?? 0
+    } else if (pos.some(pp => ['WR','TE'].includes(pp))) {
+      // rec_yards = selbe Yards wie QB pass_yards; rec_tds = selbe TDs wie QB pass_tds → beide weglassen
+      totalFumbles += qs.rec_fumbles ?? 0
+    } else if (pos.some(pp => ['K','P'].includes(pp))) {
+      totalPoints += (qs.fg_made ?? 0) * 3 + (qs.ep_made ?? 0)
+    }
   })
+  totalPoints += totalTDs * 6   // einmal nach der Schleife, nicht bei jedem Spieler
   return { totalYds, totalTDs, totalINTs, totalFumbles, totalPoints }
 }
 
