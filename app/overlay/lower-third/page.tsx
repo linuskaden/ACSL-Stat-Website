@@ -243,8 +243,6 @@ export default function LowerThirdOverlay() {
               </div>
             </div>
 
-            {/* Secondary color accent bar on right edge */}
-            <div style={{ width: 5, background: secondaryColor, flexShrink: 0 }} />
           </div>
 
           {/* ══ STATS BAR (only when stats exist) ══ */}

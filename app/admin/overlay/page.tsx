@@ -440,8 +440,6 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
                   </span>
                 </div>
               </div>
-              {/* Secondary accent */}
-              <div style={{ width: 4, background: secondaryColor, flexShrink: 0 }} />
             </div>
 
             {/* Stats bar */}
