@@ -390,6 +390,7 @@ function textOn(hex: string): string {
 /* ─── Team stats calc (mirrors overlay logic) ─── */
 function calcTeamTotals(players: Player[], gsRows: any[]) {
   let passYds = 0, rushYds = 0, recYds = 0, tds = 0, ints = 0, fumbles = 0, targets = 0, receptions = 0
+  let fgm = 0, fga = 0, epm = 0, epa = 0
   players.forEach(p => {
     const rows = gsRows.filter(r => r.player_id === p.id)
     const qs: Record<string, number> = {}
@@ -406,10 +407,14 @@ function calcTeamTotals(players: Player[], gsRows: any[]) {
       recYds += qs.rec_yards ?? 0; fumbles += qs.rec_fumbles ?? 0
       targets += qs.rec_targets ?? 0; receptions += qs.receptions ?? 0
     }
+    if (pos.some(pp => ['K', 'P'].includes(pp))) {
+      fgm += qs.fg_made ?? 0; fga += qs.fg_attempts ?? 0
+      epm += qs.ep_made ?? 0; epa += qs.ep_attempts ?? 0
+    }
   })
   const totalYds = passYds + rushYds
   const catchPct = targets > 0 ? Math.round(receptions / targets * 100) : 0
-  return { passYds, rushYds, recYds, totalYds, tds, ints, fumbles, targets, receptions, catchPct }
+  return { passYds, rushYds, recYds, totalYds, tds, ints, fumbles, targets, receptions, catchPct, fgm, fga, epm, epa }
 }
 
 function OperatorPreview({ player, team, stats, mode, visible,
@@ -498,6 +503,8 @@ function OperatorPreview({ player, team, stats, mode, visible,
                   { label: 'TAR/REC', value: `${s.targets}/${s.receptions}` },
                   { label: 'CATCH%', value: s.targets > 0 ? `${s.catchPct}%` : '—' },
                   { label: 'TDs', value: s.tds, accent: '#04a550' },
+                  { label: 'FG', value: `${s.fgm}/${s.fga}` },
+                  { label: 'EP', value: `${s.epm}/${s.epa}` },
                   { label: 'INT', value: s.ints, accent: '#ff1d25' },
                   { label: 'FUM', value: s.fumbles },
                 ]

@@ -63,9 +63,10 @@ function buildStats(positions: string[], s: any): StatItem[] {
 type TeamStats = {
   passYds: number; rushYds: number; recYds: number; totalYds: number
   tds: number; ints: number; fumbles: number; targets: number; receptions: number
+  fgm: number; fga: number; epm: number; epa: number
 }
 function emptyTeamStats(): TeamStats {
-  return { passYds: 0, rushYds: 0, recYds: 0, totalYds: 0, tds: 0, ints: 0, fumbles: 0, targets: 0, receptions: 0 }
+  return { passYds: 0, rushYds: 0, recYds: 0, totalYds: 0, tds: 0, ints: 0, fumbles: 0, targets: 0, receptions: 0, fgm: 0, fga: 0, epm: 0, epa: 0 }
 }
 function calcTeamStats(players: any[], gsRows: any[]): TeamStats {
   const s = emptyTeamStats()
@@ -91,6 +92,13 @@ function calcTeamStats(players: any[], gsRows: any[]): TeamStats {
       s.fumbles    += qs.rec_fumbles ?? 0
       s.targets    += qs.rec_targets ?? 0
       s.receptions += qs.receptions ?? 0
+    }
+    // K/P separat — zählt auch für Dual-Position-Spieler
+    if (pos.some(pp => ['K', 'P'].includes(pp))) {
+      s.fgm += qs.fg_made     ?? 0
+      s.fga += qs.fg_attempts ?? 0
+      s.epm += qs.ep_made     ?? 0
+      s.epa += qs.ep_attempts ?? 0
     }
   })
   s.totalYds = s.passYds + s.rushYds
@@ -332,6 +340,8 @@ function TeamStatsRow({ team, stats }: { team: any; stats: TeamStats }) {
     { label: 'TAR/REC', value: `${stats.targets}/${stats.receptions}` },
     { label: 'CATCH%',  value: stats.targets > 0 ? `${catchPct}%` : '—' },
     { label: 'TDs',     value: stats.tds,     accent: '#04a550' },
+    { label: 'FG',      value: `${stats.fgm}/${stats.fga}` },
+    { label: 'EP',      value: `${stats.epm}/${stats.epa}` },
     { label: 'INT',     value: stats.ints,    accent: '#ff1d25' },
     { label: 'FUM',     value: stats.fumbles  },
   ]

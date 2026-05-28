@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import type { Player, Team } from '@/lib/supabase/types'
@@ -40,7 +40,8 @@ function calcTeamScore(stats: AllStats, players: Player[]): number {
       if (pos.includes('QB')) score += ((s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0)) * 6
       else if (pos.includes('RB')) score += (s.rush_tds ?? 0) * 6
       // WR/TE rec_tds = selbe TDs wie QB pass_tds → nicht nochmal zählen
-      else if (pos.some((pp: string) => ['K','P'].includes(pp))) score += (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0)
+      // K/P als separates if (nicht else if) — Dual-Position-Spieler wie RB/K zählen hier auch
+      if (pos.some((pp: string) => ['K','P'].includes(pp))) score += (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0)
     })
   })
   return score
@@ -61,6 +62,7 @@ function teamTotals(allStats: AllStats, players: Player[], quarter: string) {
   let totalPassYds = 0, totalRushYds = 0, totalRecYds = 0
   let totalTDs = 0, totalINTs = 0, totalFumbles = 0, totalPoints = 0
   let totalTargets = 0, totalReceptions = 0
+  let totalFGM = 0, totalFGA = 0, totalEPM = 0, totalEPA = 0
   players.forEach(p => {
     const qs = (quarter === 'Total'
       ? QUARTERS.reduce((acc, q) => ({ ...acc, ...Object.fromEntries(Object.entries(allStats[q]?.[p.id] ?? {}).map(([k, v]) => [k, (acc[k] ?? 0) + (v ?? 0)])) }), {} as StatRow)
@@ -84,14 +86,19 @@ function teamTotals(allStats: AllStats, players: Player[], quarter: string) {
       totalFumbles    += qs.rec_fumbles   ?? 0
       totalTargets    += qs.rec_targets   ?? 0
       totalReceptions += qs.receptions    ?? 0
-    } else if (pos.some(pp => ['K','P'].includes(pp))) {
-      totalPoints += (qs.fg_made ?? 0) * 3 + (qs.ep_made ?? 0)
+    }
+    // K/P als separates if — zählt auch bei Dual-Position-Spielern (RB/K, DB/K usw.)
+    if (pos.some(pp => ['K','P'].includes(pp))) {
+      totalFGM += qs.fg_made      ?? 0
+      totalFGA += qs.fg_attempts  ?? 0
+      totalEPM += qs.ep_made      ?? 0
+      totalEPA += qs.ep_attempts  ?? 0
     }
   })
-  totalPoints += totalTDs * 6
-  const totalYds = totalPassYds + totalRushYds   // kein rec (= selbe Yards wie pass)
+  totalPoints += totalTDs * 6 + totalFGM * 3 + totalEPM
+  const totalYds = totalPassYds + totalRushYds
   const catchPct = totalTargets > 0 ? Math.round(totalReceptions / totalTargets * 100) : 0
-  return { totalYds, totalPassYds, totalRushYds, totalRecYds, totalTDs, totalINTs, totalFumbles, totalPoints, totalTargets, totalReceptions, catchPct }
+  return { totalYds, totalPassYds, totalRushYds, totalRecYds, totalTDs, totalINTs, totalFumbles, totalPoints, totalTargets, totalReceptions, catchPct, totalFGM, totalFGA, totalEPM, totalEPA }
 }
 
 export default function StatsTracker({ game, homePlayers, awayPlayers, initialStats }: {
@@ -287,6 +294,8 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
               <span className="text-white/10">|</span>
               {/* Scores / turnover */}
               <span>TDs: <strong className="text-[#04a550]">{t.totalTDs}</strong></span>
+              <span>FG: <strong className="text-white">{t.totalFGM}/{t.totalFGA}</strong></span>
+              <span>EP: <strong className="text-white">{t.totalEPM}/{t.totalEPA}</strong></span>
               <span>INTs: <strong className="text-[#ff1d25]">{t.totalINTs}</strong></span>
               <span>FUM: <strong className="text-[#7a7a7a]">{t.totalFumbles}</strong></span>
             </>
@@ -320,22 +329,75 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
     <div className="p-8 text-center text-[#7a7a7a] text-sm">No players found for this team.</div>
   )
 
+  // Standard-Positionsgruppen (nur Spieler ohne K/P als Primärposition)
   const posGroups: Record<string, Player[]> = {}
   players.forEach(p => {
-    const pos = p.positions[0] ?? 'DEF'
-    if (!posGroups[pos]) posGroups[pos] = []
-    posGroups[pos].push(p)
+    const primaryPos = p.positions[0] ?? 'DEF'
+    // Reine Kicker/Punter kommen nur in den Kicker-Abschnitt unten
+    if (['K', 'P'].includes(primaryPos)) return
+    if (!posGroups[primaryPos]) posGroups[primaryPos] = []
+    posGroups[primaryPos].push(p)
   })
+
+  // Kicker-Abschnitt: alle Spieler mit K oder P irgendwo in ihren Positionen
+  // (reine K/P-Spieler UND Dual-Position wie RB/K, DB/K etc.)
+  const kickerPlayers = players.filter(p =>
+    p.positions.some((pp: string) => ['K', 'P'].includes(pp))
+  )
+
+  function renderPlayerRow(player: Player, fields: readonly string[], pos: string) {
+    const st = readOnly ? calcTotals(allStats, player.id) : {}
+    const getV = (field: string) => readOnly ? (st[field] ?? 0) : getStat(player.id, field)
+    return (
+      <tr key={`${player.id}-${pos}`} className="border-b border-white/5 hover:bg-white/[0.02]">
+        <td className="px-3 py-1.5 font-medium whitespace-nowrap">
+          {player.first_name[0]}. {player.last_name}
+          {/* Badge für Dual-Position-Kicker */}
+          {pos === 'K/P' && !['K','P'].includes(player.positions[0] ?? '') && (
+            <span className="ml-1.5 text-[9px] text-[#7a7a7a] bg-white/5 px-1 py-0.5 rounded">
+              {player.positions[0]}
+            </span>
+          )}
+        </td>
+        <td className="text-center px-2 py-1.5 text-[#7a7a7a] font-mono">{player.jersey_number ?? '—'}</td>
+        {fields.map(field => (
+          <td key={field} className="stats-cell text-center px-1 py-1">
+            {readOnly ? (
+              <span className="font-semibold">{getV(field as string)}</span>
+            ) : (
+              <input
+                type="number" min="0" step="1"
+                value={getStat(player.id, field as string) || ''}
+                placeholder="0"
+                onChange={e => setStat(player.id, field as string, Number(e.target.value) || 0)}
+                className="w-14 text-center bg-transparent border-0 text-white text-xs focus:outline-none py-1 px-1 rounded hover:bg-white/5"
+              />
+            )}
+          </td>
+        ))}
+        {/* Auto-calculated */}
+        {pos === 'QB' && <>
+          <td className="text-center px-2 py-1.5 text-[#5a5a5a] font-semibold">{getV('pass_yards') + getV('qb_rush_yards')}</td>
+          <td className="text-center px-2 py-1.5 text-[#5a5a5a] font-semibold">{getV('pass_tds') + getV('qb_rush_tds')}</td>
+          <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcYPA(getV('pass_yards'), getV('pass_attempts'))}</td>
+          <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcCompPct(getV('pass_completions'), getV('pass_attempts'))}</td>
+        </>}
+        {pos === 'RB' && <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcYPC(getV('rush_yards'), getV('rush_carries'))}</td>}
+        {['WR','TE'].includes(pos) && <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcYPR(getV('rec_yards'), getV('receptions'))}</td>}
+        {pos === 'K/P' && <td className="text-center px-2 py-1.5 text-[#5a5a5a] font-semibold">{getV('fg_made') * 3 + getV('ep_made')}</td>}
+      </tr>
+    )
+  }
 
   return (
     <table className="w-full text-xs border-collapse">
       <tbody>
+        {/* ── Normale Positionsgruppen ── */}
         {Object.entries(posGroups).map(([pos, posPlayers]) => {
           const { fields, headers } = getPositionFields(posPlayers[0]?.positions ?? [])
           return (
-            <>
-              {/* Position group header */}
-              <tr key={`header-${pos}`} className="bg-[#1a1a1a] sticky top-0 z-10">
+            <React.Fragment key={pos}>
+              <tr className="bg-[#1a1a1a] sticky top-0 z-10">
                 <th className="text-left px-3 py-1.5 text-[#7a7a7a] font-semibold uppercase tracking-wider border-b border-white/10 w-32">
                   <span style={{ color: teamColor }}>{pos}</span>
                 </th>
@@ -343,54 +405,31 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
                 {headers.map(h => (
                   <th key={h} className="text-center px-2 py-1.5 text-[#7a7a7a] font-medium border-b border-white/10 min-w-[56px]">{h}</th>
                 ))}
-                {/* Auto-calculated columns */}
                 {pos === 'QB' && <><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[52px]">Total YDS</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPA</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[52px]">Comp%</th></>}
-                {pos === 'RB' && <><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPC</th></>}
-                {['WR','TE'].includes(pos) && <><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPR</th></>}
-                {['K','P'].includes(pos) && <><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">PTS</th></>}
+                {pos === 'RB' && <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPC</th>}
+                {['WR','TE'].includes(pos) && <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPR</th>}
               </tr>
-
-              {posPlayers.map(player => {
-                const st = readOnly ? calcTotals(allStats, player.id) : {}
-                const getV = (field: string) => readOnly ? (st[field] ?? 0) : getStat(player.id, field)
-
-                return (
-                  <tr key={player.id} className="border-b border-white/5 hover:bg-white/[0.02] group">
-                    <td className="px-3 py-1.5 font-medium whitespace-nowrap">
-                      {player.first_name[0]}. {player.last_name}
-                    </td>
-                    <td className="text-center px-2 py-1.5 text-[#7a7a7a] font-mono">{player.jersey_number ?? '—'}</td>
-                    {fields.map(field => (
-                      <td key={field} className="stats-cell text-center px-1 py-1">
-                        {readOnly ? (
-                          <span className="font-semibold">{getV(field as string)}</span>
-                        ) : (
-                          <input
-                            type="number" min="0" step={field === 'sacks' ? '0.5' : '1'}
-                            value={getStat(player.id, field as string) || ''}
-                            placeholder="0"
-                            onChange={e => setStat(player.id, field as string, Number(e.target.value) || 0)}
-                            className="w-14 text-center bg-transparent border-0 text-white text-xs focus:outline-none py-1 px-1 rounded hover:bg-white/5"
-                          />
-                        )}
-                      </td>
-                    ))}
-                    {/* Auto-calculated */}
-                    {pos === 'QB' && <>
-                      <td className="text-center px-2 py-1.5 text-[#5a5a5a] font-semibold">{getV('pass_yards') + getV('qb_rush_yards')}</td>
-                      <td className="text-center px-2 py-1.5 text-[#5a5a5a] font-semibold">{getV('pass_tds') + getV('qb_rush_tds')}</td>
-                      <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcYPA(getV('pass_yards'), getV('pass_attempts'))}</td>
-                      <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcCompPct(getV('pass_completions'), getV('pass_attempts'))}</td>
-                    </>}
-                    {pos === 'RB' && <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcYPC(getV('rush_yards'), getV('rush_carries'))}</td>}
-                    {['WR','TE'].includes(pos) && <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcYPR(getV('rec_yards'), getV('receptions'))}</td>}
-                    {['K','P'].includes(pos) && <td className="text-center px-2 py-1.5 text-[#5a5a5a] font-semibold">{getV('fg_made') * 3 + getV('ep_made')}</td>}
-                  </tr>
-                )
-              })}
-            </>
+              {posPlayers.map(p => renderPlayerRow(p, fields, pos))}
+            </React.Fragment>
           )
         })}
+
+        {/* ── Kicker / Punter Abschnitt ── */}
+        {kickerPlayers.length > 0 && (
+          <React.Fragment key="K/P">
+            <tr className="bg-[#1a1a1a] sticky top-0 z-10">
+              <th className="text-left px-3 py-1.5 font-semibold uppercase tracking-wider border-b border-white/10 w-32">
+                <span style={{ color: teamColor }}>K / P</span>
+              </th>
+              <th className="px-2 py-1.5 text-[#7a7a7a] border-b border-white/10 w-8">#</th>
+              {K_HEADERS.map(h => (
+                <th key={h} className="text-center px-2 py-1.5 text-[#7a7a7a] font-medium border-b border-white/10 min-w-[56px]">{h}</th>
+              ))}
+              <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">PTS</th>
+            </tr>
+            {kickerPlayers.map(p => renderPlayerRow(p, K_FIELDS, 'K/P'))}
+          </React.Fragment>
+        )}
       </tbody>
     </table>
   )
