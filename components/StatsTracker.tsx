@@ -389,34 +389,50 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
     )
   }
 
+  // Feste Anzeigereihenfolge: Offense → K/P → Defense
+  const OFFENSE_ORDER = ['QB', 'RB', 'WR', 'TE']
+  const DEFENSE_ORDER = ['DB', 'DL', 'LB', 'OL']
+  // Alles was nicht explizit eingeordnet ist kommt ganz am Ende
+  const OTHER_KEYS    = Object.keys(posGroups).filter(
+    p => !OFFENSE_ORDER.includes(p) && !DEFENSE_ORDER.includes(p)
+  )
+  const orderedKeys   = [
+    ...OFFENSE_ORDER.filter(p => posGroups[p]),
+    ...DEFENSE_ORDER.filter(p => posGroups[p]),
+    ...OTHER_KEYS,
+  ]
+
+  function renderGroup(pos: string) {
+    const posPlayers = posGroups[pos]
+    if (!posPlayers?.length) return null
+    const nonKickerPos = (posPlayers[0]?.positions ?? []).filter((pp: string) => !['K', 'P'].includes(pp))
+    const { fields, headers } = getPositionFields(nonKickerPos)
+    return (
+      <React.Fragment key={pos}>
+        <tr className="bg-[#1a1a1a] sticky top-0 z-10">
+          <th className="text-left px-3 py-1.5 text-[#7a7a7a] font-semibold uppercase tracking-wider border-b border-white/10 w-32">
+            <span style={{ color: teamColor }}>{pos}</span>
+          </th>
+          <th className="px-2 py-1.5 text-[#7a7a7a] border-b border-white/10 w-8">#</th>
+          {headers.map(h => (
+            <th key={h} className="text-center px-2 py-1.5 text-[#7a7a7a] font-medium border-b border-white/10 min-w-[56px]">{h}</th>
+          ))}
+          {pos === 'QB' && <><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[52px]">Total YDS</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPA</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[52px]">Comp%</th></>}
+          {pos === 'RB' && <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPC</th>}
+          {['WR','TE'].includes(pos) && <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPR</th>}
+        </tr>
+        {posPlayers.map(p => renderPlayerRow(p, fields, pos))}
+      </React.Fragment>
+    )
+  }
+
   return (
     <table className="w-full text-xs border-collapse">
       <tbody>
-        {/* ── Normale Positionsgruppen ── */}
-        {Object.entries(posGroups).map(([pos, posPlayers]) => {
-          // K/P rausfiltern — sonst bekäme DB/K z.B. K_FIELDS statt DEF_FIELDS
-          const nonKickerPos = (posPlayers[0]?.positions ?? []).filter((pp: string) => !['K', 'P'].includes(pp))
-          const { fields, headers } = getPositionFields(nonKickerPos)
-          return (
-            <React.Fragment key={pos}>
-              <tr className="bg-[#1a1a1a] sticky top-0 z-10">
-                <th className="text-left px-3 py-1.5 text-[#7a7a7a] font-semibold uppercase tracking-wider border-b border-white/10 w-32">
-                  <span style={{ color: teamColor }}>{pos}</span>
-                </th>
-                <th className="px-2 py-1.5 text-[#7a7a7a] border-b border-white/10 w-8">#</th>
-                {headers.map(h => (
-                  <th key={h} className="text-center px-2 py-1.5 text-[#7a7a7a] font-medium border-b border-white/10 min-w-[56px]">{h}</th>
-                ))}
-                {pos === 'QB' && <><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[52px]">Total YDS</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPA</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[52px]">Comp%</th></>}
-                {pos === 'RB' && <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPC</th>}
-                {['WR','TE'].includes(pos) && <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPR</th>}
-              </tr>
-              {posPlayers.map(p => renderPlayerRow(p, fields, pos))}
-            </React.Fragment>
-          )
-        })}
+        {/* QB → RB → WR → TE */}
+        {OFFENSE_ORDER.map(pos => renderGroup(pos))}
 
-        {/* ── Kicker / Punter Abschnitt ── */}
+        {/* K / P (zwischen Offense und Defense) */}
         {kickerPlayers.length > 0 && (
           <React.Fragment key="K/P">
             <tr className="bg-[#1a1a1a] sticky top-0 z-10">
@@ -432,6 +448,12 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
             {kickerPlayers.map(p => renderPlayerRow(p, K_FIELDS, 'K/P'))}
           </React.Fragment>
         )}
+
+        {/* DB → DL → LB → OL */}
+        {DEFENSE_ORDER.map(pos => renderGroup(pos))}
+
+        {/* Sonstige Positionen die nicht in der definierten Reihenfolge sind */}
+        {OTHER_KEYS.map(pos => renderGroup(pos))}
       </tbody>
     </table>
   )
