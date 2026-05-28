@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
+import DeletePlayerButton from './DeletePlayerButton'
 
 const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
@@ -64,6 +66,7 @@ export default async function EditPlayerPage({ params }: { params: Promise<{ id:
         <h1 className="text-2xl font-black">{isNew ? 'Add Player' : 'Edit Player'}</h1>
       </div>
 
+      {/* ── Save form ── */}
       <form action={savePlayer} className="space-y-6">
         <Section title="Basic Info">
           <div className="grid grid-cols-2 gap-4">
@@ -138,23 +141,20 @@ export default async function EditPlayerPage({ params }: { params: Promise<{ id:
             {isNew ? 'Add Player' : 'Save Changes'}
           </button>
           <Link href="/admin/players" className="text-[#7a7a7a] hover:text-white text-sm transition-colors">Cancel</Link>
-
-          {!isNew && (
-            <form action={deletePlayer} className="ml-auto">
-              <button type="submit"
-                className="text-[#ff1d25] hover:text-red-400 text-sm border border-[#ff1d25]/30 hover:border-[#ff1d25] px-3 py-2 rounded transition-colors"
-                onClick={() => confirm('Delete this player?')}>
-                Delete Player
-              </button>
-            </form>
-          )}
         </div>
       </form>
+
+      {/* ── Delete form (outside save form to avoid nesting) ── */}
+      {!isNew && (
+        <div className="flex justify-end mt-4">
+          <DeletePlayerButton action={deletePlayer} />
+        </div>
+      )}
     </div>
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="bg-[#111] border border-white/5 rounded-xl p-5 space-y-4">
       <h2 className="text-xs font-semibold uppercase tracking-wider text-[#7a7a7a]">{title}</h2>
