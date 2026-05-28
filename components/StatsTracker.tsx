@@ -393,14 +393,9 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
   const OFFENSE_ORDER = ['QB', 'RB', 'WR', 'TE']
   const DEFENSE_ORDER = ['DB', 'DL', 'LB', 'OL']
   // Alles was nicht explizit eingeordnet ist kommt ganz am Ende
-  const OTHER_KEYS    = Object.keys(posGroups).filter(
+  const OTHER_KEYS = Object.keys(posGroups).filter(
     p => !OFFENSE_ORDER.includes(p) && !DEFENSE_ORDER.includes(p)
   )
-  const orderedKeys   = [
-    ...OFFENSE_ORDER.filter(p => posGroups[p]),
-    ...DEFENSE_ORDER.filter(p => posGroups[p]),
-    ...OTHER_KEYS,
-  ]
 
   function renderGroup(pos: string) {
     const posPlayers = posGroups[pos]
