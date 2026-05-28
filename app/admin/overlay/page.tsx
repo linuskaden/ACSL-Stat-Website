@@ -330,6 +330,16 @@ function buildStatItems(positions: string[], s: any): { label: string; value: st
 }
 
 /* ─────────────────────────────────
+   Shared helper: readable text on colored bg
+───────────────────────────────── */
+function textOn(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  return 0.299 * r + 0.587 * g + 0.114 * b > 0.48 ? '#000000' : '#ffffff'
+}
+
+/* ─────────────────────────────────
    Operator Preview
 ───────────────────────────────── */
 function OperatorPreview({ player, team, stats, mode, visible }: {
@@ -339,10 +349,14 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
   mode: 'live' | 'career'
   visible: boolean
 }) {
-  const primaryColor = team?.primary_color ?? '#ff1d25'
-  const secondaryColor = team?.secondary_color ?? 'rgba(255,255,255,0.12)'
-  const statItems = player ? buildStatItems(player.positions, stats) : []
-  const modeLabel = mode === 'career' ? '2026 SEASON' : 'GAME STATS'
+  const primaryColor   = team?.primary_color   ?? '#ff1d25'
+  const secondaryColor = team?.secondary_color ?? '#ffffff'
+  const onPrimary      = team ? textOn(primaryColor) : '#ffffff'
+  const dimOnPrimary   = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)'
+  const hairline       = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'
+  const statItems      = player ? buildStatItems(player.positions, stats) : []
+  const modeLabel      = mode === 'career' ? '2026 SEASON' : 'GAME STATS'
+  const hasStats       = statItems.length > 0
 
   return (
     <div style={{
@@ -350,7 +364,7 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
       borderBottom: '1px solid rgba(255,255,255,0.06)',
       padding: '14px 20px',
     }}>
-      {/* Section label */}
+      {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
           Overlay Vorschau
@@ -371,115 +385,91 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
 
       {/* Broadcast mock frame */}
       <div style={{
-        background: '#1a1a2e',
+        background: '#131825',
         borderRadius: 8,
-        padding: '24px 20px',
+        padding: '20px 20px 20px 20px',
         position: 'relative',
         overflow: 'hidden',
-        minHeight: 90,
+        minHeight: 88,
         display: 'flex',
         alignItems: 'flex-end',
       }}>
-        {/* Fake broadcast background texture */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.015) 0%, transparent 60%)',
-        }} />
-
-        {/* "ACSL BROADCAST" watermark */}
-        <div style={{
-          position: 'absolute', top: 8, right: 12,
-          fontSize: 9, fontWeight: 700, letterSpacing: 3,
-          color: 'rgba(255,255,255,0.08)', textTransform: 'uppercase',
-        }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 15% 50%, rgba(255,255,255,0.012) 0%, transparent 60%)' }} />
+        <div style={{ position: 'absolute', top: 7, right: 10, fontSize: 8, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.06)', textTransform: 'uppercase' }}>
           ACSL Broadcast
         </div>
 
         {player && team ? (
-          /* ── Lower-third card preview ── */
           <div style={{
             display: 'flex',
-            alignItems: 'stretch',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-            height: 80,
+            flexDirection: 'column',
+            boxShadow: '0 6px 24px rgba(0,0,0,0.7)',
             width: '100%',
-            maxWidth: 780,
-            opacity: visible ? 1 : 0.35,
-            transition: 'opacity 0.4s ease',
-            filter: visible ? 'none' : 'grayscale(0.5)',
+            maxWidth: 700,
+            opacity: visible ? 1 : 0.3,
+            filter: visible ? 'none' : 'grayscale(0.6)',
+            transition: 'opacity 0.4s, filter 0.4s',
           }}>
-            {/* Left: team color block */}
-            <div style={{
-              background: primaryColor,
-              width: 80,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 3,
-              flexShrink: 0,
-              position: 'relative',
-            }}>
-              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 16, background: 'linear-gradient(to right, transparent, rgba(0,0,0,0.2))' }} />
-              {team.logo_url ? (
-                <img src={team.logo_url} alt="" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.5))' }} />
-              ) : (
-                <div style={{ width: 34, height: 34, background: 'rgba(255,255,255,0.2)', borderRadius: 3 }} />
-              )}
-              {player.jersey_number != null && (
-                <span style={{ color: 'white', fontSize: 13, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
-                  #{player.jersey_number}
-                </span>
-              )}
-            </div>
-
-            {/* Accent line */}
-            <div style={{ width: 3, background: secondaryColor, flexShrink: 0 }} />
-
-            {/* Right: dark info section */}
-            <div style={{ background: '#0d1117', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 16px', gap: 5 }}>
-              {/* Name row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1 }}>
-                <span style={{ color: 'white', fontSize: 17, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.3, whiteSpace: 'nowrap' }}>
-                  {player.first_name.toUpperCase()} {player.last_name.toUpperCase()}
-                </span>
-                <span style={{ color: primaryColor, fontSize: 9, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase' }}>
-                  {player.positions.join(' · ')}
-                </span>
-                <span style={{ marginLeft: 'auto', color: '#2a2a2a', fontSize: 8, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' }}>
-                  {modeLabel}
-                </span>
+            {/* Nameplate */}
+            <div style={{ display: 'flex', alignItems: 'stretch', background: primaryColor, height: 62 }}>
+              {/* Logo */}
+              <div style={{ width: 62, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, flexShrink: 0 }}>
+                {team.logo_url
+                  ? <img src={team.logo_url} alt="" style={{ width: 42, height: 42, objectFit: 'contain' }} />
+                  : <div style={{ width: 42, height: 42, borderRadius: 3, background: hairline }} />}
               </div>
-
-              {/* Stats row */}
-              {statItems.length > 0 ? (
-                <div style={{ display: 'flex', gap: 0, alignItems: 'flex-end' }}>
-                  {statItems.map((item, i) => (
-                    <div key={item.label} style={{ textAlign: 'center', paddingRight: 14, paddingLeft: i === 0 ? 0 : 14, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                      <div style={{ color: 'white', fontSize: 19, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1 }}>
-                        {item.value}
-                      </div>
-                      <div style={{ color: '#3a3a3a', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2 }}>
-                        {item.label}
-                      </div>
-                    </div>
-                  ))}
+              {/* Divider */}
+              <div style={{ width: 1, background: hairline, margin: '10px 0', flexShrink: 0 }} />
+              {/* Info */}
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 16px', gap: 4, flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, lineHeight: 1 }}>
+                  {player.jersey_number != null && (
+                    <span style={{ color: dimOnPrimary, fontSize: 13, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif' }}>
+                      #{player.jersey_number}
+                    </span>
+                  )}
+                  <span style={{ color: onPrimary, fontSize: 18, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', whiteSpace: 'nowrap', letterSpacing: 0.3 }}>
+                    {player.first_name.toUpperCase()} {player.last_name.toUpperCase()}
+                  </span>
                 </div>
-              ) : (
-                <div style={{ color: '#222', fontSize: 9, letterSpacing: 1 }}>KEINE STATS</div>
-              )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ color: onPrimary, fontSize: 9, fontWeight: 900, letterSpacing: 2, textTransform: 'uppercase', background: hairline, padding: '2px 5px', borderRadius: 2 }}>
+                    {player.positions.join(' · ')}
+                  </span>
+                  <span style={{ color: hairline, fontSize: 10 }}>·</span>
+                  <span style={{ color: dimOnPrimary, fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+                    {team.short_name}
+                  </span>
+                </div>
+              </div>
+              {/* Secondary accent */}
+              <div style={{ width: 4, background: secondaryColor, flexShrink: 0 }} />
             </div>
+
+            {/* Stats bar */}
+            {hasStats && (
+              <div style={{
+                background: '#0b0e1a',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '8px 14px 8px 79px',
+                gap: 0,
+                borderTop: `2px solid ${primaryColor}`,
+              }}>
+                {statItems.map((item, i) => (
+                  <div key={item.label} style={{ textAlign: 'center', paddingRight: 14, paddingLeft: i === 0 ? 0 : 14, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
+                    <div style={{ color: '#fff', fontSize: 16, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1 }}>{item.value}</div>
+                    <div style={{ color: '#3a3a5a', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2 }}>{item.label}</div>
+                  </div>
+                ))}
+                <div style={{ marginLeft: 'auto', color: '#2a2a3a', fontSize: 7, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' }}>{modeLabel}</div>
+              </div>
+            )}
           </div>
         ) : (
-          /* ── Placeholder when no player selected ── */
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, opacity: 0.25 }}>
-            <div style={{ width: 80, height: 80, background: 'rgba(255,255,255,0.05)', borderRadius: 2 }} />
-            <div style={{ width: 3, height: 80, background: 'rgba(255,255,255,0.05)' }} />
-            <div style={{ flex: 1, height: 80, background: 'rgba(255,255,255,0.03)', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 11, color: '#444', letterSpacing: 2, textTransform: 'uppercase' }}>
-                Kein Spieler ausgewählt
-              </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, opacity: 0.2, width: '100%', maxWidth: 700 }}>
+            <div style={{ height: 62, background: 'rgba(255,255,255,0.04)', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 10, color: '#444', letterSpacing: 2, textTransform: 'uppercase' }}>Kein Spieler ausgewählt</span>
             </div>
           </div>
         )}
