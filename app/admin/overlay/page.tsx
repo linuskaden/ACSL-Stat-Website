@@ -10,12 +10,15 @@ type OverlayState = { active_player_id: string | null; game_id: string | null; m
 
 const POSITIONS = ['Alle', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
+type TeamOverlayState = { game_id: string | null; display_team: 'both' | 'home' | 'away'; visible: boolean }
+
 export default function OverlayControlPage() {
   const [games, setGames] = useState<Game[]>([])
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
   const [homePlayers, setHomePlayers] = useState<Player[]>([])
   const [awayPlayers, setAwayPlayers] = useState<Player[]>([])
   const [overlay, setOverlay] = useState<OverlayState>({ active_player_id: null, game_id: null, mode: 'live', visible: false })
+  const [teamOverlay, setTeamOverlay] = useState<TeamOverlayState>({ game_id: null, display_team: 'both', visible: false })
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [careerStats, setCareerStats] = useState<any>(null)
   const [loadingStats, setLoadingStats] = useState(false)
@@ -25,20 +28,28 @@ export default function OverlayControlPage() {
   const [filterAway, setFilterAway] = useState('Alle')
   const [previewStats, setPreviewStats] = useState<any>(null)
   const [overlayUrl, setOverlayUrl] = useState('')
+  const [teamOverlayUrl, setTeamOverlayUrl] = useState('')
   const [copied, setCopied] = useState(false)
+  const [copiedTeam, setCopiedTeam] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [savingTeam, setSavingTeam] = useState(false)
 
-  useEffect(() => { setOverlayUrl(`${window.location.origin}/overlay/lower-third`) }, [])
+  useEffect(() => {
+    setOverlayUrl(`${window.location.origin}/overlay/lower-third`)
+    setTeamOverlayUrl(`${window.location.origin}/overlay/team-stats`)
+  }, [])
 
   useEffect(() => {
     const supabase = createClient()
     async function init() {
-      const [{ data: gs }, { data: os }] = await Promise.all([
+      const [{ data: gs }, { data: os }, { data: tos }] = await Promise.all([
         supabase.from('games').select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)').eq('season', 2026).order('scheduled_at', { ascending: false }),
         supabase.from('overlay_state').select('*').eq('id', 1).single(),
+        supabase.from('team_overlay_state').select('*').eq('id', 1).single(),
       ])
       if (gs) setGames(gs as Game[])
       if (os) setOverlay(os as OverlayState)
+      if (tos) setTeamOverlay(tos as TeamOverlayState)
       const list = (gs ?? []) as Game[]
       const auto = list.find(g => g.status === 'live') ?? (os?.game_id ? list.find(g => g.id === os.game_id) : null) ?? null
       if (auto) { setSelectedGame(auto); loadPlayers(auto) }
@@ -104,11 +115,20 @@ export default function OverlayControlPage() {
     setSaving(false)
   }, [overlay])
 
+  const pushTeamOverlay = useCallback(async (patch: Partial<TeamOverlayState>) => {
+    const supabase = createClient()
+    setTeamOverlay(prev => ({ ...prev, ...patch }))
+    setSavingTeam(true)
+    await supabase.from('team_overlay_state').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1)
+    setSavingTeam(false)
+  }, [])
+
   async function handleGameChange(gameId: string) {
     const game = games.find(g => g.id === gameId)
     if (!game) return
     setSelectedGame(game); loadPlayers(game)
     if (overlay.active_player_id) pushOverlay({ game_id: gameId })
+    pushTeamOverlay({ game_id: gameId })
   }
 
   async function showOnOverlay(player: Player, mode: 'live' | 'career') {
@@ -117,6 +137,9 @@ export default function OverlayControlPage() {
 
   function copyUrl() {
     navigator.clipboard.writeText(overlayUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
+  function copyTeamUrl() {
+    navigator.clipboard.writeText(teamOverlayUrl).then(() => { setCopiedTeam(true); setTimeout(() => setCopiedTeam(false), 2000) })
   }
 
   function filterPlayers(players: Player[], search: string, filter: string) {
@@ -228,6 +251,17 @@ export default function OverlayControlPage() {
         stats={previewStats}
         mode={overlay.mode}
         visible={overlay.visible}
+      />
+
+      {/* ══ Team Stats Overlay Control ══ */}
+      <TeamStatsControl
+        teamOverlay={teamOverlay}
+        selectedGame={selectedGame}
+        onPush={pushTeamOverlay}
+        saving={savingTeam}
+        overlayUrl={teamOverlayUrl}
+        copied={copiedTeam}
+        onCopy={copyTeamUrl}
       />
 
       {/* ══ Player grid – two columns ══ */}
@@ -730,6 +764,125 @@ function BioCell({ label, value, span }: { label: string; value: string; span?: 
     <div style={{ gridColumn: span ? '1 / -1' : 'auto', background: '#131826', padding: '8px 10px', marginBottom: 1 }}>
       <div style={{ fontSize: 9, fontWeight: 700, color: '#444', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
       <div style={{ fontSize: 13, fontWeight: 600, color: '#ddd' }}>{value}</div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────
+   Team Stats Overlay Control Panel
+───────────────────────────────── */
+function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUrl, copied, onCopy }: {
+  teamOverlay: TeamOverlayState
+  selectedGame: Game | null
+  onPush: (patch: Partial<TeamOverlayState>) => void
+  saving: boolean
+  overlayUrl: string
+  copied: boolean
+  onCopy: () => void
+}) {
+  const homeTeam = selectedGame?.home_team
+  const awayTeam = selectedGame?.away_team
+
+  return (
+    <div style={{
+      background: '#080b14',
+      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      padding: '14px 20px',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
+          Team Stats Overlay
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+        {saving && <span style={{ fontSize: 10, color: '#444' }}>saving…</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: teamOverlay.visible ? '#04a550' : '#333',
+            boxShadow: teamOverlay.visible ? '0 0 6px #04a550' : 'none',
+            transition: 'all 0.3s',
+          }} />
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: teamOverlay.visible ? '#04a550' : '#444', textTransform: 'uppercase' }}>
+            {teamOverlay.visible ? 'On Air' : 'Hidden'}
+          </span>
+        </div>
+      </div>
+
+      {/* Controls row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+
+        {/* Display team selector */}
+        <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+          {([
+            { value: 'both', label: '⬛ Beide' },
+            { value: 'home', label: homeTeam ? `🏠 ${homeTeam.short_name}` : '🏠 Home' },
+            { value: 'away', label: awayTeam ? `✈️ ${awayTeam.short_name}` : '✈️ Away' },
+          ] as const).map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => onPush({ display_team: opt.value })}
+              style={{
+                padding: '7px 14px',
+                fontSize: 11,
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+                background: teamOverlay.display_team === opt.value ? '#ff1d25' : '#131826',
+                color: teamOverlay.display_team === opt.value ? 'white' : '#666',
+                transition: 'all 0.15s',
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Show / Hide button */}
+        <button
+          onClick={() => onPush({ visible: !teamOverlay.visible, game_id: selectedGame?.id ?? teamOverlay.game_id })}
+          style={{
+            padding: '8px 20px',
+            fontSize: 12,
+            fontWeight: 900,
+            borderRadius: 8,
+            border: `1px solid ${teamOverlay.visible ? '#04a550' : 'rgba(255,255,255,0.1)'}`,
+            background: teamOverlay.visible ? 'rgba(4,165,80,0.15)' : 'rgba(255,255,255,0.04)',
+            color: teamOverlay.visible ? '#04a550' : '#888',
+            cursor: 'pointer',
+            boxShadow: teamOverlay.visible ? '0 0 12px rgba(4,165,80,0.2)' : 'none',
+            transition: 'all 0.2s',
+          }}
+        >
+          {teamOverlay.visible ? '▼ HIDE' : '▲ SHOW'}
+        </button>
+
+        {/* URL copy */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+          <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 5, padding: '5px 9px', fontSize: 10, color: '#666', whiteSpace: 'nowrap' }}>
+            {overlayUrl || '…'}
+          </code>
+          <button
+            onClick={onCopy}
+            style={{
+              padding: '5px 12px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer',
+              background: copied ? '#04a550' : '#1a2040',
+              color: copied ? 'white' : '#888',
+              border: '1px solid rgba(255,255,255,0.08)',
+              transition: 'all 0.2s',
+            }}
+          >
+            {copied ? '✓ Copied' : 'Copy'}
+          </button>
+        </div>
+      </div>
+
+      {/* No game warning */}
+      {!selectedGame && (
+        <div style={{ marginTop: 10, fontSize: 11, color: '#555', fontStyle: 'italic' }}>
+          Wähle oben ein Spiel aus um Team Stats zu senden
+        </div>
+      )}
     </div>
   )
 }
