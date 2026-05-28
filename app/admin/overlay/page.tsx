@@ -27,6 +27,7 @@ export default function OverlayControlPage() {
   const [filterHome, setFilterHome] = useState('Alle')
   const [filterAway, setFilterAway] = useState('Alle')
   const [previewStats, setPreviewStats] = useState<any>(null)
+  const [gameStatsRows, setGameStatsRows] = useState<any[]>([])
   const [overlayUrl, setOverlayUrl] = useState('')
   const [teamOverlayUrl, setTeamOverlayUrl] = useState('')
   const [copied, setCopied] = useState(false)
@@ -60,11 +61,15 @@ export default function OverlayControlPage() {
   async function loadPlayers(game: Game) {
     const supabase = createClient()
     const teamIds = [game.home_team.id, game.away_team?.id].filter(Boolean) as string[]
-    const { data } = await supabase.from('players').select('*').in('team_id', teamIds).eq('is_active', true).order('jersey_number', { nullsFirst: false })
-    if (data) {
-      setHomePlayers((data as Player[]).filter(p => p.team_id === game.home_team.id))
-      setAwayPlayers(game.away_team ? (data as Player[]).filter(p => p.team_id === game.away_team!.id) : [])
+    const [{ data: players }, { data: gs }] = await Promise.all([
+      supabase.from('players').select('*').in('team_id', teamIds).eq('is_active', true).order('jersey_number', { nullsFirst: false }),
+      supabase.from('game_stats').select('*').eq('game_id', game.id),
+    ])
+    if (players) {
+      setHomePlayers((players as Player[]).filter(p => p.team_id === game.home_team.id))
+      setAwayPlayers(game.away_team ? (players as Player[]).filter(p => p.team_id === game.away_team!.id) : [])
     }
+    setGameStatsRows(gs ?? [])
   }
 
   // Load career stats when player selected (for modal)
@@ -251,6 +256,12 @@ export default function OverlayControlPage() {
         stats={previewStats}
         mode={overlay.mode}
         visible={overlay.visible}
+        teamOverlay={teamOverlay}
+        homeTeam={selectedGame?.home_team ?? null}
+        awayTeam={selectedGame?.away_team ?? null}
+        homePlayers={homePlayers}
+        awayPlayers={awayPlayers}
+        gameStatsRows={gameStatsRows}
       />
 
       {/* ══ Team Stats Overlay Control ══ */}
@@ -376,12 +387,44 @@ function textOn(hex: string): string {
 /* ─────────────────────────────────
    Operator Preview
 ───────────────────────────────── */
-function OperatorPreview({ player, team, stats, mode, visible }: {
+/* ─── Team stats calc (mirrors overlay logic) ─── */
+function calcTeamTotals(players: Player[], gsRows: any[]) {
+  let passYds = 0, rushYds = 0, recYds = 0, tds = 0, ints = 0, fumbles = 0, targets = 0, receptions = 0
+  players.forEach(p => {
+    const rows = gsRows.filter(r => r.player_id === p.id)
+    const qs: Record<string, number> = {}
+    rows.forEach(r => Object.entries(r).forEach(([k, v]) => { if (typeof v === 'number') qs[k] = (qs[k] ?? 0) + v }))
+    const pos = p.positions as string[]
+    if (pos.includes('QB')) {
+      passYds += qs.pass_yards ?? 0; rushYds += qs.qb_rush_yards ?? 0
+      tds += (qs.pass_tds ?? 0) + (qs.qb_rush_tds ?? 0); ints += qs.interceptions_thrown ?? 0
+    } else if (pos.includes('RB')) {
+      rushYds += qs.rush_yards ?? 0; recYds += qs.rb_rec_yards ?? 0
+      tds += qs.rush_tds ?? 0; fumbles += qs.rb_fumbles ?? 0
+      targets += qs.rb_targets ?? 0; receptions += qs.rb_receptions ?? 0
+    } else if (pos.some(pp => ['WR', 'TE'].includes(pp))) {
+      recYds += qs.rec_yards ?? 0; fumbles += qs.rec_fumbles ?? 0
+      targets += qs.rec_targets ?? 0; receptions += qs.receptions ?? 0
+    }
+  })
+  const totalYds = passYds + rushYds
+  const catchPct = targets > 0 ? Math.round(receptions / targets * 100) : 0
+  return { passYds, rushYds, recYds, totalYds, tds, ints, fumbles, targets, receptions, catchPct }
+}
+
+function OperatorPreview({ player, team, stats, mode, visible,
+  teamOverlay, homeTeam, awayTeam, homePlayers, awayPlayers, gameStatsRows }: {
   player: Player | null
   team: Team | null | undefined
   stats: any
   mode: 'live' | 'career'
   visible: boolean
+  teamOverlay: TeamOverlayState
+  homeTeam: Team | null | undefined
+  awayTeam: Team | null | undefined
+  homePlayers: Player[]
+  awayPlayers: Player[]
+  gameStatsRows: any[]
 }) {
   const primaryColor   = team?.primary_color   ?? '#ff1d25'
   const secondaryColor = team?.secondary_color ?? '#ffffff'
@@ -432,6 +475,55 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
         <div style={{ position: 'absolute', top: 7, right: 10, fontSize: 8, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.06)', textTransform: 'uppercase' }}>
           ACSL Broadcast
         </div>
+
+        {/* Team stats rows (shown above player card like in the real overlay) */}
+        {teamOverlay.visible && (homeTeam || awayTeam) && (() => {
+          const showHome = teamOverlay.display_team === 'both' || teamOverlay.display_team === 'home'
+          const showAway = teamOverlay.display_team === 'both' || teamOverlay.display_team === 'away'
+          const hStats = calcTeamTotals(homePlayers, gameStatsRows)
+          const aStats = calcTeamTotals(awayPlayers, gameStatsRows)
+          const rows: { team: Team; stats: ReturnType<typeof calcTeamTotals> }[] = [
+            ...(showHome && homeTeam ? [{ team: homeTeam, stats: hStats }] : []),
+            ...(showAway && awayTeam ? [{ team: awayTeam, stats: aStats }] : []),
+          ]
+          return (
+            <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 2, marginBottom: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.6)' }}>
+              {rows.map(({ team: t, stats: s }) => {
+                const tc    = t.primary_color ?? '#ff1d25'
+                const onTc  = textOn(tc)
+                const dim   = onTc === '#ffffff' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'
+                const cols  = [
+                  { label: 'PASS', value: s.passYds }, { label: 'RUSH', value: s.rushYds },
+                  { label: 'REC', value: s.recYds },   { label: 'TOTAL', value: s.totalYds },
+                  { label: 'TAR/REC', value: `${s.targets}/${s.receptions}` },
+                  { label: 'CATCH%', value: s.targets > 0 ? `${s.catchPct}%` : '—' },
+                  { label: 'TDs', value: s.tds, accent: '#04a550' },
+                  { label: 'INT', value: s.ints, accent: '#ff1d25' },
+                  { label: 'FUM', value: s.fumbles },
+                ]
+                return (
+                  <div key={t.id} style={{ display: 'inline-flex', alignItems: 'stretch' }}>
+                    <div style={{ background: tc, display: 'flex', alignItems: 'center', gap: 7, padding: '5px 10px 5px 7px', minWidth: 110, flexShrink: 0 }}>
+                      {t.logo_url && <img src={t.logo_url} alt="" style={{ width: 26, height: 26, objectFit: 'contain' }} />}
+                      <div>
+                        <div style={{ color: onTc, fontSize: 12, fontWeight: 900, fontFamily: '"Arial Black", sans-serif', lineHeight: 1, whiteSpace: 'nowrap' }}>{t.short_name.toUpperCase()}</div>
+                        <div style={{ color: dim, fontSize: 6, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', lineHeight: 1, marginTop: 2 }}>{t.name}</div>
+                      </div>
+                    </div>
+                    <div style={{ background: '#0b0e1a', display: 'flex', alignItems: 'center', padding: '0 8px', borderTop: `2px solid ${tc}`, gap: 0 }}>
+                      {cols.map((col, i) => (
+                        <div key={col.label} style={{ textAlign: 'center', padding: '5px 7px', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
+                          <div style={{ color: (col as any).accent ?? '#fff', fontSize: 13, fontWeight: 900, fontFamily: '"Arial Black", sans-serif', lineHeight: 1 }}>{col.value}</div>
+                          <div style={{ color: '#7a7a9a', fontSize: 5, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2 }}>{col.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
 
         {player && team ? (
           <div style={{
