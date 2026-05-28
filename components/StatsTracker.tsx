@@ -366,7 +366,7 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
               <span className="font-semibold">{getV(field as string)}</span>
             ) : (
               <input
-                type="number" min="0" step="1"
+                type="number" min="0" step={field === 'sacks' ? '0.5' : '1'}
                 value={getStat(player.id, field as string) || ''}
                 placeholder="0"
                 onChange={e => setStat(player.id, field as string, Number(e.target.value) || 0)}
@@ -394,7 +394,9 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
       <tbody>
         {/* ── Normale Positionsgruppen ── */}
         {Object.entries(posGroups).map(([pos, posPlayers]) => {
-          const { fields, headers } = getPositionFields(posPlayers[0]?.positions ?? [])
+          // K/P rausfiltern — sonst bekäme DB/K z.B. K_FIELDS statt DEF_FIELDS
+          const nonKickerPos = (posPlayers[0]?.positions ?? []).filter((pp: string) => !['K', 'P'].includes(pp))
+          const { fields, headers } = getPositionFields(nonKickerPos)
           return (
             <React.Fragment key={pos}>
               <tr className="bg-[#1a1a1a] sticky top-0 z-10">
