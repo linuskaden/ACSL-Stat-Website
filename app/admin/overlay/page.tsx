@@ -343,35 +343,51 @@ export default function OverlayControlPage() {
 ───────────────────────────────── */
 function buildStatItems(positions: string[], s: any): { label: string; value: string | number }[] {
   if (!s) return []
-  if (positions.includes('QB')) return [
-    { label: 'PASS YDS', value: s.pass_yards ?? 0 },
-    { label: 'TDs', value: (s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0) },
-    { label: 'INT', value: s.interceptions_thrown ?? 0 },
-    { label: 'C/ATT', value: `${s.pass_completions ?? 0}/${s.pass_attempts ?? 0}` },
-    { label: 'RUSH', value: s.qb_rush_yards ?? 0 },
-  ]
-  if (positions.includes('RB')) return [
-    { label: 'RUSH YDS', value: s.rush_yards ?? 0 },
-    { label: 'TDs', value: s.rush_tds ?? 0 },
-    { label: 'CAR', value: s.rush_carries ?? 0 },
-    { label: 'REC YDS', value: s.rb_rec_yards ?? 0 },
-    { label: 'REC', value: s.rb_receptions ?? 0 },
-  ]
-  if (positions.some((p: string) => ['WR', 'TE'].includes(p))) return [
-    { label: 'REC YDS', value: s.rec_yards ?? 0 },
-    { label: 'TDs', value: s.rec_tds ?? 0 },
-    { label: 'REC', value: s.receptions ?? 0 },
-    { label: 'TAR', value: s.rec_targets ?? 0 },
-  ]
-  if (positions.some((p: string) => ['K', 'P'].includes(p))) return [
-    { label: 'FG', value: `${s.fg_made ?? 0}/${s.fg_attempts ?? 0}` },
-    { label: 'EP', value: `${s.ep_made ?? 0}/${s.ep_attempts ?? 0}` },
-    { label: 'PTS', value: (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0) },
-  ]
-  return [
-    { label: 'SACKS', value: s.sacks ?? 0 },
-    { label: 'INT', value: s.def_interceptions ?? 0 },
-  ]
+  const items: { label: string; value: string | number }[] = []
+  const hasKP  = positions.some((p: string) => ['K', 'P'].includes(p))
+  const hasDef = positions.some((p: string) => ['DB', 'LB', 'DL', 'OL'].includes(p))
+
+  if (positions.includes('QB')) {
+    items.push(
+      { label: 'PASS YDS', value: s.pass_yards ?? 0 },
+      { label: 'TDs', value: (s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0) },
+      { label: 'INT', value: s.interceptions_thrown ?? 0 },
+      { label: 'C/ATT', value: `${s.pass_completions ?? 0}/${s.pass_attempts ?? 0}` },
+      { label: 'RUSH', value: s.qb_rush_yards ?? 0 },
+    )
+  } else if (positions.includes('RB')) {
+    items.push(
+      { label: 'RUSH YDS', value: s.rush_yards ?? 0 },
+      { label: 'TDs', value: s.rush_tds ?? 0 },
+      { label: 'CAR', value: s.rush_carries ?? 0 },
+      { label: 'REC YDS', value: s.rb_rec_yards ?? 0 },
+      { label: 'REC', value: s.rb_receptions ?? 0 },
+    )
+  } else if (positions.some((p: string) => ['WR', 'TE'].includes(p))) {
+    items.push(
+      { label: 'REC YDS', value: s.rec_yards ?? 0 },
+      { label: 'TDs', value: s.rec_tds ?? 0 },
+      { label: 'REC', value: s.receptions ?? 0 },
+      { label: 'TAR', value: s.rec_targets ?? 0 },
+    )
+  } else {
+    if (hasDef || !hasKP) {
+      items.push(
+        { label: 'SACKS', value: s.sacks ?? 0 },
+        { label: 'INT', value: s.def_interceptions ?? 0 },
+      )
+    }
+  }
+
+  if (hasKP) {
+    items.push(
+      { label: 'FG', value: `${s.fg_made ?? 0}/${s.fg_attempts ?? 0}` },
+      { label: 'EP', value: `${s.ep_made ?? 0}/${s.ep_attempts ?? 0}` },
+      { label: 'PTS', value: (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0) },
+    )
+  }
+
+  return items
 }
 
 /* ─────────────────────────────────
