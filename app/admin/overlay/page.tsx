@@ -401,11 +401,9 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
 
         {player && team ? (
           <div style={{
-            display: 'flex',
+            display: 'inline-flex',
             flexDirection: 'column',
             boxShadow: '0 6px 24px rgba(0,0,0,0.7)',
-            width: '100%',
-            maxWidth: 700,
             opacity: visible ? 1 : 0.3,
             filter: visible ? 'none' : 'grayscale(0.6)',
             transition: 'opacity 0.4s, filter 0.4s',
@@ -421,7 +419,7 @@ function OperatorPreview({ player, team, stats, mode, visible }: {
               {/* Divider */}
               <div style={{ width: 1, background: hairline, margin: '10px 0', flexShrink: 0 }} />
               {/* Info */}
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 16px', gap: 4, flex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 16px', gap: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, lineHeight: 1 }}>
                   {player.jersey_number != null && (
                     <span style={{ color: dimOnPrimary, fontSize: 13, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif' }}>

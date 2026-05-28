@@ -147,10 +147,9 @@ export default function LowerThirdOverlay() {
     }}>
       {player && (
         <div style={{
-          display: 'flex',
+          display: 'inline-flex',
           flexDirection: 'column',
           boxShadow: '0 20px 60px rgba(0,0,0,0.85), 0 4px 20px rgba(0,0,0,0.6)',
-          minWidth: 560,
         }}>
 
           {/* ══ NAMEPLATE ══ */}
@@ -190,7 +189,6 @@ export default function LowerThirdOverlay() {
               justifyContent: 'center',
               padding: '0 22px',
               gap: 5,
-              flex: 1,
             }}>
               {/* Row 1: #Number  Name */}
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, lineHeight: 1 }}>
