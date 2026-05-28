@@ -58,7 +58,9 @@ function calcTotals(allStats: AllStats, playerId: string) {
 }
 
 function teamTotals(allStats: AllStats, players: Player[], quarter: string) {
-  let totalYds = 0, totalTDs = 0, totalINTs = 0, totalFumbles = 0, totalPoints = 0
+  let totalPassYds = 0, totalRushYds = 0, totalRecYds = 0
+  let totalTDs = 0, totalINTs = 0, totalFumbles = 0, totalPoints = 0
+  let totalTargets = 0, totalReceptions = 0
   players.forEach(p => {
     const qs = (quarter === 'Total'
       ? QUARTERS.reduce((acc, q) => ({ ...acc, ...Object.fromEntries(Object.entries(allStats[q]?.[p.id] ?? {}).map(([k, v]) => [k, (acc[k] ?? 0) + (v ?? 0)])) }), {} as StatRow)
@@ -66,22 +68,30 @@ function teamTotals(allStats: AllStats, players: Player[], quarter: string) {
     const pos = p.positions
 
     if (pos.includes('QB')) {
-      totalYds   += (qs.pass_yards ?? 0) + (qs.qb_rush_yards ?? 0)
-      totalTDs   += (qs.pass_tds  ?? 0) + (qs.qb_rush_tds  ?? 0)
-      totalINTs  += qs.interceptions_thrown ?? 0
+      totalPassYds += qs.pass_yards     ?? 0
+      totalRushYds += qs.qb_rush_yards  ?? 0
+      totalTDs     += (qs.pass_tds ?? 0) + (qs.qb_rush_tds ?? 0)
+      totalINTs    += qs.interceptions_thrown ?? 0
     } else if (pos.includes('RB')) {
-      totalYds   += qs.rush_yards ?? 0            // rb_rec_yards weggelassen – selbe Yards wie QB pass_yards
-      totalTDs   += qs.rush_tds   ?? 0
-      totalFumbles += qs.rb_fumbles ?? 0
+      totalRushYds    += qs.rush_yards    ?? 0
+      totalRecYds     += qs.rb_rec_yards  ?? 0
+      totalTDs        += qs.rush_tds      ?? 0
+      totalFumbles    += qs.rb_fumbles    ?? 0
+      totalTargets    += qs.rb_targets    ?? 0
+      totalReceptions += qs.rb_receptions ?? 0
     } else if (pos.some(pp => ['WR','TE'].includes(pp))) {
-      // rec_yards = selbe Yards wie QB pass_yards; rec_tds = selbe TDs wie QB pass_tds → beide weglassen
-      totalFumbles += qs.rec_fumbles ?? 0
+      totalRecYds     += qs.rec_yards     ?? 0
+      totalFumbles    += qs.rec_fumbles   ?? 0
+      totalTargets    += qs.rec_targets   ?? 0
+      totalReceptions += qs.receptions    ?? 0
     } else if (pos.some(pp => ['K','P'].includes(pp))) {
       totalPoints += (qs.fg_made ?? 0) * 3 + (qs.ep_made ?? 0)
     }
   })
-  totalPoints += totalTDs * 6   // einmal nach der Schleife, nicht bei jedem Spieler
-  return { totalYds, totalTDs, totalINTs, totalFumbles, totalPoints }
+  totalPoints += totalTDs * 6
+  const totalYds = totalPassYds + totalRushYds   // kein rec (= selbe Yards wie pass)
+  const catchPct = totalTargets > 0 ? Math.round(totalReceptions / totalTargets * 100) : 0
+  return { totalYds, totalPassYds, totalRushYds, totalRecYds, totalTDs, totalINTs, totalFumbles, totalPoints, totalTargets, totalReceptions, catchPct }
 }
 
 export default function StatsTracker({ game, homePlayers, awayPlayers, initialStats }: {
@@ -257,14 +267,28 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
         </div>
 
         {/* Team stat summary */}
-        <div className="flex items-center gap-6 text-xs text-[#7a7a7a]">
+        <div className="flex items-center gap-4 text-xs text-[#7a7a7a] flex-wrap">
           {(() => {
             const t = activeTeam === 'home' ? homeTotals : awayTotals
             return <>
-              <span>YDS: <strong className="text-white">{t.totalYds}</strong></span>
+              {/* Yardage breakdown */}
+              <span>PASS: <strong className="text-white">{t.totalPassYds}</strong></span>
+              <span className="text-white/10">|</span>
+              <span>RUSH: <strong className="text-white">{t.totalRushYds}</strong></span>
+              <span className="text-white/10">|</span>
+              <span>REC: <strong className="text-white">{t.totalRecYds}</strong></span>
+              <span className="text-white/10">|</span>
+              <span>TOTAL: <strong className="text-white">{t.totalYds}</strong></span>
+              <span className="text-white/10">|</span>
+              {/* Targets / catches */}
+              <span>TAR/REC: <strong className="text-white">{t.totalTargets}/{t.totalReceptions}</strong>
+                {t.totalTargets > 0 && <span className="text-[#7a7a7a]"> ({t.catchPct}%)</span>}
+              </span>
+              <span className="text-white/10">|</span>
+              {/* Scores / turnover */}
               <span>TDs: <strong className="text-[#04a550]">{t.totalTDs}</strong></span>
               <span>INTs: <strong className="text-[#ff1d25]">{t.totalINTs}</strong></span>
-              <span>Fumbles: <strong className="text-[#7a7a7a]">{t.totalFumbles}</strong></span>
+              <span>FUM: <strong className="text-[#7a7a7a]">{t.totalFumbles}</strong></span>
             </>
           })()}
         </div>
