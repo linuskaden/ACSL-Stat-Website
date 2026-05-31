@@ -23,6 +23,28 @@ const REC_HEADERS = ['Rec YDS','Rec','Tar','Rec TD','Fumbles']
 const DEF_HEADERS = ['Sacks','INT']
 const K_HEADERS = ['FGM','FGA','EPM','EPA']
 
+/**
+ * Ensure a team colour is legible on the dark UI backgrounds (#0a0a0a – #1a1a1a).
+ * Very dark colours (e.g. TU's #000000) are blended toward white so they stay
+ * visible without losing their hue. Colours already bright enough are returned
+ * unchanged.
+ */
+function darkSafe(hex?: string | null): string {
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return '#ff1d25'
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  // Perceived luminance (0 = black, 1 = white)
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  if (lum >= 0.22) return hex            // already readable on dark bg
+  // Blend toward white — keeps the hue, lifts the brightness
+  const t = 0.65
+  const nr = Math.round(r + (255 - r) * t)
+  const ng = Math.round(g + (255 - g) * t)
+  const nb = Math.round(b + (255 - b) * t)
+  return `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`
+}
+
 function getPositionFields(pos: string[]): { fields: readonly string[]; headers: string[] } {
   if (pos.includes('QB')) return { fields: QB_FIELDS, headers: QB_HEADERS }
   if (pos.includes('RB')) return { fields: RB_FIELDS, headers: RB_HEADERS }
@@ -217,9 +239,9 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
       <div className="bg-[#111] border-b border-white/10 px-4 py-2 flex items-center gap-4 shrink-0">
         <Link href="/admin/games" className="text-xs text-[#7a7a7a] hover:text-white">← Games</Link>
         <div className="font-bold text-sm">
-          <span style={{ color: game.home_team.primary_color }}>{game.home_team.short_name}</span>
+          <span style={{ color: darkSafe(game.home_team.primary_color) }}>{game.home_team.short_name}</span>
           <span className="text-[#7a7a7a] mx-2">vs</span>
-          <span style={{ color: game.away_team.primary_color }}>{game.away_team.short_name}</span>
+          <span style={{ color: darkSafe(game.away_team.primary_color) }}>{game.away_team.short_name}</span>
         </div>
 
         {/* Score inputs — auto-calculated from stats, manually editable for safeties/2pt */}
@@ -263,7 +285,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
             const t = side === 'home' ? game.home_team : game.away_team
             return (
               <button key={side} onClick={() => setActiveTeam(side as 'home' | 'away')}
-                style={activeTeam === side ? { borderColor: t.primary_color, color: t.primary_color } : {}}
+                style={activeTeam === side ? { borderColor: darkSafe(t.primary_color), color: darkSafe(t.primary_color) } : {}}
                 className={`px-4 py-1.5 rounded text-sm font-bold transition-colors border ${
                   activeTeam === side ? 'bg-white/5' : 'border-transparent text-[#7a7a7a] hover:text-white'
                 }`}>
@@ -313,7 +335,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
           setStat={setStat}
           calcTotals={calcTotals}
           readOnly={quarter === 'Total'}
-          teamColor={activeTeamData?.primary_color}
+          teamColor={darkSafe(activeTeamData?.primary_color)}
         />
       </div>
     </div>
