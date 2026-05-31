@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import GameStatsDownloadButton from '@/components/GameStatsDownloadButton'
 
 const GAME_TYPES = ['regular_season', 'wildcard', 'semifinal', 'third_place', 'final']
 const STATUS_OPTIONS = ['scheduled', 'live', 'final']
@@ -305,6 +306,10 @@ export default async function AdminGamesPage() {
                           View Stats
                         </Link>
                       )}
+                      <GameStatsDownloadButton
+                        gameId={game.id}
+                        label={`${game.home_team?.short_name ?? 'H'}-vs-${game.away_team?.short_name ?? 'A'}`}
+                      />
                     </div>
                   </div>
                 </div>
@@ -377,6 +382,10 @@ export default async function AdminGamesPage() {
                         View Stats
                       </Link>
                     )}
+                    <GameStatsDownloadButton
+                      gameId={game.id}
+                      label={`${game.home_team?.short_name ?? 'H'}-vs-${game.away_team?.short_name ?? 'A'}`}
+                    />
                   </div>
                 </div>
               </div>
