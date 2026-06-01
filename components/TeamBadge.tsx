@@ -27,7 +27,7 @@ export default function TeamBadge({ team, size = 'md', showName = false }: Props
         )}
       </div>
       {showName && (
-        <span className={`font-semibold text-white ${textSizes[size]}`}>{team.name}</span>
+        <span className={`font-semibold text-slate-900 dark:text-white ${textSizes[size]}`}>{team.name}</span>
       )}
     </div>
   )

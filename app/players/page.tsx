@@ -42,8 +42,8 @@ export default function PlayersPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-wrap items-center gap-4 mb-6">
-        <h1 className="text-2xl font-black">Players</h1>
-        <span className="text-[#7a7a7a] text-sm">{filtered.length} results</span>
+        <h1 className="text-3xl font-black italic tracking-tight text-slate-900 dark:text-white">Players</h1>
+        <span className="text-slate-500 dark:text-[#7a7a7a] text-sm">{filtered.length} results</span>
       </div>
 
       {/* Filters */}
@@ -52,12 +52,12 @@ export default function PlayersPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name, #, position, study..."
-          className="bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#7a7a7a] focus:outline-none focus:border-[#ff1d25] w-64"
+          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#7a7a7a] focus:outline-none focus:border-[#ff1d25] w-64"
         />
         <select
           value={selectedTeam}
           onChange={e => setSelectedTeam(e.target.value)}
-          className="bg-[#111] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#ff1d25]"
+          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#ff1d25]"
         >
           <option value="all">All Teams</option>
           {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -66,7 +66,7 @@ export default function PlayersPage() {
           {POSITIONS.map(pos => (
             <button key={pos} onClick={() => setSelectedPos(pos)}
               className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
-                selectedPos === pos ? 'bg-[#ff1d25] text-white' : 'bg-[#111] text-[#7a7a7a] hover:text-white border border-white/5'
+                selectedPos === pos ? 'bg-[#ff1d25] text-white' : 'bg-white dark:bg-[#111] text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white border border-black/[0.07] dark:border-white/5'
               }`}>
               {pos}
             </button>
@@ -75,53 +75,53 @@ export default function PlayersPage() {
       </div>
 
       {loading ? (
-        <div className="text-[#7a7a7a] text-sm py-8 text-center">Loading...</div>
+        <div className="text-slate-500 dark:text-[#7a7a7a] text-sm py-8 text-center">Loading...</div>
       ) : (
-        <div className="bg-[#111] border border-white/5 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl overflow-hidden shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/5">
-                <th className="text-left px-4 py-2.5 text-[#7a7a7a] font-medium text-xs">#</th>
-                <th className="text-left px-4 py-2.5 text-[#7a7a7a] font-medium text-xs">Player</th>
-                <th className="text-left px-4 py-2.5 text-[#7a7a7a] font-medium text-xs">Pos</th>
-                <th className="text-left px-4 py-2.5 text-[#7a7a7a] font-medium text-xs hidden md:table-cell">Team</th>
-                <th className="text-left px-4 py-2.5 text-[#7a7a7a] font-medium text-xs hidden lg:table-cell">Study</th>
-                <th className="text-center px-3 py-2.5 text-[#7a7a7a] font-medium text-xs hidden md:table-cell">Ht</th>
-                <th className="text-center px-3 py-2.5 text-[#7a7a7a] font-medium text-xs hidden md:table-cell">Wt</th>
-                <th className="text-left px-4 py-2.5 text-[#7a7a7a] font-medium text-xs hidden xl:table-cell">From</th>
+              <tr className="border-b border-black/[0.07] dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
+                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">#</th>
+                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">Player</th>
+                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">Pos</th>
+                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden md:table-cell">Team</th>
+                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden lg:table-cell">Study</th>
+                <th className="text-center px-3 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden md:table-cell">Ht</th>
+                <th className="text-center px-3 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden md:table-cell">Wt</th>
+                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden xl:table-cell">From</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-[#7a7a7a] text-sm">No players found.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400 dark:text-[#7a7a7a] text-sm">No players found.</td></tr>
               ) : filtered.map(p => (
-                <tr key={p.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
+                <tr key={p.id} className="border-b border-black/[0.05] dark:border-white/5 last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
                   <td className="px-4 py-2.5">
-                    <span className="font-mono text-xs text-[#7a7a7a]">{p.jersey_number ?? '—'}</span>
+                    <span className="font-mono text-xs text-slate-500 dark:text-[#7a7a7a]">{p.jersey_number ?? '—'}</span>
                   </td>
                   <td className="px-4 py-2.5">
                     <Link href={`/players/${p.id}`} className="hover:text-[#ff1d25] transition-colors">
-                      <span className="font-semibold">{p.first_name} {p.last_name}</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">{p.first_name} {p.last_name}</span>
                     </Link>
-                    {p.nickname && <span className="text-[#7a7a7a] text-xs ml-1">"{p.nickname}"</span>}
+                    {p.nickname && <span className="text-slate-400 dark:text-[#7a7a7a] text-xs ml-1">"{p.nickname}"</span>}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-[#7a7a7a]">{p.positions.join('/')}</td>
+                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a]">{p.positions.join('/')}</td>
                   <td className="px-4 py-2.5 hidden md:table-cell">
                     {p.team && <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ background: p.team.primary_color }} />
-                      <span className="text-xs text-[#7a7a7a]">{p.team.short_name}</span>
+                      <span className="text-xs text-slate-500 dark:text-[#7a7a7a]">{p.team.short_name}</span>
                     </div>}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-[#7a7a7a] hidden lg:table-cell max-w-[180px] truncate">
+                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden lg:table-cell max-w-[180px] truncate">
                     {p.field_of_study ?? '—'}
                   </td>
-                  <td className="text-center px-3 py-2.5 text-xs text-[#7a7a7a] hidden md:table-cell">
+                  <td className="text-center px-3 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden md:table-cell">
                     {p.height_cm ?? '—'}
                   </td>
-                  <td className="text-center px-3 py-2.5 text-xs text-[#7a7a7a] hidden md:table-cell">
+                  <td className="text-center px-3 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden md:table-cell">
                     {p.weight_kg ?? '—'}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-[#7a7a7a] hidden xl:table-cell">
+                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden xl:table-cell">
                     {p.hometown ? `${p.hometown}${p.country ? `, ${p.country}` : ''}` : '—'}
                   </td>
                 </tr>

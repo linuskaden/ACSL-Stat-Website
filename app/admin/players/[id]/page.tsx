@@ -107,8 +107,8 @@ export default async function EditPlayerPage({
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center gap-4 mb-4">
-        <Link href="/admin/players" className="text-xs text-[#7a7a7a] hover:text-white">← Players</Link>
-        <h1 className="text-2xl font-black">{isNew ? 'Add Player' : 'Edit Player'}</h1>
+        <Link href="/admin/players" className="text-xs text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">← Players</Link>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white">{isNew ? 'Add Player' : 'Edit Player'}</h1>
       </div>
 
       {/* Tab nav — only for existing players */}
@@ -117,7 +117,7 @@ export default async function EditPlayerPage({
           <Link
             href={`/admin/players/${id}?tab=edit`}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              activeTab === 'edit' ? 'bg-white/10 text-white' : 'text-[#7a7a7a] hover:text-white'
+              activeTab === 'edit' ? 'bg-[#ff1d25] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/5'
             }`}
           >
             Bearbeiten
@@ -125,7 +125,7 @@ export default async function EditPlayerPage({
           <Link
             href={`/admin/players/${id}?tab=stats`}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              activeTab === 'stats' ? 'bg-white/10 text-white' : 'text-[#7a7a7a] hover:text-white'
+              activeTab === 'stats' ? 'bg-[#ff1d25] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/5'
             }`}
           >
             Career Stats
@@ -146,9 +146,9 @@ export default async function EditPlayerPage({
               </div>
 
               <div>
-                <label className="text-xs text-[#7a7a7a] uppercase tracking-wider block mb-2">Team</label>
+                <label className="text-xs text-slate-500 dark:text-[#7a7a7a] uppercase tracking-wider block mb-2">Team</label>
                 <select name="team_id" defaultValue={player?.team_id ?? ''}
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#ff1d25]">
+                  className="w-full bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]">
                   <option value="">No Team</option>
                   {(teams ?? []).map((t: any) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
@@ -157,14 +157,14 @@ export default async function EditPlayerPage({
               </div>
 
               <div>
-                <label className="text-xs text-[#7a7a7a] uppercase tracking-wider block mb-2">Positions</label>
+                <label className="text-xs text-slate-500 dark:text-[#7a7a7a] uppercase tracking-wider block mb-2">Positions</label>
                 <div className="flex flex-wrap gap-2">
                   {POSITIONS.map(pos => (
                     <label key={pos} className="flex items-center gap-1.5 cursor-pointer">
                       <input type="checkbox" name="positions" value={pos}
                         defaultChecked={player?.positions?.includes(pos)}
                         className="accent-[#ff1d25]" />
-                      <span className="text-sm text-white">{pos}</span>
+                      <span className="text-sm text-slate-700 dark:text-white">{pos}</span>
                     </label>
                   ))}
                 </div>
@@ -195,9 +195,9 @@ export default async function EditPlayerPage({
 
             <Section title="Status">
               <div>
-                <label className="text-xs text-[#7a7a7a] uppercase tracking-wider block mb-2">Active Status</label>
+                <label className="text-xs text-slate-500 dark:text-[#7a7a7a] uppercase tracking-wider block mb-2">Active Status</label>
                 <select name="is_active" defaultValue={player?.is_active !== false ? 'true' : 'false'}
-                  className="bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#ff1d25]">
+                  className="bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]">
                   <option value="true">Active</option>
                   <option value="false">Inactive</option>
                 </select>
@@ -209,7 +209,7 @@ export default async function EditPlayerPage({
                 className="bg-[#ff1d25] hover:bg-[#e0181f] text-white font-bold px-6 py-2.5 rounded-lg transition-colors">
                 {isNew ? 'Add Player' : 'Save Changes'}
               </button>
-              <Link href="/admin/players" className="text-[#7a7a7a] hover:text-white text-sm transition-colors">Cancel</Link>
+              <Link href="/admin/players" className="text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white text-sm transition-colors">Cancel</Link>
             </div>
           </form>
 
@@ -322,17 +322,17 @@ function AdminStatsContent({
       return da < db ? -1 : 1
     })
 
-  const th = 'px-3 py-2 text-left text-xs font-semibold text-[#7a7a7a] uppercase tracking-wider whitespace-nowrap border-b border-white/10'
-  const td = 'px-3 py-2 text-xs text-white whitespace-nowrap'
-  const tdNum = 'px-3 py-2 text-xs text-white text-center whitespace-nowrap'
+  const th = 'px-3 py-2 text-left text-xs font-semibold text-slate-400 dark:text-[#7a7a7a] uppercase tracking-wider whitespace-nowrap border-b border-black/10 dark:border-white/10'
+  const td = 'px-3 py-2 text-xs text-slate-900 dark:text-white whitespace-nowrap'
+  const tdNum = 'px-3 py-2 text-xs text-slate-900 dark:text-white text-center whitespace-nowrap'
 
   return (
     <div className="space-y-6">
       {/* ── Section A: Season Totals ── */}
-      <div className="bg-[#111] border border-white/5 rounded-xl p-5">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[#7a7a7a] mb-4">Season Totals</h2>
+      <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-5 shadow-sm">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a] mb-4">Season Totals</h2>
         {career.length === 0 ? (
-          <p className="text-sm text-[#7a7a7a]">No career stats recorded yet.</p>
+          <p className="text-sm text-slate-500 dark:text-[#7a7a7a]">No career stats recorded yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -345,7 +345,7 @@ function AdminStatsContent({
               </thead>
               <tbody>
                 {career.map((cs: any) => (
-                  <tr key={cs.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                  <tr key={cs.id} className="border-b border-black/[0.05] dark:border-white/5 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
                     <td className={td}>{cs.season}</td>
                     <td className={tdNum}>{cs.games_played ?? 0}</td>
                     {cols.map(c => (
@@ -360,10 +360,10 @@ function AdminStatsContent({
       </div>
 
       {/* ── Section B: Per-Game Breakdown ── */}
-      <div className="bg-[#111] border border-white/5 rounded-xl p-5">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[#7a7a7a] mb-4">Per-Game Breakdown</h2>
+      <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-5 shadow-sm">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a] mb-4">Per-Game Breakdown</h2>
         {gameRows.length === 0 ? (
-          <p className="text-sm text-[#7a7a7a]">No game stats recorded yet.</p>
+          <p className="text-sm text-slate-500 dark:text-[#7a7a7a]">No game stats recorded yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -380,7 +380,7 @@ function AdminStatsContent({
                   const homeShort = (game as any)?.home_team?.short_name ?? '?'
                   const awayShort = (game as any)?.away_team?.short_name ?? '?'
                   return (
-                    <tr key={gameId} className="border-b border-white/5 hover:bg-white/[0.02]">
+                    <tr key={gameId} className="border-b border-black/[0.05] dark:border-white/5 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
                       <td className={td}>{formatDate(game?.scheduled_at ?? null)}</td>
                       <td className={td}>{homeShort} vs {awayShort}</td>
                       <td className={tdNum}>
@@ -404,8 +404,8 @@ function AdminStatsContent({
 /* ─── Shared form helpers ─── */
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="bg-[#111] border border-white/5 rounded-xl p-5 space-y-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-[#7a7a7a]">{title}</h2>
+    <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-5 space-y-4 shadow-sm">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a]">{title}</h2>
       {children}
     </div>
   )
@@ -414,10 +414,10 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function Field({ label, name, defaultValue, type = 'text', required, textarea }: {
   label: string; name: string; defaultValue?: string; type?: string; required?: boolean; textarea?: boolean
 }) {
-  const cls = "w-full bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#ff1d25]"
+  const cls = "w-full bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]"
   return (
     <div>
-      <label className="text-xs text-[#7a7a7a] uppercase tracking-wider block mb-1.5">{label}</label>
+      <label className="text-xs text-slate-500 dark:text-[#7a7a7a] uppercase tracking-wider block mb-1.5">{label}</label>
       {textarea ? (
         <textarea name={name} defaultValue={defaultValue} rows={2} className={cls} />
       ) : (

@@ -29,7 +29,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Back link */}
       {team && (
-        <Link href={`/teams/${team.slug}`} className="text-xs text-[#7a7a7a] hover:text-white mb-4 inline-flex items-center gap-1">
+        <Link href={`/teams/${team.slug}`} className="text-xs text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white mb-4 inline-flex items-center gap-1">
           ← {team.name}
         </Link>
       )}

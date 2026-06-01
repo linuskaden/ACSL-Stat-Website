@@ -26,11 +26,11 @@ export default async function AdminDashboard() {
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-black">Admin Dashboard</h1>
-          <p className="text-[#7a7a7a] text-sm mt-1">ACSL Stats Operator Panel</p>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white">Admin Dashboard</h1>
+          <p className="text-slate-500 dark:text-[#7a7a7a] text-sm mt-1">ACSL Stats Operator Panel</p>
         </div>
         <form action={handleLogout}>
-          <button type="submit" className="text-xs text-[#7a7a7a] hover:text-white border border-white/10 rounded px-3 py-1.5 transition-colors">
+          <button type="submit" className="text-xs text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white border border-black/10 dark:border-white/10 rounded px-3 py-1.5 transition-colors">
             Sign Out
           </button>
         </form>
@@ -63,9 +63,9 @@ export default async function AdminDashboard() {
           { label: 'Season', value: '2026' },
         ].map(s => (
           <Link key={s.label} href={s.href ?? '#'}
-            className={`bg-[#111] border border-white/5 rounded-xl p-4 ${s.href ? 'hover:border-white/20 transition-colors' : ''}`}>
-            <div className="text-3xl font-black text-white">{s.value}</div>
-            <div className="text-xs text-[#7a7a7a] mt-1">{s.label}</div>
+            className={`bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-4 shadow-sm ${s.href ? 'hover:border-black/15 dark:hover:border-white/20 transition-colors' : ''}`}>
+            <div className="text-3xl font-black text-slate-900 dark:text-white">{s.value}</div>
+            <div className="text-xs text-slate-500 dark:text-[#7a7a7a] mt-1">{s.label}</div>
           </Link>
         ))}
       </div>
@@ -100,10 +100,10 @@ function AdminCard({ title, desc, href, icon, external }: {
 }) {
   return (
     <Link href={href} target={external ? '_blank' : undefined}
-      className="bg-[#111] border border-white/5 rounded-xl p-5 hover:border-white/20 transition-all group">
+      className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-black/15 dark:hover:border-white/20 transition-all group">
       <div className="text-2xl mb-3">{icon}</div>
-      <h3 className="font-bold text-white group-hover:text-[#ff1d25] transition-colors">{title}</h3>
-      <p className="text-xs text-[#7a7a7a] mt-1">{desc}</p>
+      <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-[#ff1d25] transition-colors">{title}</h3>
+      <p className="text-xs text-slate-500 dark:text-[#7a7a7a] mt-1">{desc}</p>
     </Link>
   )
 }

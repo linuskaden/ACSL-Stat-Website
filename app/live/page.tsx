@@ -44,14 +44,14 @@ export default function LivePage() {
   }, [])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-4 py-16 text-center text-[#7a7a7a]">Loading...</div>
+    <div className="max-w-4xl mx-auto px-4 py-16 text-center text-slate-500 dark:text-[#7a7a7a]">Loading...</div>
   )
 
   if (!game) return (
     <div className="max-w-4xl mx-auto px-4 py-16 text-center">
       <div className="text-6xl mb-4">📺</div>
-      <h1 className="text-2xl font-black mb-2">No Live Game</h1>
-      <p className="text-[#7a7a7a]">Check back when a game is in progress.</p>
+      <h1 className="text-2xl font-black mb-2 text-slate-900 dark:text-white">No Live Game</h1>
+      <p className="text-slate-500 dark:text-[#7a7a7a]">Check back when a game is in progress.</p>
       <Link href="/schedule" className="mt-4 inline-block text-[#ff1d25] text-sm hover:underline">View Schedule →</Link>
     </div>
   )
@@ -63,7 +63,7 @@ export default function LivePage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
       {/* Scoreboard */}
-      <div className="bg-[#111] border border-[#ff1d25]/30 rounded-2xl p-6">
+      <div className="bg-white dark:bg-[#111] border border-[#ff1d25]/30 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-center gap-1 mb-4">
           <span className="animate-pulse w-2 h-2 rounded-full bg-[#ff1d25] inline-block" />
           <span className="text-[#ff1d25] text-xs font-bold uppercase tracking-widest">Live</span>
@@ -71,16 +71,16 @@ export default function LivePage() {
         <div className="flex items-center justify-center gap-8">
           <div className="text-center flex flex-col items-center gap-2">
             <TeamBadge team={game.home_team} size="lg" />
-            <span className="font-bold text-sm">{game.home_team?.name}</span>
+            <span className="font-bold text-sm text-slate-900 dark:text-white">{game.home_team?.name}</span>
           </div>
           <div className="text-center">
-            <div className="text-5xl font-black tabular-nums">
-              {game.home_score ?? 0} <span className="text-[#7a7a7a]">–</span> {game.away_score ?? 0}
+            <div className="text-5xl font-black tabular-nums text-slate-900 dark:text-white">
+              {game.home_score ?? 0} <span className="text-slate-400 dark:text-[#7a7a7a]">–</span> {game.away_score ?? 0}
             </div>
           </div>
           <div className="text-center flex flex-col items-center gap-2">
             <TeamBadge team={game.away_team} size="lg" />
-            <span className="font-bold text-sm">{game.away_team?.name}</span>
+            <span className="font-bold text-sm text-slate-900 dark:text-white">{game.away_team?.name}</span>
           </div>
         </div>
       </div>
@@ -120,18 +120,18 @@ function LiveStatsTable({ title, players, teamColor }: { title: string; players:
       <h2 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: teamColor ?? '#7a7a7a' }}>
         {title}
       </h2>
-      <div className="bg-[#111] border border-white/5 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl overflow-hidden shadow-sm">
         {players.length === 0 ? (
-          <p className="px-4 py-4 text-xs text-[#7a7a7a]">No stats yet.</p>
+          <p className="px-4 py-4 text-xs text-slate-500 dark:text-[#7a7a7a]">No stats yet.</p>
         ) : (
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-white/5">
-                <th className="text-left px-3 py-2 text-[#7a7a7a]">Player</th>
-                <th className="text-left px-2 py-2 text-[#7a7a7a]">Pos</th>
-                <th className="text-center px-2 py-2 text-[#7a7a7a]">YDS</th>
-                <th className="text-center px-2 py-2 text-[#7a7a7a]">TD</th>
-                <th className="text-center px-2 py-2 text-[#7a7a7a]">INT</th>
+              <tr className="border-b border-black/[0.07] dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
+                <th className="text-left px-3 py-2 text-slate-400 dark:text-[#7a7a7a]">Player</th>
+                <th className="text-left px-2 py-2 text-slate-400 dark:text-[#7a7a7a]">Pos</th>
+                <th className="text-center px-2 py-2 text-slate-400 dark:text-[#7a7a7a]">YDS</th>
+                <th className="text-center px-2 py-2 text-slate-400 dark:text-[#7a7a7a]">TD</th>
+                <th className="text-center px-2 py-2 text-slate-400 dark:text-[#7a7a7a]">INT</th>
               </tr>
             </thead>
             <tbody>
@@ -153,13 +153,13 @@ function LiveStatsTable({ title, players, teamColor }: { title: string; players:
                   : 0
                 const intVal = isQB ? s.interceptions_thrown : isDef ? s.def_interceptions : 0
                 return (
-                  <tr key={s.player_id} className="border-b border-white/5 last:border-0">
-                    <td className="px-3 py-2 font-medium">
+                  <tr key={s.player_id} className="border-b border-black/[0.05] dark:border-white/5 last:border-0">
+                    <td className="px-3 py-2 font-medium text-slate-900 dark:text-white">
                       {s.player?.first_name?.[0]}. {s.player?.last_name}
-                      {s.player?.jersey_number && <span className="text-[#7a7a7a] ml-1">#{s.player.jersey_number}</span>}
+                      {s.player?.jersey_number && <span className="text-slate-400 dark:text-[#7a7a7a] ml-1">#{s.player.jersey_number}</span>}
                     </td>
-                    <td className="px-2 py-2 text-[#7a7a7a]">{pos}</td>
-                    <td className="text-center px-2 py-2 font-semibold">{isK ? `${s.fg_made}/${s.fg_attempts} FG` : yds}</td>
+                    <td className="px-2 py-2 text-slate-500 dark:text-[#7a7a7a]">{pos}</td>
+                    <td className="text-center px-2 py-2 font-semibold text-slate-900 dark:text-white">{isK ? `${s.fg_made}/${s.fg_attempts} FG` : yds}</td>
                     <td className="text-center px-2 py-2 font-semibold text-[#04a550]">{isDef ? s.sacks : tds}</td>
                     <td className="text-center px-2 py-2 text-[#ff1d25]">{intVal > 0 ? intVal : '—'}</td>
                   </tr>

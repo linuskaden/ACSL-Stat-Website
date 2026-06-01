@@ -42,13 +42,13 @@ export default async function PlayoffsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-black mb-1">Playoff Bracket 2026</h1>
-      <p className="text-[#555] text-sm mb-8">
+      <h1 className="text-3xl font-black italic tracking-tight mb-1 text-slate-900 dark:text-white">Playoff Bracket 2026</h1>
+      <p className="text-slate-500 dark:text-[#555] text-sm mb-8">
         Wildcard → Semifinals → 3rd Place / ACSL Summer Bowl
       </p>
 
       {!hasAnyGame && (
-        <div className="bg-[#111] border border-white/5 rounded-xl p-8 text-center text-[#555]">
+        <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-8 text-center text-slate-500 dark:text-[#555] shadow-sm">
           Playoff bracket wird nach der Regular Season angezeigt.
         </div>
       )}
@@ -59,11 +59,11 @@ export default async function PlayoffsPage() {
             {/* Section divider */}
             {roundIdx > 0 && (
               <div className="flex items-center gap-3 mb-4">
-                <div className="text-[#333] text-lg">↓</div>
+                <div className="text-slate-300 dark:text-[#333] text-lg">↓</div>
               </div>
             )}
 
-            <h2 className="text-[10px] font-bold tracking-widest text-[#555] uppercase mb-3">
+            <h2 className="text-[10px] font-bold tracking-widest text-slate-400 dark:text-[#555] uppercase mb-3">
               {ROUND_LABEL[round]}
             </h2>
 
@@ -80,17 +80,17 @@ export default async function PlayoffsPage() {
 
                 return (
                   <div key={game.id}
-                    className={`bg-[#111] border rounded-xl overflow-hidden ${
+                    className={`bg-white dark:bg-[#111] border rounded-xl overflow-hidden shadow-sm ${
                       round === 'final'       ? 'border-[#ff1d25]/30' :
                       round === 'third_place' ? 'border-[#f5a623]/20' :
                       isLive                  ? 'border-[#ff1d25]/40' :
-                                               'border-white/5'
+                                               'border-black/[0.07] dark:border-white/5'
                     }`}>
 
                     {/* Game name banner (for named games) */}
                     {game.notes && (
                       <div className={`px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase border-b ${
-                        round === 'final' ? 'bg-[#ff1d25]/10 border-[#ff1d25]/20 text-[#ff1d25]' : 'bg-white/[0.03] border-white/5 text-[#f5a623]'
+                        round === 'final' ? 'bg-[#ff1d25]/10 border-[#ff1d25]/20 text-[#ff1d25]' : 'bg-black/[0.03] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/5 text-[#f5a623]'
                       }`}>
                         {game.notes}
                       </div>
@@ -106,14 +106,14 @@ export default async function PlayoffsPage() {
                     />
 
                     {/* Divider + meta */}
-                    <div className="flex items-center border-t border-b border-white/[0.04] px-4 py-1.5 bg-[#0d0d0d]">
-                      <span className="text-[10px] text-[#333] font-bold tracking-widest uppercase mr-auto">
+                    <div className="flex items-center border-t border-b border-black/[0.06] dark:border-white/[0.04] px-4 py-1.5 bg-black/[0.02] dark:bg-[#0d0d0d]">
+                      <span className="text-[10px] text-slate-400 dark:text-[#333] font-bold tracking-widest uppercase mr-auto">
                         {isLive ? <span className="text-[#ff1d25] animate-pulse">● LIVE</span> :
                          isFinal ? <span className="text-[#04a550]">Final</span> :
                          'Upcoming'}
                       </span>
                       {game.scheduled_at && (
-                        <span className="text-[11px] text-[#444]">
+                        <span className="text-[11px] text-slate-400 dark:text-[#444]">
                           {new Date(game.scheduled_at).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           {' · '}
                           {new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })}
@@ -148,9 +148,9 @@ function TeamRow({ team, seed, score, won, isTop }: {
   isTop: boolean
 }) {
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 ${won ? 'bg-white/[0.03]' : ''} ${!isTop ? '' : ''}`}>
+    <div className={`flex items-center gap-3 px-4 py-3 ${won ? 'bg-black/[0.03] dark:bg-white/[0.03]' : ''} ${!isTop ? '' : ''}`}>
       {/* Seed */}
-      <span className="text-xs text-[#444] w-4 text-center font-mono shrink-0">
+      <span className="text-xs text-slate-400 dark:text-[#444] w-4 text-center font-mono shrink-0">
         {seed ?? ''}
       </span>
 
@@ -158,17 +158,17 @@ function TeamRow({ team, seed, score, won, isTop }: {
       {team?.logo_url ? (
         <img src={team.logo_url} alt="" className="w-7 h-7 object-contain shrink-0" />
       ) : (
-        <div className="w-7 h-7 rounded bg-white/5 shrink-0" />
+        <div className="w-7 h-7 rounded bg-black/5 dark:bg-white/5 shrink-0" />
       )}
 
       {/* Name */}
-      <span className={`flex-1 text-sm font-semibold ${won ? 'text-white font-bold' : team ? 'text-[#aaa]' : 'text-[#444]'}`}>
+      <span className={`flex-1 text-sm font-semibold ${won ? 'text-slate-900 dark:text-white font-bold' : team ? 'text-slate-600 dark:text-[#aaa]' : 'text-slate-400 dark:text-[#444]'}`}>
         {team?.short_name ?? 'TBD'}
       </span>
 
       {/* Score */}
       {score !== null && (
-        <span className={`text-lg font-black tabular-nums ${won ? 'text-white' : 'text-[#666]'}`}>
+        <span className={`text-lg font-black tabular-nums ${won ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-[#666]'}`}>
           {score}
         </span>
       )}

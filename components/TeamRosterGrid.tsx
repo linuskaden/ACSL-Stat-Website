@@ -77,9 +77,9 @@ export default function TeamRosterGrid({
   return (
     <div style={{
       display: 'flex',
-      height: overlayMode ? 'auto' : 'calc(100vh - 56px)',
+      height: overlayMode ? 'auto' : 'calc(100vh - 64px)',
       overflow: overlayMode ? 'visible' : 'hidden',
-      background: '#10142080',
+      background: 'var(--bg)',
     }}>
 
       {/* ── Left sidebar: all teams ── */}
@@ -87,15 +87,15 @@ export default function TeamRosterGrid({
         <div style={{
           width: 200,
           flexShrink: 0,
-          background: '#0c0f1a',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--surface)',
+          borderRight: '1px solid var(--border)',
           overflowY: 'auto',
           padding: '16px 0',
         }}>
           {/* Section: TEAMS */}
           <div style={{
             fontSize: 10, fontWeight: 700, letterSpacing: 2,
-            color: '#444', textTransform: 'uppercase',
+            color: 'var(--fg-faint)', textTransform: 'uppercase',
             padding: '0 16px 8px',
           }}>
             Teams
@@ -127,7 +127,7 @@ export default function TeamRosterGrid({
                   <div style={{ minWidth: 0 }}>
                     <div style={{
                       fontSize: 12, fontWeight: isActive ? 700 : 500,
-                      color: isActive ? 'white' : '#aaa',
+                      color: isActive ? 'var(--fg)' : 'var(--fg-muted)',
                       lineHeight: 1.2, whiteSpace: 'nowrap',
                       overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>
@@ -142,10 +142,10 @@ export default function TeamRosterGrid({
           {/* Liga */}
           <div style={{
             fontSize: 10, fontWeight: 700, letterSpacing: 2,
-            color: '#444', textTransform: 'uppercase',
+            color: 'var(--fg-faint)', textTransform: 'uppercase',
             padding: '16px 16px 8px',
             marginTop: 8,
-            borderTop: '1px solid rgba(255,255,255,0.05)',
+            borderTop: '1px solid var(--border)',
           }}>
             Liga
           </div>
@@ -163,7 +163,7 @@ export default function TeamRosterGrid({
               }}>
                 ACSL
               </div>
-              <span style={{ fontSize: 12, color: '#888' }}>Alle Teams</span>
+              <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>Alle Teams</span>
             </div>
           </Link>
         </div>
@@ -179,8 +179,8 @@ export default function TeamRosterGrid({
       }}>
         {/* Top bar */}
         <div style={{
-          background: '#0c0f1a',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--surface)',
+          borderBottom: '1px solid var(--border)',
           padding: '12px 20px',
           display: 'flex',
           flexWrap: 'wrap',
@@ -210,10 +210,10 @@ export default function TeamRosterGrid({
               </div>
             )}
             <div>
-              <div style={{ fontSize: 17, fontWeight: 900, color: 'white', letterSpacing: -0.3, lineHeight: 1.1 }}>
+              <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--fg)', letterSpacing: -0.3, lineHeight: 1.1 }}>
                 {team.name}
               </div>
-              <div style={{ fontSize: 11, color: '#555' }}>
+              <div style={{ fontSize: 11, color: 'var(--fg-faint)' }}>
                 {filtered.length} Spieler
               </div>
             </div>
@@ -226,11 +226,11 @@ export default function TeamRosterGrid({
             placeholder="Suche nach Name oder Nummer..."
             style={{
               flex: 1, minWidth: 180, maxWidth: 400,
-              background: '#171c2e',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)',
               borderRadius: 8,
               padding: '7px 12px',
-              color: 'white', fontSize: 13,
+              color: 'var(--fg)', fontSize: 13,
               outline: 'none',
             }}
           />
@@ -245,8 +245,8 @@ export default function TeamRosterGrid({
                   padding: '5px 10px',
                   fontSize: 11, fontWeight: 700,
                   border: 'none', borderRadius: 6, cursor: 'pointer',
-                  background: filter === pos ? team.primary_color : 'rgba(255,255,255,0.06)',
-                  color: filter === pos ? 'white' : '#888',
+                  background: filter === pos ? team.primary_color : 'var(--subtle)',
+                  color: filter === pos ? 'white' : 'var(--fg-muted)',
                   transition: 'all 0.15s',
                 }}
               >
@@ -265,7 +265,7 @@ export default function TeamRosterGrid({
             padding: '16px 20px',
           }}>
             {filtered.length === 0 ? (
-              <div style={{ color: '#444', textAlign: 'center', padding: '48px', fontSize: 14 }}>
+              <div style={{ color: 'var(--fg-faint)', textAlign: 'center', padding: '48px', fontSize: 14 }}>
                 Keine Spieler gefunden
               </div>
             ) : (
@@ -324,8 +324,8 @@ function PlayerCard({
       onClick={onClick}
       style={{
         position: 'relative',
-        background: isSelected ? `${primaryColor}22` : '#171c2e',
-        border: `1px solid ${isSelected ? primaryColor : isOnAir ? '#04a550' : 'rgba(255,255,255,0.06)'}`,
+        background: isSelected ? `${primaryColor}22` : 'var(--surface-2)',
+        border: `1px solid ${isSelected ? primaryColor : isOnAir ? '#04a550' : 'var(--border)'}`,
         borderRadius: 10,
         padding: '12px',
         cursor: 'pointer',
@@ -342,7 +342,7 @@ function PlayerCard({
         <span style={{
           fontSize: 36, fontWeight: 900,
           fontFamily: '"Arial Black", Impact, sans-serif',
-          color: isSelected ? primaryColor : 'rgba(255,255,255,0.7)',
+          color: isSelected ? primaryColor : 'var(--fg-muted)',
           lineHeight: 1,
           transition: 'color 0.15s',
         }}>
@@ -368,10 +368,10 @@ function PlayerCard({
       {/* Bottom: name + active dot */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'white', lineHeight: 1.2 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg)', lineHeight: 1.2 }}>
             {player.first_name}
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)', lineHeight: 1.2 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg-muted)', lineHeight: 1.2 }}>
             {player.last_name}
           </div>
         </div>
@@ -418,8 +418,8 @@ function PlayerDetailPanel({
     <div style={{
       width: 320,
       flexShrink: 0,
-      background: '#0c0f1a',
-      borderLeft: '1px solid rgba(255,255,255,0.06)',
+      background: 'var(--surface)',
+      borderLeft: '1px solid var(--border)',
       overflowY: 'auto',
       display: 'flex',
       flexDirection: 'column',
@@ -430,20 +430,20 @@ function PlayerDetailPanel({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '12px 16px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid var(--border)',
         position: 'sticky', top: 0,
-        background: '#0c0f1a',
+        background: 'var(--surface)',
         zIndex: 1,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 11, color: primaryColor, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>
             {pos}
           </span>
-          <span style={{ color: '#333' }}>·</span>
-          <span style={{ fontSize: 11, color: '#666', fontWeight: 600 }}>
+          <span style={{ color: 'var(--fg-faint)' }}>·</span>
+          <span style={{ fontSize: 11, color: 'var(--fg-muted)', fontWeight: 600 }}>
             #{player.jersey_number ?? '—'}
           </span>
-          <span style={{ color: '#333' }}>·</span>
+          <span style={{ color: 'var(--fg-faint)' }}>·</span>
           {team.logo_url ? (
             <div style={{
               width: 22, height: 22, background: primaryColor,
@@ -465,9 +465,9 @@ function PlayerDetailPanel({
         <button
           onClick={onClose}
           style={{
-            background: 'rgba(255,255,255,0.05)', border: 'none',
+            background: 'var(--subtle)', border: 'none',
             borderRadius: 6, width: 26, height: 26,
-            color: '#888', fontSize: 16, cursor: 'pointer',
+            color: 'var(--fg-muted)', fontSize: 16, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
@@ -477,10 +477,10 @@ function PlayerDetailPanel({
 
       {/* Name */}
       <div style={{ padding: '20px 16px 12px' }}>
-        <div style={{ fontSize: 28, fontWeight: 900, color: 'white', lineHeight: 1.1, letterSpacing: -0.5 }}>
+        <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--fg)', lineHeight: 1.1, letterSpacing: -0.5 }}>
           {player.first_name}
         </div>
-        <div style={{ fontSize: 28, fontWeight: 900, color: 'rgba(255,255,255,0.6)', lineHeight: 1.1, letterSpacing: -0.5 }}>
+        <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--fg-muted)', lineHeight: 1.1, letterSpacing: -0.5 }}>
           {player.last_name}
         </div>
 
@@ -538,10 +538,10 @@ function PlayerDetailPanel({
                 flex: 1,
                 padding: '10px 8px',
                 fontSize: 12, fontWeight: 800,
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: '1px solid var(--border)',
                 borderRadius: 8, cursor: 'pointer',
-                background: 'rgba(255,255,255,0.04)',
-                color: '#aaa',
+                background: 'var(--subtle)',
+                color: 'var(--fg-muted)',
                 letterSpacing: 0.5,
               }}
             >
@@ -553,7 +553,7 @@ function PlayerDetailPanel({
 
       {/* ── Biografie ── */}
       <Section title="Biografie">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border)', borderRadius: 8, overflow: 'hidden' }}>
           {player.height_cm && <BioCell label="Größe" value={`${player.height_cm} cm`} />}
           {player.weight_kg && <BioCell label="Gewicht" value={`${player.weight_kg} kg`} />}
           {player.country && <BioCell label="Herkunft" value={player.country} />}
@@ -563,16 +563,16 @@ function PlayerDetailPanel({
           {player.semester && <BioCell label="Semester" value={player.semester} />}
         </div>
         {player.football_experience && (
-          <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-            <span style={{ color: '#888', fontWeight: 600 }}>Erfahrung: </span>
+          <div style={{ marginTop: 8, fontSize: 12, color: 'var(--fg-muted)' }}>
+            <span style={{ color: 'var(--fg-muted)', fontWeight: 600 }}>Erfahrung: </span>
             {player.football_experience}
           </div>
         )}
         {player.fun_fact && (
           <div style={{
-            marginTop: 8, background: 'rgba(255,255,255,0.03)',
+            marginTop: 8, background: 'var(--subtle)',
             borderRadius: 6, padding: '8px 10px',
-            fontSize: 11, color: '#666', fontStyle: 'italic',
+            fontSize: 11, color: 'var(--fg-muted)', fontStyle: 'italic',
             borderLeft: `2px solid ${primaryColor}`,
           }}>
             „{player.fun_fact}"
@@ -583,11 +583,11 @@ function PlayerDetailPanel({
       {/* ── Karrieredaten ── */}
       <Section title="Karrieredaten">
         {loadingStats ? (
-          <div style={{ color: '#444', fontSize: 12 }}>Lade…</div>
+          <div style={{ color: 'var(--fg-faint)', fontSize: 12 }}>Lade…</div>
         ) : careerStats ? (
           <CareerStatsDisplay cs={careerStats} positions={player.positions} />
         ) : (
-          <div style={{ color: '#444', fontSize: 12, fontStyle: 'italic' }}>
+          <div style={{ color: 'var(--fg-faint)', fontSize: 12, fontStyle: 'italic' }}>
             Noch keine Statistiken eingetragen
           </div>
         )}
@@ -597,8 +597,8 @@ function PlayerDetailPanel({
       {(player.nickname) && (
         <Section title="Notizen">
           {player.nickname && (
-            <div style={{ fontSize: 12, color: '#888' }}>
-              Spitzname: <span style={{ color: '#bbb' }}>„{player.nickname}"</span>
+            <div style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
+              Spitzname: <span style={{ color: 'var(--fg)' }}>„{player.nickname}"</span>
             </div>
           )}
         </Section>
@@ -615,11 +615,11 @@ function Chip({ children, color, dot }: { children: React.ReactNode; color?: str
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
-      background: color ? `${color}18` : 'rgba(255,255,255,0.07)',
-      color: color ?? '#999',
+      background: color ? `${color}18` : 'var(--subtle)',
+      color: color ?? 'var(--fg-muted)',
       fontSize: 11, fontWeight: 600,
       padding: '4px 9px', borderRadius: 20,
-      border: `1px solid ${color ? `${color}30` : 'rgba(255,255,255,0.08)'}`,
+      border: `1px solid ${color ? `${color}30` : 'var(--border)'}`,
     }}>
       {dot && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color, display: 'inline-block' }} />}
       {children}
@@ -632,10 +632,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div style={{ padding: '0 16px 16px' }}>
       <div style={{
         fontSize: 10, fontWeight: 700, letterSpacing: 2,
-        color: '#444', textTransform: 'uppercase',
+        color: 'var(--fg-faint)', textTransform: 'uppercase',
         marginBottom: 10,
         paddingBottom: 6,
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
+        borderBottom: '1px solid var(--border)',
       }}>
         {title}
       </div>
@@ -648,13 +648,13 @@ function BioCell({ label, value, span }: { label: string; value: string; span?: 
   return (
     <div style={{
       gridColumn: span ? '1 / -1' : 'auto',
-      background: '#131826',
+      background: 'var(--surface-2)',
       padding: '8px 10px',
     }}>
-      <div style={{ fontSize: 9, fontWeight: 700, color: '#444', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>
+      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--fg-faint)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>
         {label}
       </div>
-      <div style={{ fontSize: 13, fontWeight: 600, color: '#ddd' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg)' }}>
         {value}
       </div>
     </div>
@@ -696,26 +696,26 @@ function CareerStatsDisplay({ cs, positions }: { cs: any; positions: string[] })
   }
 
   if (items.length === 0) return (
-    <div style={{ color: '#444', fontSize: 12, fontStyle: 'italic' }}>Keine Statistiken</div>
+    <div style={{ color: 'var(--fg-faint)', fontSize: 12, fontStyle: 'italic' }}>Keine Statistiken</div>
   )
 
   return (
     <div>
       {cs.season && (
-        <div style={{ fontSize: 10, color: '#555', marginBottom: 8 }}>
+        <div style={{ fontSize: 10, color: 'var(--fg-faint)', marginBottom: 8 }}>
           Saison {cs.season} · {cs.games_played ?? 0} Spiele
         </div>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
         {items.map(item => (
           <div key={item.label} style={{
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--subtle)',
             borderRadius: 6, padding: '8px 6px', textAlign: 'center',
           }}>
-            <div style={{ fontSize: 18, fontWeight: 900, fontFamily: '"Arial Black", sans-serif', color: 'white', lineHeight: 1 }}>
+            <div style={{ fontSize: 18, fontWeight: 900, fontFamily: '"Arial Black", sans-serif', color: 'var(--fg)', lineHeight: 1 }}>
               {item.value}
             </div>
-            <div style={{ fontSize: 9, color: '#555', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 3 }}>
+            <div style={{ fontSize: 9, color: 'var(--fg-faint)', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 3 }}>
               {item.label}
             </div>
           </div>

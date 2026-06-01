@@ -12,8 +12,8 @@ function calcAvg(value: number, gp: number): string {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-xs text-[#7a7a7a] uppercase tracking-wider">{label}</div>
-      <div className="text-sm font-semibold text-white mt-0.5 truncate">{value}</div>
+      <div className="text-xs text-slate-400 dark:text-[#7a7a7a] uppercase tracking-wider">{label}</div>
+      <div className="text-sm font-semibold text-slate-900 dark:text-white mt-0.5 truncate">{value}</div>
     </div>
   )
 }
@@ -72,14 +72,14 @@ function CareerAveragesGrid({ cs, positions }: { cs: any; positions: string[] })
 
   return (
     <div>
-      <div className="flex items-center gap-1 mb-1 text-xs text-[#7a7a7a]">
+      <div className="flex items-center gap-1 mb-1 text-xs text-slate-400 dark:text-[#7a7a7a]">
         <span>GP: {gp}</span>
       </div>
       <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
         {stats.map(s => (
           <div key={s.label} className="text-center">
-            <div className="text-lg font-black text-white">{s.value}</div>
-            <div className="text-xs text-[#7a7a7a] uppercase tracking-wide">{s.label}</div>
+            <div className="text-lg font-black text-slate-900 dark:text-white">{s.value}</div>
+            <div className="text-xs text-slate-400 dark:text-[#7a7a7a] uppercase tracking-wide">{s.label}</div>
           </div>
         ))}
       </div>
@@ -107,7 +107,7 @@ export default function PlayerPageClient({
         <button
           onClick={() => setTab('profile')}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-            tab === 'profile' ? 'bg-white/10 text-white' : 'text-[#7a7a7a] hover:text-white'
+            tab === 'profile' ? 'bg-[#ff1d25] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/5'
           }`}
         >
           Profil
@@ -115,7 +115,7 @@ export default function PlayerPageClient({
         <button
           onClick={() => setTab('stats')}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-            tab === 'stats' ? 'bg-white/10 text-white' : 'text-[#7a7a7a] hover:text-white'
+            tab === 'stats' ? 'bg-[#ff1d25] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/5'
           }`}
         >
           Career Stats
@@ -124,7 +124,7 @@ export default function PlayerPageClient({
 
       {/* ── Profil Tab ── */}
       {tab === 'profile' && (
-        <div className="bg-[#111] border border-white/5 rounded-2xl p-6">
+        <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-2xl p-6 shadow-sm">
           {team && (
             <div className="flex items-center gap-4 mb-4">
               <TeamBadge team={team} size="lg" />
@@ -137,14 +137,14 @@ export default function PlayerPageClient({
                   #{player.jersey_number}
                 </span>
               )}
-              <h1 className="text-3xl font-black">{player.first_name} {player.last_name}</h1>
-              {player.nickname && <span className="text-[#7a7a7a]">"{player.nickname}"</span>}
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white">{player.first_name} {player.last_name}</h1>
+              {player.nickname && <span className="text-slate-400 dark:text-[#7a7a7a]">"{player.nickname}"</span>}
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {pos.map((p: string) => (
-                <span key={p} className="bg-white/10 text-white text-xs px-2 py-0.5 rounded font-semibold">{p}</span>
+                <span key={p} className="bg-black/[0.06] dark:bg-white/10 text-slate-900 dark:text-white text-xs px-2 py-0.5 rounded font-semibold">{p}</span>
               ))}
-              {team && <span className="text-[#7a7a7a] text-sm">{team.name}</span>}
+              {team && <span className="text-slate-500 dark:text-[#7a7a7a] text-sm">{team.name}</span>}
             </div>
 
             {/* Bio grid */}
@@ -159,13 +159,13 @@ export default function PlayerPageClient({
             </div>
 
             {player.fun_fact && (
-              <div className="mt-4 bg-white/5 rounded-lg px-4 py-2.5 text-sm text-[#7a7a7a] italic">
+              <div className="mt-4 bg-black/[0.04] dark:bg-white/5 rounded-lg px-4 py-2.5 text-sm text-slate-500 dark:text-[#7a7a7a] italic">
                 "{player.fun_fact}"
               </div>
             )}
             {player.football_experience && (
-              <div className="mt-2 text-xs text-[#7a7a7a]">
-                <span className="text-white font-medium">Football Exp: </span>{player.football_experience}
+              <div className="mt-2 text-xs text-slate-500 dark:text-[#7a7a7a]">
+                <span className="text-slate-900 dark:text-white font-medium">Football Exp: </span>{player.football_experience}
               </div>
             )}
           </div>
@@ -175,16 +175,16 @@ export default function PlayerPageClient({
       {/* ── Career Stats Tab ── */}
       {tab === 'stats' && (
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[#7a7a7a] mb-3">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a] mb-3">
             Career Stats — per Game
           </h2>
           {career.length === 0 ? (
-            <div className="bg-[#111] border border-white/5 rounded-xl p-6 text-center text-[#7a7a7a] text-sm">
+            <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-6 text-center text-slate-500 dark:text-[#7a7a7a] text-sm shadow-sm">
               No stats recorded yet.
             </div>
           ) : career.map((cs: any) => (
-            <div key={cs.id} className="bg-[#111] border border-white/5 rounded-xl p-5 mb-3">
-              <h3 className="font-bold mb-3 text-sm">Season {cs.season}</h3>
+            <div key={cs.id} className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-5 mb-3 shadow-sm">
+              <h3 className="font-bold mb-3 text-sm text-slate-900 dark:text-white">Season {cs.season}</h3>
               <CareerAveragesGrid cs={cs} positions={pos} />
             </div>
           ))}

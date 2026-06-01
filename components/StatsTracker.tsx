@@ -234,13 +234,13 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
   const awayTotals = teamTotals(allStats, awayPlayers, quarter === 'Total' ? 'Total' : quarter)
 
   return (
-    <div className="max-h-screen flex flex-col bg-[#0a0a0a]">
+    <div className="max-h-screen flex flex-col bg-[#f7f8fa] dark:bg-[#0a0a0a]">
       {/* Top bar */}
-      <div className="bg-[#111] border-b border-white/10 px-4 py-2 flex items-center gap-4 shrink-0">
-        <Link href="/admin/games" className="text-xs text-[#7a7a7a] hover:text-white">← Games</Link>
+      <div className="bg-white dark:bg-[#111] border-b border-black/10 dark:border-white/10 px-4 py-2 flex items-center gap-4 shrink-0">
+        <Link href="/admin/games" className="text-xs text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">← Games</Link>
         <div className="font-bold text-sm">
           <span style={{ color: darkSafe(game.home_team.primary_color) }}>{game.home_team.short_name}</span>
-          <span className="text-[#7a7a7a] mx-2">vs</span>
+          <span className="text-slate-400 dark:text-[#7a7a7a] mx-2">vs</span>
           <span style={{ color: darkSafe(game.away_team.primary_color) }}>{game.away_team.short_name}</span>
         </div>
 
@@ -248,13 +248,13 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center">
             <input value={homeScore} onChange={e => { setHomeScore(Number(e.target.value)) }} onBlur={updateScore}
-              type="number" className="w-12 bg-[#0a0a0a] border border-white/10 rounded px-2 py-1 text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
+              type="number" className="w-12 bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
             <span className="text-[10px] text-[#ff1d25] leading-none mt-0.5">auto</span>
           </div>
-          <span className="text-[#7a7a7a]">–</span>
+          <span className="text-slate-400 dark:text-[#7a7a7a]">–</span>
           <div className="flex flex-col items-center">
             <input value={awayScore} onChange={e => { setAwayScore(Number(e.target.value)) }} onBlur={updateScore}
-              type="number" className="w-12 bg-[#0a0a0a] border border-white/10 rounded px-2 py-1 text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
+              type="number" className="w-12 bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
             <span className="text-[10px] text-[#ff1d25] leading-none mt-0.5">auto</span>
           </div>
         </div>
@@ -263,14 +263,14 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
         <div className="flex gap-1 ml-2">
           {[...QUARTERS, 'Total'].map(q => (
             <button key={q} onClick={() => setQuarter(q)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${quarter === q ? 'bg-[#ff1d25] text-white' : 'text-[#7a7a7a] hover:text-white bg-[#1a1a1a]'}`}>
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${quarter === q ? 'bg-[#ff1d25] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white bg-[#f1f5f9] dark:bg-[#1a1a1a]'}`}>
               {q}
             </button>
           ))}
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {Object.keys(saving).length > 0 && <span className="text-xs text-[#7a7a7a] animate-pulse">Saving...</span>}
+          {Object.keys(saving).length > 0 && <span className="text-xs text-slate-500 dark:text-[#7a7a7a] animate-pulse">Saving...</span>}
           <button onClick={finalizeGame}
             className="text-xs border border-[#04a550]/40 text-[#04a550] hover:bg-[#04a550]/10 px-3 py-1.5 rounded transition-colors font-medium">
             Finalize & Transfer Stats
@@ -279,7 +279,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
       </div>
 
       {/* Team selector + team totals */}
-      <div className="bg-[#111] border-b border-white/5 px-4 py-2 flex items-center gap-6 shrink-0">
+      <div className="bg-white dark:bg-[#111] border-b border-black/[0.07] dark:border-white/5 px-4 py-2 flex items-center gap-6 shrink-0">
         <div className="flex gap-1">
           {['home', 'away'].map(side => {
             const t = side === 'home' ? game.home_team : game.away_team
@@ -287,7 +287,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
               <button key={side} onClick={() => setActiveTeam(side as 'home' | 'away')}
                 style={activeTeam === side ? { borderColor: darkSafe(t.primary_color), color: darkSafe(t.primary_color) } : {}}
                 className={`px-4 py-1.5 rounded text-sm font-bold transition-colors border ${
-                  activeTeam === side ? 'bg-white/5' : 'border-transparent text-[#7a7a7a] hover:text-white'
+                  activeTeam === side ? 'bg-black/[0.04] dark:bg-white/5' : 'border-transparent text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white'
                 }`}>
                 {t.short_name}
               </button>
@@ -296,30 +296,30 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
         </div>
 
         {/* Team stat summary */}
-        <div className="flex items-center gap-4 text-xs text-[#7a7a7a] flex-wrap">
+        <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-[#7a7a7a] flex-wrap">
           {(() => {
             const t = activeTeam === 'home' ? homeTotals : awayTotals
             return <>
               {/* Yardage breakdown */}
-              <span>PASS: <strong className="text-white">{t.totalPassYds}</strong></span>
-              <span className="text-white/10">|</span>
-              <span>RUSH: <strong className="text-white">{t.totalRushYds}</strong></span>
-              <span className="text-white/10">|</span>
-              <span>REC: <strong className="text-white">{t.totalRecYds}</strong></span>
-              <span className="text-white/10">|</span>
-              <span>TOTAL: <strong className="text-white">{t.totalYds}</strong></span>
-              <span className="text-white/10">|</span>
+              <span>PASS: <strong className="text-slate-900 dark:text-white">{t.totalPassYds}</strong></span>
+              <span className="text-black/10 dark:text-white/10">|</span>
+              <span>RUSH: <strong className="text-slate-900 dark:text-white">{t.totalRushYds}</strong></span>
+              <span className="text-black/10 dark:text-white/10">|</span>
+              <span>REC: <strong className="text-slate-900 dark:text-white">{t.totalRecYds}</strong></span>
+              <span className="text-black/10 dark:text-white/10">|</span>
+              <span>TOTAL: <strong className="text-slate-900 dark:text-white">{t.totalYds}</strong></span>
+              <span className="text-black/10 dark:text-white/10">|</span>
               {/* Targets / catches */}
-              <span>TAR/REC: <strong className="text-white">{t.totalTargets}/{t.totalReceptions}</strong>
-                {t.totalTargets > 0 && <span className="text-[#7a7a7a]"> ({t.catchPct}%)</span>}
+              <span>TAR/REC: <strong className="text-slate-900 dark:text-white">{t.totalTargets}/{t.totalReceptions}</strong>
+                {t.totalTargets > 0 && <span className="text-slate-500 dark:text-[#7a7a7a]"> ({t.catchPct}%)</span>}
               </span>
-              <span className="text-white/10">|</span>
+              <span className="text-black/10 dark:text-white/10">|</span>
               {/* Scores / turnover */}
               <span>TDs: <strong className="text-[#04a550]">{t.totalTDs}</strong></span>
-              <span>FG: <strong className="text-white">{t.totalFGM}/{t.totalFGA}</strong></span>
-              <span>EP: <strong className="text-white">{t.totalEPM}/{t.totalEPA}</strong></span>
+              <span>FG: <strong className="text-slate-900 dark:text-white">{t.totalFGM}/{t.totalFGA}</strong></span>
+              <span>EP: <strong className="text-slate-900 dark:text-white">{t.totalEPM}/{t.totalEPA}</strong></span>
               <span>INTs: <strong className="text-[#ff1d25]">{t.totalINTs}</strong></span>
-              <span>FUM: <strong className="text-[#7a7a7a]">{t.totalFumbles}</strong></span>
+              <span>FUM: <strong className="text-slate-500 dark:text-[#7a7a7a]">{t.totalFumbles}</strong></span>
             </>
           })()}
         </div>
@@ -348,7 +348,7 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
   readOnly: boolean; teamColor?: string
 }) {
   if (players.length === 0) return (
-    <div className="p-8 text-center text-[#7a7a7a] text-sm">No players found for this team.</div>
+    <div className="p-8 text-center text-slate-500 dark:text-[#7a7a7a] text-sm">No players found for this team.</div>
   )
 
   // Standard-Positionsgruppen (nur Spieler ohne K/P als Primärposition)
@@ -371,17 +371,17 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
     const st = readOnly ? calcTotals(allStats, player.id) : {}
     const getV = (field: string) => readOnly ? (st[field] ?? 0) : getStat(player.id, field)
     return (
-      <tr key={`${player.id}-${pos}`} className="border-b border-white/5 hover:bg-white/[0.02]">
+      <tr key={`${player.id}-${pos}`} className="border-b border-black/[0.05] dark:border-white/5 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
         <td className="px-3 py-1.5 font-medium whitespace-nowrap">
           {player.first_name[0]}. {player.last_name}
           {/* Badge für Dual-Position-Kicker */}
           {pos === 'K/P' && !['K','P'].includes(player.positions[0] ?? '') && (
-            <span className="ml-1.5 text-[9px] text-[#7a7a7a] bg-white/5 px-1 py-0.5 rounded">
+            <span className="ml-1.5 text-[9px] text-slate-500 dark:text-[#7a7a7a] bg-black/[0.06] dark:bg-white/5 px-1 py-0.5 rounded">
               {player.positions[0]}
             </span>
           )}
         </td>
-        <td className="text-center px-2 py-1.5 text-[#7a7a7a] font-mono">{player.jersey_number ?? '—'}</td>
+        <td className="text-center px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-mono">{player.jersey_number ?? '—'}</td>
         {fields.map(field => (
           <td key={field} className="stats-cell text-center px-1 py-1">
             {readOnly ? (
@@ -392,21 +392,21 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
                 value={getStat(player.id, field as string) || ''}
                 placeholder="0"
                 onChange={e => setStat(player.id, field as string, Number(e.target.value) || 0)}
-                className="w-14 text-center bg-transparent border-0 text-white text-xs focus:outline-none py-1 px-1 rounded hover:bg-white/5"
+                className="w-14 text-center bg-transparent border-0 text-slate-900 dark:text-white text-xs focus:outline-none py-1 px-1 rounded hover:bg-black/[0.04] dark:hover:bg-white/5"
               />
             )}
           </td>
         ))}
         {/* Auto-calculated */}
         {pos === 'QB' && <>
-          <td className="text-center px-2 py-1.5 text-[#5a5a5a] font-semibold">{getV('pass_yards') + getV('qb_rush_yards')}</td>
-          <td className="text-center px-2 py-1.5 text-[#5a5a5a] font-semibold">{getV('pass_tds') + getV('qb_rush_tds')}</td>
-          <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcYPA(getV('pass_yards'), getV('pass_attempts'))}</td>
-          <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcCompPct(getV('pass_completions'), getV('pass_attempts'))}</td>
+          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold">{getV('pass_yards') + getV('qb_rush_yards')}</td>
+          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold">{getV('pass_tds') + getV('qb_rush_tds')}</td>
+          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a]">{calcYPA(getV('pass_yards'), getV('pass_attempts'))}</td>
+          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a]">{calcCompPct(getV('pass_completions'), getV('pass_attempts'))}</td>
         </>}
-        {pos === 'RB' && <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcYPC(getV('rush_yards'), getV('rush_carries'))}</td>}
-        {['WR','TE'].includes(pos) && <td className="text-center px-2 py-1.5 text-[#5a5a5a]">{calcYPR(getV('rec_yards'), getV('receptions'))}</td>}
-        {pos === 'K/P' && <td className="text-center px-2 py-1.5 text-[#5a5a5a] font-semibold">{getV('fg_made') * 3 + getV('ep_made')}</td>}
+        {pos === 'RB' && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a]">{calcYPC(getV('rush_yards'), getV('rush_carries'))}</td>}
+        {['WR','TE'].includes(pos) && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a]">{calcYPR(getV('rec_yards'), getV('receptions'))}</td>}
+        {pos === 'K/P' && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold">{getV('fg_made') * 3 + getV('ep_made')}</td>}
       </tr>
     )
   }
@@ -426,17 +426,17 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
     const { fields, headers } = getPositionFields(nonKickerPos)
     return (
       <React.Fragment key={pos}>
-        <tr className="bg-[#1a1a1a] sticky top-0 z-10">
-          <th className="text-left px-3 py-1.5 text-[#7a7a7a] font-semibold uppercase tracking-wider border-b border-white/10 w-32">
+        <tr className="bg-[#f1f5f9] dark:bg-[#1a1a1a] sticky top-0 z-10">
+          <th className="text-left px-3 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-semibold uppercase tracking-wider border-b border-black/10 dark:border-white/10 w-32">
             <span style={{ color: teamColor }}>{pos}</span>
           </th>
-          <th className="px-2 py-1.5 text-[#7a7a7a] border-b border-white/10 w-8">#</th>
+          <th className="px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] border-b border-black/10 dark:border-white/10 w-8">#</th>
           {headers.map(h => (
-            <th key={h} className="text-center px-2 py-1.5 text-[#7a7a7a] font-medium border-b border-white/10 min-w-[56px]">{h}</th>
+            <th key={h} className="text-center px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-medium border-b border-black/10 dark:border-white/10 min-w-[56px]">{h}</th>
           ))}
-          {pos === 'QB' && <><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[52px]">Total YDS</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPA</th><th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[52px]">Comp%</th></>}
-          {pos === 'RB' && <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPC</th>}
-          {['WR','TE'].includes(pos) && <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">YPR</th>}
+          {pos === 'QB' && <><th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[52px]">Total YDS</th><th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">YPA</th><th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[52px]">Comp%</th></>}
+          {pos === 'RB' && <th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">YPC</th>}
+          {['WR','TE'].includes(pos) && <th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">YPR</th>}
         </tr>
         {posPlayers.map(p => renderPlayerRow(p, fields, pos))}
       </React.Fragment>
@@ -452,15 +452,15 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
         {/* K / P (zwischen Offense und Defense) */}
         {kickerPlayers.length > 0 && (
           <React.Fragment key="K/P">
-            <tr className="bg-[#1a1a1a] sticky top-0 z-10">
-              <th className="text-left px-3 py-1.5 font-semibold uppercase tracking-wider border-b border-white/10 w-32">
+            <tr className="bg-[#f1f5f9] dark:bg-[#1a1a1a] sticky top-0 z-10">
+              <th className="text-left px-3 py-1.5 font-semibold uppercase tracking-wider border-b border-black/10 dark:border-white/10 w-32">
                 <span style={{ color: teamColor }}>K / P</span>
               </th>
-              <th className="px-2 py-1.5 text-[#7a7a7a] border-b border-white/10 w-8">#</th>
+              <th className="px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] border-b border-black/10 dark:border-white/10 w-8">#</th>
               {K_HEADERS.map(h => (
-                <th key={h} className="text-center px-2 py-1.5 text-[#7a7a7a] font-medium border-b border-white/10 min-w-[56px]">{h}</th>
+                <th key={h} className="text-center px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-medium border-b border-black/10 dark:border-white/10 min-w-[56px]">{h}</th>
               ))}
-              <th className="text-center px-2 py-1.5 text-[#5a5a5a] border-b border-white/10 min-w-[48px]">PTS</th>
+              <th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">PTS</th>
             </tr>
             {kickerPlayers.map(p => renderPlayerRow(p, K_FIELDS, 'K/P'))}
           </React.Fragment>

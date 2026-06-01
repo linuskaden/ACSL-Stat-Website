@@ -120,7 +120,7 @@ export default function GameStatsDownloadButton({ gameId, label }: Props) {
       onClick={handleDownload}
       disabled={loading}
       title="Download game stats as CSV"
-      className="text-xs text-[#7a7a7a] hover:text-white border border-white/10 px-2 py-1 rounded transition-colors disabled:opacity-40 shrink-0"
+      className="text-xs text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white border border-black/10 dark:border-white/10 px-2 py-1 rounded transition-colors disabled:opacity-40 shrink-0"
     >
       {loading ? '…' : '↓ CSV'}
     </button>

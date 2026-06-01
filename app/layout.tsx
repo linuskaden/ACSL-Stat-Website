@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Archivo } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const archivo = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+  variable: "--font-archivo",
+});
 
 export const metadata: Metadata = {
   title: "ACSL Stats",
@@ -12,14 +17,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geist.variable} h-full`}>
-      {/* Apply saved theme before first paint to prevent flash */}
+    <html lang="en" className={`${archivo.variable} h-full`} suppressHydrationWarning>
+      {/* Apply saved theme before first paint to prevent flash (light is default). */}
       <head>
         <script dangerouslySetInnerHTML={{
-          __html: `try{if(localStorage.getItem('acsl-theme')==='light')document.documentElement.classList.add('light')}catch(e){}`
+          __html: `try{if(localStorage.getItem('acsl-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`
         }} />
       </head>
-      <body className="min-h-full flex flex-col bg-[#0a0a0a] text-white">
+      <body className="min-h-full flex flex-col bg-[var(--bg)] text-[var(--fg)] font-[family-name:var(--font-archivo)]">
         <NavBar />
         <main className="flex-1">{children}</main>
       </body>

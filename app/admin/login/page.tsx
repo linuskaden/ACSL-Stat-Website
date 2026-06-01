@@ -26,34 +26,34 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#f7f8fa] dark:bg-[#0a0a0a] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-full bg-[#ff1d25] flex items-center justify-center font-black text-white text-lg mx-auto mb-3">
-            AC
+          <div className="font-black italic tracking-tight text-3xl text-slate-900 dark:text-white mb-3">
+            ACSL<span className="text-[#ff1d25]">.</span>
           </div>
-          <h1 className="text-2xl font-black">ACSL Admin</h1>
-          <p className="text-[#7a7a7a] text-sm mt-1">Operator Access</p>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white">ACSL Admin</h1>
+          <p className="text-slate-500 dark:text-[#7a7a7a] text-sm mt-1">Operator Access</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="text-xs text-[#7a7a7a] uppercase tracking-wider block mb-1">Email</label>
+            <label className="text-xs text-slate-500 dark:text-[#7a7a7a] uppercase tracking-wider block mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full bg-[#111] border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#ff1d25]"
+              className="w-full bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]"
               required
             />
           </div>
           <div>
-            <label className="text-xs text-[#7a7a7a] uppercase tracking-wider block mb-1">Password</label>
+            <label className="text-xs text-slate-500 dark:text-[#7a7a7a] uppercase tracking-wider block mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full bg-[#111] border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#ff1d25]"
+              className="w-full bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]"
               required
             />
           </div>
