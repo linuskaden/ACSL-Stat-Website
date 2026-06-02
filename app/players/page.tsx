@@ -7,13 +7,36 @@ import type { PlayerWithTeam, Team } from '@/lib/supabase/types'
 
 const POSITIONS = ['All', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
+type SortKey = 'num' | 'name' | 'pos' | 'team' | 'study' | 'ht' | 'wt' | 'from'
+
+function sortValue(p: PlayerWithTeam, key: SortKey): string | number | null {
+  switch (key) {
+    case 'num':   return p.jersey_number ?? null
+    case 'name':  return `${p.last_name ?? ''} ${p.first_name ?? ''}`.trim().toLowerCase()
+    case 'pos':   return (p.positions?.[0] ?? '').toLowerCase()
+    case 'team':  return (p.team?.short_name ?? '').toLowerCase()
+    case 'study': return (p.field_of_study ?? '').toLowerCase()
+    case 'ht':    return p.height_cm ?? null
+    case 'wt':    return p.weight_kg ?? null
+    case 'from':  return (p.hometown ?? '').toLowerCase()
+  }
+}
+
 export default function PlayersPage() {
   const [players, setPlayers] = useState<PlayerWithTeam[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [search, setSearch] = useState('')
   const [selectedTeam, setSelectedTeam] = useState('all')
   const [selectedPos, setSelectedPos] = useState('All')
+  const [selectedCountry, setSelectedCountry] = useState('all')
   const [loading, setLoading] = useState(true)
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+    else { setSortKey(key); setSortDir('asc') }
+  }
 
   useEffect(() => {
     const supabase = createClient()
@@ -27,6 +50,8 @@ export default function PlayersPage() {
     })
   }, [])
 
+  const countries = [...new Set(players.map(p => p.country).filter(Boolean) as string[])].sort()
+
   const filtered = players.filter(p => {
     const q = search.toLowerCase()
     const matchSearch = !q || [
@@ -36,7 +61,22 @@ export default function PlayersPage() {
     ].some(v => v?.toLowerCase().includes(q))
     const matchTeam = selectedTeam === 'all' || p.team_id === selectedTeam
     const matchPos = selectedPos === 'All' || p.positions.includes(selectedPos)
-    return matchSearch && matchTeam && matchPos
+    const matchCountry = selectedCountry === 'all' || p.country === selectedCountry
+    return matchSearch && matchTeam && matchPos && matchCountry
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    const av = sortValue(a, sortKey)
+    const bv = sortValue(b, sortKey)
+    const aMissing = av === null || av === ''
+    const bMissing = bv === null || bv === ''
+    if (aMissing && bMissing) return 0
+    if (aMissing) return 1   // missing values always sort last
+    if (bMissing) return -1
+    const cmp = typeof av === 'number' && typeof bv === 'number'
+      ? av - bv
+      : String(av).localeCompare(String(bv))
+    return sortDir === 'asc' ? cmp : -cmp
   })
 
   return (
@@ -62,6 +102,14 @@ export default function PlayersPage() {
           <option value="all">All Teams</option>
           {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
+        <select
+          value={selectedCountry}
+          onChange={e => setSelectedCountry(e.target.value)}
+          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#ff1d25]"
+        >
+          <option value="all">All Countries</option>
+          {countries.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
         <div className="flex gap-1">
           {POSITIONS.map(pos => (
             <button key={pos} onClick={() => setSelectedPos(pos)}
@@ -81,20 +129,20 @@ export default function PlayersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-black/[0.07] dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
-                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">#</th>
-                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">Player</th>
-                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">Pos</th>
-                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden md:table-cell">Team</th>
-                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden lg:table-cell">Study</th>
-                <th className="text-center px-3 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden md:table-cell">Ht</th>
-                <th className="text-center px-3 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden md:table-cell">Wt</th>
-                <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs hidden xl:table-cell">From</th>
+                <SortHeader label="#"      sk="num"   active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4" />
+                <SortHeader label="Player" sk="name"  active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4" />
+                <SortHeader label="Pos"    sk="pos"   active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4" />
+                <SortHeader label="Team"   sk="team"  active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4 hidden md:table-cell" />
+                <SortHeader label="Study"  sk="study" active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4 hidden lg:table-cell" />
+                <SortHeader label="Ht"     sk="ht"    active={sortKey} dir={sortDir} onSort={toggleSort} className="text-center px-3 hidden md:table-cell" center />
+                <SortHeader label="Wt"     sk="wt"    active={sortKey} dir={sortDir} onSort={toggleSort} className="text-center px-3 hidden md:table-cell" center />
+                <SortHeader label="From"   sk="from"  active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4 hidden md:table-cell" />
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {sorted.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400 dark:text-[#7a7a7a] text-sm">No players found.</td></tr>
-              ) : filtered.map(p => (
+              ) : sorted.map(p => (
                 <tr key={p.id} className="border-b border-black/[0.05] dark:border-white/5 last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
                   <td className="px-4 py-2.5">
                     <span className="font-mono text-xs text-slate-500 dark:text-[#7a7a7a]">{p.jersey_number ?? '—'}</span>
@@ -121,7 +169,7 @@ export default function PlayersPage() {
                   <td className="text-center px-3 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden md:table-cell">
                     {p.weight_kg ?? '—'}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden xl:table-cell">
+                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden md:table-cell">
                     {p.hometown ? `${p.hometown}${p.country ? `, ${p.country}` : ''}` : '—'}
                   </td>
                 </tr>
@@ -131,5 +179,31 @@ export default function PlayersPage() {
         </div>
       )}
     </div>
+  )
+}
+
+function SortHeader({ label, sk, active, dir, onSort, className, center }: {
+  label: string
+  sk: SortKey
+  active: SortKey
+  dir: 'asc' | 'desc'
+  onSort: (k: SortKey) => void
+  className?: string
+  center?: boolean
+}) {
+  const isActive = active === sk
+  return (
+    <th className={`py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs ${className ?? ''}`}>
+      <button
+        type="button"
+        onClick={() => onSort(sk)}
+        className={`inline-flex items-center gap-1 select-none hover:text-slate-900 dark:hover:text-white transition-colors ${center ? 'justify-center' : ''} ${isActive ? 'text-slate-900 dark:text-white' : ''}`}
+      >
+        {label}
+        <span className={`text-[9px] leading-none ${isActive ? 'text-[#ff1d25]' : 'opacity-0'}`}>
+          {isActive && dir === 'desc' ? '▼' : '▲'}
+        </span>
+      </button>
+    </th>
   )
 }
