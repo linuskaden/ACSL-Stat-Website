@@ -1,15 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { getSelectedSeason } from '@/lib/season'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/admin/login')
 
+  const season = await getSelectedSeason()
+
   const [{ count: playerCount }, { count: gameCount }, { data: liveGames }] = await Promise.all([
     supabase.from('players').select('*', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('games').select('*', { count: 'exact', head: true }).eq('season', 2026),
+    supabase.from('games').select('*', { count: 'exact', head: true }).eq('season', season),
     supabase.from('games')
       .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
       .eq('status', 'live'),
@@ -58,9 +61,9 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Active Players', value: playerCount ?? 0, href: '/admin/players' },
-          { label: 'Games 2026', value: gameCount ?? 0, href: '/admin/games' },
+          { label: `Games ${season}`, value: gameCount ?? 0, href: '/admin/games' },
           { label: 'Live Games', value: liveGames?.length ?? 0 },
-          { label: 'Season', value: '2026' },
+          { label: 'Season', value: String(season) },
         ].map(s => (
           <Link key={s.label} href={s.href ?? '#'}
             className={`bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-4 shadow-sm ${s.href ? 'hover:border-black/15 dark:hover:border-white/20 transition-colors' : ''}`}>

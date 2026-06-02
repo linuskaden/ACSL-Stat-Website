@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getSelectedSeason } from '@/lib/season'
 
 export const revalidate = 30
 
@@ -6,18 +7,19 @@ const ROUND_ORDER = ['wildcard', 'semifinal', 'third_place', 'final']
 
 export default async function PlayoffsPage() {
   const supabase = await createClient()
+  const season = await getSelectedSeason()
 
   const [{ data: games }, { data: bracket }] = await Promise.all([
     supabase
       .from('games')
       .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
-      .eq('season', 2026)
+      .eq('season', season)
       .in('game_type', ROUND_ORDER)
       .order('scheduled_at', { nullsFirst: false }),
     supabase
       .from('playoff_bracket')
       .select('*')
-      .eq('season', 2026),
+      .eq('season', season),
   ])
 
   // Map game_id → bracket entry for seed + winner info
@@ -64,7 +66,7 @@ export default async function PlayoffsPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-black italic tracking-tight mb-1 text-slate-900 dark:text-white">Playoff Bracket 2026</h1>
+      <h1 className="text-3xl font-black italic tracking-tight mb-1 text-slate-900 dark:text-white">Playoff Bracket {season}</h1>
       <p className="text-slate-500 dark:text-[#555] text-sm mb-8">
         Wildcard → Semifinals → ACSL Summer Bowl
       </p>

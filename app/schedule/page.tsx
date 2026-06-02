@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import TeamBadge from '@/components/TeamBadge'
 import type { GameWithTeams } from '@/lib/supabase/types'
+import { getSelectedSeason } from '@/lib/season'
 
 export const revalidate = 30
 
@@ -20,10 +21,11 @@ const GAME_TYPE_LABELS: Record<string, string> = {
 
 export default async function SchedulePage() {
   const supabase = await createClient()
+  const season = await getSelectedSeason()
   const { data: games } = await supabase
     .from('games')
     .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
-    .eq('season', 2026)
+    .eq('season', season)
     .order('scheduled_at', { nullsFirst: false })
 
   const grouped: Record<string, GameWithTeams[]> = {}
@@ -35,7 +37,7 @@ export default async function SchedulePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-black italic tracking-tight mb-6 text-slate-900 dark:text-white">Schedule &amp; Results</h1>
+      <h1 className="text-3xl font-black italic tracking-tight mb-6 text-slate-900 dark:text-white">Schedule &amp; Results <span className="text-slate-400 dark:text-[#7a7a7a] font-bold not-italic text-2xl">{season}</span></h1>
 
       {Object.keys(grouped).length === 0 && (
         <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-8 text-center text-slate-500 dark:text-[#7a7a7a] shadow-sm">

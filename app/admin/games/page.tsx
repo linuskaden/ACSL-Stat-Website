@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import GameStatsDownloadButton from '@/components/GameStatsDownloadButton'
+import { getSelectedSeason } from '@/lib/season'
 
 const GAME_TYPES = ['regular_season', 'wildcard', 'semifinal', 'third_place', 'final']
 const STATUS_OPTIONS = ['scheduled', 'live', 'final']
@@ -18,14 +19,16 @@ export default async function AdminGamesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/admin/login')
 
+  const season = await getSelectedSeason()
+
   const [{ data: games }, { data: teams }, { data: bracket }] = await Promise.all([
     supabase
       .from('games')
       .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
-      .eq('season', 2026)
+      .eq('season', season)
       .order('scheduled_at', { nullsFirst: false }),
     supabase.from('teams').select('*').order('name'),
-    supabase.from('playoff_bracket').select('*').eq('season', 2026),
+    supabase.from('playoff_bracket').select('*').eq('season', season),
   ])
 
   // Map: game_id → bracket entry (winner_id tells us if already advanced)
@@ -38,7 +41,7 @@ export default async function AdminGamesPage() {
     'use server'
     const supabase = await createClient()
     await (supabase.from('games') as any).insert({
-      season: 2026,
+      season,
       week: formData.get('week') ? Number(formData.get('week')) : null,
       game_type: formData.get('game_type') as string,
       home_team_id: formData.get('home_team_id') as string || null,
@@ -146,7 +149,7 @@ export default async function AdminGamesPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white">Game Management</h1>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white">Game Management <span className="text-slate-400 dark:text-[#7a7a7a] font-bold">{season}</span></h1>
       </div>
 
       {/* Create Game Form */}

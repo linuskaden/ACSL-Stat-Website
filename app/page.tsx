@@ -2,15 +2,18 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import TeamBadge from '@/components/TeamBadge'
 import type { Team, StandingsWithTeam } from '@/lib/supabase/types'
+import { getSelectedSeason } from '@/lib/season'
+import StandingsTable from '@/components/StandingsTable'
 
 export const revalidate = 30
 
 export default async function HomePage() {
   const supabase = await createClient()
+  const season = await getSelectedSeason()
 
   const [{ data: teams }, { data: standings }, { data: liveGame }] = await Promise.all([
     supabase.from('teams').select('*').order('name'),
-    supabase.from('standings').select('*, team:teams(*)').eq('season', 2026).order('wins', { ascending: false }),
+    supabase.from('standings').select('*, team:teams(*)').eq('season', season).order('wins', { ascending: false }),
     supabase.from('games')
       .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
       .eq('status', 'live').limit(1).maybeSingle(),
@@ -25,7 +28,7 @@ export default async function HomePage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 bg-[#ff1d25]/10 border border-[#ff1d25]/30 rounded-full px-4 py-1 text-[#ff1d25] text-xs font-bold uppercase tracking-wider mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#ff1d25]" />
-              Season 2026
+              Season {season}
             </div>
             <h1 className="text-5xl md:text-7xl font-black italic tracking-tight leading-[0.95] text-slate-900 dark:text-white">
               ACSL <span className="text-[#ff1d25]">Stats</span>
@@ -80,42 +83,10 @@ export default async function HomePage() {
 
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a]">Standings 2026</h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a]">Standings {season}</h2>
               <Link href="/schedule" className="text-xs text-slate-500 dark:text-[#7a7a7a] hover:text-[#ff1d25]">Full Schedule →</Link>
             </div>
-            <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl overflow-hidden shadow-sm">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-black/[0.07] dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
-                    <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">#</th>
-                    <th className="text-left px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">Team</th>
-                    <th className="text-center px-3 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">W</th>
-                    <th className="text-center px-3 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">L</th>
-                    <th className="text-center px-3 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">PF</th>
-                    <th className="text-center px-3 py-2.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs">PA</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {standings && standings.length > 0 ? (standings as StandingsWithTeam[]).map((s, i) => (
-                    <tr key={s.id} className="border-b border-black/[0.05] dark:border-white/5 last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
-                      <td className="px-4 py-2.5 text-slate-400 dark:text-[#7a7a7a] text-xs">{i + 1}</td>
-                      <td className="px-4 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ background: s.team.primary_color }} />
-                          <span className="font-medium text-sm text-slate-900 dark:text-white">{s.team.short_name}</span>
-                        </div>
-                      </td>
-                      <td className="text-center px-3 py-2.5 font-semibold text-slate-900 dark:text-white">{s.wins}</td>
-                      <td className="text-center px-3 py-2.5 text-slate-500 dark:text-[#7a7a7a]">{s.losses}</td>
-                      <td className="text-center px-3 py-2.5 text-slate-500 dark:text-[#7a7a7a]">{s.points_for}</td>
-                      <td className="text-center px-3 py-2.5 text-slate-500 dark:text-[#7a7a7a]">{s.points_against}</td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-[#7a7a7a] text-xs">Season not started yet</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <StandingsTable standings={(standings ?? []) as StandingsWithTeam[]} />
           </section>
         </div>
       </div>

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import type { Player, Team } from '@/lib/supabase/types'
 import { calcYPA, calcYPC, calcYPR, calcCompPct } from '@/lib/utils'
 
-type Game = { id: string; home_score: number | null; away_score: number | null; status: string; home_team: Team; away_team: Team }
+type Game = { id: string; season: number; home_score: number | null; away_score: number | null; status: string; home_team: Team; away_team: Team }
 type StatRow = Record<string, number>
 type AllStats = Record<string, Record<string, StatRow>> // [quarter][playerId] = stats
 
@@ -217,14 +217,14 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
       })
       if (Object.keys(totals).length === 0) continue
 
-      const existing = await supabase.from('career_stats').select('*').eq('player_id', player.id).eq('season', 2026).single()
+      const existing = await supabase.from('career_stats').select('*').eq('player_id', player.id).eq('season', game.season).single()
       if (existing.data) {
         const merged: StatRow = {}
         const keys = Object.keys(totals)
         keys.forEach(k => { merged[k] = (existing.data[k] ?? 0) + (totals[k] ?? 0) })
         await supabase.from('career_stats').update({ ...merged, games_played: (existing.data.games_played ?? 0) + 1 }).eq('id', existing.data.id)
       } else {
-        await supabase.from('career_stats').insert({ player_id: player.id, season: 2026, games_played: 1, ...totals })
+        await supabase.from('career_stats').insert({ player_id: player.id, season: game.season, games_played: 1, ...totals })
       }
     }
     alert('Game finalized! Stats transferred to career database.')

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import SeasonSwitcher from '@/components/SeasonSwitcher'
 
 const links = [
   { href: '/', label: 'Home' },
@@ -94,6 +95,9 @@ export default function NavBar() {
 
         {/* Right side */}
         <div className="ml-auto flex items-center gap-2">
+          {/* Season switcher */}
+          <SeasonSwitcher />
+
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
