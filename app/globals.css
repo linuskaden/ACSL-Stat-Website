@@ -71,3 +71,51 @@ body {
 
 /* ── Focus rings ── */
 *:focus-visible { outline-color: var(--acsl-red); }
+
+/* ===== Playoff bracket tree ===== */
+:root { --pf-line: rgba(0, 0, 0, 0.18); --pf-bronze: rgba(245, 166, 35, 0.55); }
+.dark { --pf-line: rgba(255, 255, 255, 0.20); --pf-bronze: rgba(245, 166, 35, 0.6); }
+
+.pf-scroll { overflow-x: auto; padding-bottom: 6px; }
+.pf-inner { min-width: 860px; }
+
+.pf-heads { display: flex; margin-bottom: 12px; }
+.pf-head {
+  flex: 0 0 200px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.pf-head--gap   { flex: 0 0 34px; }
+.pf-head--champ { flex: 0 0 150px; }
+
+.pf-bracket { display: flex; align-items: stretch; height: 340px; }
+.pf-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 0 0 200px;
+}
+.pf-col--champ { flex: 0 0 150px; }
+.pf-champ-spacer { height: 124px; }
+
+.pf-conn { position: relative; flex: 0 0 34px; }
+.pf-line { position: absolute; height: 2px; background: var(--pf-line); }
+.pf-line--bronze { background: var(--pf-bronze); }
+
+/* 1:1 feed (wildcard → semifinal): straight lines at the two match centers */
+.pf-conn--feed .h-top { top: 25%; left: 0; width: 100%; }
+.pf-conn--feed .h-bot { top: 75%; left: 0; width: 100%; }
+
+/* merge (semifinals → final winners / 3rd-place losers) */
+.pf-conn--merge .h-up  { top: 25%; left: 0;   width: 50%; }
+.pf-conn--merge .h-dn  { top: 75%; left: 0;   width: 50%; }
+.pf-conn--merge .v     { top: 25%; left: 50%; width: 2px; height: 50%; }
+.pf-conn--merge .h-win { top: 25%; left: 50%; width: 50%; }
+.pf-conn--merge .h-los { top: 75%; left: 50%; width: 50%; }
+
+/* 1:1 center (final → champion, both at 25%) */
+.pf-conn--single .h-mid { top: 25%; left: 0; width: 100%; }
