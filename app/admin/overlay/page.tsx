@@ -516,7 +516,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
                 const cols  = [
                   { label: 'PASS', value: s.passYds }, { label: 'RUSH', value: s.rushYds },
                   { label: 'REC', value: s.recYds },   { label: 'TOTAL', value: s.totalYds },
-                  { label: 'TAR/REC', value: `${s.targets}/${s.receptions}` },
+                  { label: 'REC/TAR', value: `${s.receptions}/${s.targets}` },
                   { label: 'CATCH%', value: s.targets > 0 ? `${s.catchPct}%` : '—' },
                   { label: 'TDs', value: s.tds, accent: '#04a550' },
                   { label: 'FG', value: `${s.fgm}/${s.fga}` },

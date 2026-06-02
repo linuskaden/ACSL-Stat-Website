@@ -162,7 +162,7 @@ function TeamRow({ team, stats }: { team: Team; stats: TeamStats }) {
     { label: 'RUSH',    value: stats.rushYds  },
     { label: 'REC',     value: stats.recYds   },
     { label: 'TOTAL',   value: stats.totalYds },
-    { label: 'TAR/REC', value: `${stats.targets}/${stats.receptions}` },
+    { label: 'REC/TAR', value: `${stats.receptions}/${stats.targets}` },
     { label: 'CATCH%',  value: stats.targets > 0 ? `${catchPct}%` : '—' },
     { label: 'TDs',     value: stats.tds      },
     { label: 'INT',     value: stats.ints     },

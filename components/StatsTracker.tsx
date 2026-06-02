@@ -309,8 +309,8 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
               <span className="text-black/10 dark:text-white/10">|</span>
               <span>TOTAL: <strong className="text-slate-900 dark:text-white">{t.totalYds}</strong></span>
               <span className="text-black/10 dark:text-white/10">|</span>
-              {/* Targets / catches */}
-              <span>TAR/REC: <strong className="text-slate-900 dark:text-white">{t.totalTargets}/{t.totalReceptions}</strong>
+              {/* Catches / targets */}
+              <span>REC/TAR: <strong className="text-slate-900 dark:text-white">{t.totalReceptions}/{t.totalTargets}</strong>
                 {t.totalTargets > 0 && <span className="text-slate-500 dark:text-[#7a7a7a]"> ({t.catchPct}%)</span>}
               </span>
               <span className="text-black/10 dark:text-white/10">|</span>
