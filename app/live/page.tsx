@@ -114,61 +114,120 @@ function aggregateStats(stats: any[]) {
   return Object.values(byPlayer)
 }
 
+/* ── Position-based stat categories (columns shown depend on position) ── */
+type StatCol = { h: string; get: (s: any) => string | number; accent?: 'green' | 'red' }
+type StatCategory = { key: string; label: string; match: (pos: string) => boolean; cols: StatCol[] }
+
+const STAT_CATEGORIES: StatCategory[] = [
+  {
+    key: 'passing', label: 'Passing', match: (p) => p === 'QB',
+    cols: [
+      { h: 'C/ATT', get: (s) => `${s.pass_completions ?? 0}/${s.pass_attempts ?? 0}` },
+      { h: 'YDS',   get: (s) => s.pass_yards ?? 0 },
+      { h: 'TD',    get: (s) => s.pass_tds ?? 0, accent: 'green' },
+      { h: 'INT',   get: (s) => s.interceptions_thrown ?? 0, accent: 'red' },
+      { h: 'RUSH',  get: (s) => s.qb_rush_yards ?? 0 },
+    ],
+  },
+  {
+    key: 'rushing', label: 'Rushing', match: (p) => p === 'RB',
+    cols: [
+      { h: 'CAR',     get: (s) => s.rush_carries ?? 0 },
+      { h: 'YDS',     get: (s) => s.rush_yards ?? 0 },
+      { h: 'TD',      get: (s) => s.rush_tds ?? 0, accent: 'green' },
+      { h: 'REC',     get: (s) => s.rb_receptions ?? 0 },
+      { h: 'REC YDS', get: (s) => s.rb_rec_yards ?? 0 },
+    ],
+  },
+  {
+    key: 'receiving', label: 'Receiving', match: (p) => ['WR', 'TE'].includes(p),
+    cols: [
+      { h: 'REC', get: (s) => s.receptions ?? 0 },
+      { h: 'YDS', get: (s) => s.rec_yards ?? 0 },
+      { h: 'TD',  get: (s) => s.rec_tds ?? 0, accent: 'green' },
+      { h: 'TGT', get: (s) => s.rec_targets ?? 0 },
+    ],
+  },
+  {
+    key: 'defense', label: 'Defense', match: (p) => ['DL', 'LB', 'DB'].includes(p),
+    cols: [
+      { h: 'SACK', get: (s) => s.sacks ?? 0, accent: 'green' },
+      { h: 'INT',  get: (s) => s.def_interceptions ?? 0, accent: 'red' },
+    ],
+  },
+  {
+    key: 'kicking', label: 'Kicking', match: (p) => ['K', 'P'].includes(p),
+    cols: [
+      { h: 'FG', get: (s) => `${s.fg_made ?? 0}/${s.fg_attempts ?? 0}` },
+      { h: 'XP', get: (s) => `${s.ep_made ?? 0}/${s.ep_attempts ?? 0}` },
+    ],
+  },
+]
+
+function categoryKeyFor(pos: string): string {
+  const cat = STAT_CATEGORIES.find((c) => c.match(pos))
+  return cat ? cat.key : 'defense' // unknown/empty position falls back to defense
+}
+
 function LiveStatsTable({ title, players, teamColor }: { title: string; players: any[]; teamColor?: string }) {
   return (
     <div>
       <h2 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: teamColor ?? '#7a7a7a' }}>
         {title}
       </h2>
-      <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl overflow-hidden shadow-sm">
-        {players.length === 0 ? (
-          <p className="px-4 py-4 text-xs text-slate-500 dark:text-[#7a7a7a]">No stats yet.</p>
-        ) : (
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-black/[0.07] dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
-                <th className="text-left px-3 py-2 text-slate-400 dark:text-[#7a7a7a]">Player</th>
-                <th className="text-left px-2 py-2 text-slate-400 dark:text-[#7a7a7a]">Pos</th>
-                <th className="text-center px-2 py-2 text-slate-400 dark:text-[#7a7a7a]">YDS</th>
-                <th className="text-center px-2 py-2 text-slate-400 dark:text-[#7a7a7a]">TD</th>
-                <th className="text-center px-2 py-2 text-slate-400 dark:text-[#7a7a7a]">INT</th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.map((s: any) => {
-                const pos = s.player?.positions?.[0] ?? ''
-                const isQB = pos === 'QB'
-                const isRB = pos === 'RB'
-                const isRec = ['WR','TE'].includes(pos)
-                const isDef = ['DL','LB','DB'].includes(pos)
-                const isK = ['K','P'].includes(pos)
-                const yds = isQB ? s.pass_yards + s.qb_rush_yards
-                  : isRB ? s.rush_yards + s.rb_rec_yards
-                  : isRec ? s.rec_yards
-                  : 0
-                const tds = isQB ? s.pass_tds + s.qb_rush_tds
-                  : isRB ? s.rush_tds
-                  : isRec ? s.rec_tds
-                  : isK ? (s.fg_made * 3 + s.ep_made)
-                  : 0
-                const intVal = isQB ? s.interceptions_thrown : isDef ? s.def_interceptions : 0
-                return (
-                  <tr key={s.player_id} className="border-b border-black/[0.05] dark:border-white/5 last:border-0">
-                    <td className="px-3 py-2 font-medium text-slate-900 dark:text-white">
-                      {s.player?.first_name?.[0]}. {s.player?.last_name}
-                      {s.player?.jersey_number && <span className="text-slate-400 dark:text-[#7a7a7a] ml-1">#{s.player.jersey_number}</span>}
-                    </td>
-                    <td className="px-2 py-2 text-slate-500 dark:text-[#7a7a7a]">{pos}</td>
-                    <td className="text-center px-2 py-2 font-semibold text-slate-900 dark:text-white">{isK ? `${s.fg_made}/${s.fg_attempts} FG` : yds}</td>
-                    <td className="text-center px-2 py-2 font-semibold text-[#04a550]">{isDef ? s.sacks : tds}</td>
-                    <td className="text-center px-2 py-2 text-[#ff1d25]">{intVal > 0 ? intVal : '—'}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {players.length === 0 ? (
+        <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl px-4 py-4 text-xs text-slate-500 dark:text-[#7a7a7a] shadow-sm">
+          No stats yet.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {STAT_CATEGORIES.map((cat) => {
+            const group = players.filter((s: any) => categoryKeyFor(s.player?.positions?.[0] ?? '') === cat.key)
+            if (group.length === 0) return null
+            return (
+              <div key={cat.key} className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl overflow-hidden shadow-sm">
+                <div className="px-3 py-1.5 border-b border-black/[0.07] dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#7a7a7a]">
+                  {cat.label}
+                </div>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-black/[0.07] dark:border-white/5">
+                      <th className="text-left px-3 py-1.5 text-slate-400 dark:text-[#7a7a7a] font-semibold">Player</th>
+                      {cat.cols.map((c) => (
+                        <th key={c.h} className="text-center px-2 py-1.5 text-slate-400 dark:text-[#7a7a7a] font-semibold">{c.h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.map((s: any) => (
+                      <tr key={s.player_id} className="border-b border-black/[0.05] dark:border-white/5 last:border-0">
+                        <td className="px-3 py-2 font-medium text-slate-900 dark:text-white whitespace-nowrap">
+                          {s.player?.first_name?.[0]}. {s.player?.last_name}
+                          {s.player?.jersey_number && <span className="text-slate-400 dark:text-[#7a7a7a] ml-1">#{s.player.jersey_number}</span>}
+                        </td>
+                        {cat.cols.map((c) => {
+                          const v = c.get(s)
+                          const zeroAccent = c.accent != null && v === 0
+                          const color = zeroAccent
+                            ? 'text-slate-300 dark:text-[#555]'
+                            : c.accent === 'green' ? 'text-[#04a550]'
+                            : c.accent === 'red' ? 'text-[#ff1d25]'
+                            : 'text-slate-900 dark:text-white'
+                          return (
+                            <td key={c.h} className={`text-center px-2 py-2 font-semibold tabular-nums ${color}`}>
+                              {zeroAccent ? '—' : v}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
