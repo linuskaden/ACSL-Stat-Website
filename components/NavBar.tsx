@@ -11,6 +11,7 @@ const links = [
   { href: '/schedule', label: 'Schedule' },
   { href: '/playoffs', label: 'Playoffs' },
   { href: '/players', label: 'Players' },
+  { href: '/leaders', label: 'Leaders' },
   { href: '/live', label: 'Live' },
 ]
 
