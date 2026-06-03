@@ -13,6 +13,10 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   title: "ACSL Stats",
   description: "Austrian College Sports League – Live Stats & Standings",
+  icons: {
+    icon: "/logos/ACSL-Logo.png",
+    apple: "/logos/ACSL-Logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
