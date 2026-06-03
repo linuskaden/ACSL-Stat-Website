@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import TeamBadge from '@/components/TeamBadge'
+import Link from 'next/link'
 import type { GameWithTeams } from '@/lib/supabase/types'
 import { getSelectedSeason } from '@/lib/season'
 
@@ -27,6 +28,13 @@ export default async function SchedulePage() {
     .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
     .eq('season', season)
     .order('scheduled_at', { nullsFirst: false })
+
+  // Find which games already have stats tracked
+  const gameIds = (games ?? []).map((g: any) => g.id as string)
+  const { data: statsRows } = gameIds.length > 0
+    ? await supabase.from('game_stats').select('game_id').in('game_id', gameIds)
+    : { data: [] as any[] }
+  const gamesWithStats = new Set((statsRows ?? []).map((r: any) => r.game_id as string))
 
   const grouped: Record<string, GameWithTeams[]> = {}
   ;(games ?? []).forEach((g: any) => {
@@ -101,10 +109,26 @@ export default async function SchedulePage() {
 
                   {/* Location */}
                   {game.location && (
-                    <div className="text-xs text-slate-400 dark:text-[#7a7a7a] hidden md:block shrink-0 w-24 truncate text-right">
+                    <div className="text-xs text-slate-400 dark:text-[#7a7a7a] hidden lg:block shrink-0 w-24 truncate text-right">
                       {game.location}
                     </div>
                   )}
+
+                  {/* Box Score button */}
+                  <div className="shrink-0">
+                    {gamesWithStats.has(game.id) ? (
+                      <Link
+                        href={`/games/${game.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#ff1d25]/10 text-[#ff1d25] text-xs font-semibold hover:bg-[#ff1d25]/20 transition-colors"
+                      >
+                        Box Score
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.04] text-slate-300 dark:text-[#555] text-xs font-semibold cursor-not-allowed select-none">
+                        Box Score
+                      </span>
+                    )}
+                  </div>
                 </div>
               )
             })}
