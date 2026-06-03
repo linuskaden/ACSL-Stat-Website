@@ -42,14 +42,24 @@ export default async function AdminGamesPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
+    const gameType = formData.get('game_type') as string
+    if (!GAME_TYPES.includes(gameType)) return
+
+    const rawWeek = formData.get('week')
+    const week = rawWeek ? Number(rawWeek) : null
+    if (week !== null && (!Number.isInteger(week) || week < 1 || week > 52)) return
+
+    const location = (formData.get('location') as string | null)?.slice(0, 200) || null
+
     await (supabase.from('games') as any).insert({
       season,
-      week: formData.get('week') ? Number(formData.get('week')) : null,
-      game_type: formData.get('game_type') as string,
+      week,
+      game_type: gameType,
       home_team_id: formData.get('home_team_id') as string || null,
       away_team_id: formData.get('away_team_id') as string || null,
       scheduled_at: formData.get('scheduled_at') as string || null,
-      location: formData.get('location') as string || null,
+      location,
       status: 'scheduled',
     })
     redirect('/admin/games')
@@ -60,10 +70,20 @@ export default async function AdminGamesPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
     const gameId = formData.get('game_id') as string
+    if (!/^[0-9a-f-]{36}$/i.test(gameId)) return
+
     const status = formData.get('status') as string
-    const homeScore = formData.get('home_score') ? Number(formData.get('home_score')) : null
-    const awayScore = formData.get('away_score') ? Number(formData.get('away_score')) : null
+    if (!STATUS_OPTIONS.includes(status)) return
+
+    const rawHome = formData.get('home_score')
+    const rawAway = formData.get('away_score')
+    const homeScore = rawHome ? Number(rawHome) : null
+    const awayScore = rawAway ? Number(rawAway) : null
+    if (homeScore !== null && (!Number.isInteger(homeScore) || homeScore < 0 || homeScore > 999)) return
+    if (awayScore !== null && (!Number.isInteger(awayScore) || awayScore < 0 || awayScore > 999)) return
+
     await supabase.from('games').update({ status, home_score: homeScore, away_score: awayScore }).eq('id', gameId)
     redirect('/admin/games')
   }
@@ -87,6 +107,7 @@ export default async function AdminGamesPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const gameId = formData.get('game_id') as string
+    if (!/^[0-9a-f-]{36}$/i.test(gameId)) return
 
     const { data: game } = await supabase.from('games').select('*').eq('id', gameId).single()
     if (!game || game.status !== 'final') { redirect('/admin/games'); return }

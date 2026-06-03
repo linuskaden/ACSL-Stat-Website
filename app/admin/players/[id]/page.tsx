@@ -44,26 +44,44 @@ export default async function EditPlayerPage({
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const positions = formData.getAll('positions') as string[]
+
+    // Helpers
+    const str = (key: string, max: number) =>
+      ((formData.get(key) as string | null)?.trim().slice(0, max)) || null
+    const num = (key: string, min: number, max: number) => {
+      const raw = formData.get(key)
+      if (!raw) return null
+      const n = Number(raw)
+      return Number.isFinite(n) && n >= min && n <= max ? n : null
+    }
+
+    const VALID_POSITIONS = ['QB','RB','WR','TE','OL','DL','LB','DB','K','P']
+    const positions = (formData.getAll('positions') as string[]).filter(p => VALID_POSITIONS.includes(p))
+    if (positions.length === 0) return
+
+    const first_name = str('first_name', 100)
+    const last_name  = str('last_name',  100)
+    if (!first_name || !last_name) return
+
     const data = {
-      team_id: formData.get('team_id') as string || null,
-      jersey_number: formData.get('jersey_number') ? Number(formData.get('jersey_number')) : null,
+      team_id:             str('team_id', 36) || null,
+      jersey_number:       num('jersey_number', 0, 99),
       positions,
-      first_name: formData.get('first_name') as string,
-      last_name: formData.get('last_name') as string,
-      nickname: formData.get('nickname') as string || null,
-      hometown: formData.get('hometown') as string || null,
-      state_province: formData.get('state_province') as string || null,
-      country: formData.get('country') as string || null,
-      date_of_birth: formData.get('date_of_birth') as string || null,
-      height_cm: formData.get('height_cm') ? Number(formData.get('height_cm')) : null,
-      weight_kg: formData.get('weight_kg') ? Number(formData.get('weight_kg')) : null,
-      field_of_study: formData.get('field_of_study') as string || null,
-      semester: formData.get('semester') as string || null,
-      acsl_since: formData.get('acsl_since') as string || null,
-      football_experience: formData.get('football_experience') as string || null,
-      fun_fact: formData.get('fun_fact') as string || null,
-      notes: formData.get('notes') as string || null,
+      first_name,
+      last_name,
+      nickname:            str('nickname', 100),
+      hometown:            str('hometown', 200),
+      state_province:      str('state_province', 100),
+      country:             str('country', 100),
+      date_of_birth:       str('date_of_birth', 20),
+      height_cm:           num('height_cm', 100, 250),
+      weight_kg:           num('weight_kg', 30, 200),
+      field_of_study:      str('field_of_study', 200),
+      semester:            str('semester', 50),
+      acsl_since:          str('acsl_since', 20),
+      football_experience: str('football_experience', 500),
+      fun_fact:            str('fun_fact', 500),
+      notes:               str('notes', 500),
       is_active: formData.get('is_active') === 'true',
     }
 
