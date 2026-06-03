@@ -26,10 +26,6 @@ export default async function HomePage() {
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[#ff1d25]/10 blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 py-16 md:py-24 relative">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-[#ff1d25]/10 border border-[#ff1d25]/30 rounded-full px-4 py-1 text-[#ff1d25] text-xs font-bold uppercase tracking-wider mb-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ff1d25]" />
-              Season {season}
-            </div>
             <h1 className="text-5xl md:text-7xl font-black italic tracking-tight leading-[0.95] text-slate-900 dark:text-white">
               ACSL <span className="text-[#ff1d25]">Stats</span>
             </h1>
