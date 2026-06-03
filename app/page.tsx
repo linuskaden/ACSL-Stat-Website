@@ -23,7 +23,6 @@ export default async function HomePage() {
     <div>
       {/* ── Hero ── */}
       <section className="relative overflow-hidden border-b border-black/[0.06] dark:border-white/10 bg-gradient-to-b from-white to-[#f7f8fa] dark:from-[#0a0a0a] dark:to-[#0a0a0a]">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[#ff1d25]/10 blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 py-16 md:py-24 relative">
           <div className="max-w-3xl">
             <h1 className="text-5xl md:text-7xl font-black italic tracking-tight leading-[0.95] text-slate-900 dark:text-white">
