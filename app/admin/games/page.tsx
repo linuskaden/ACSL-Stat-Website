@@ -40,6 +40,8 @@ export default async function AdminGamesPage() {
   async function createGame(formData: FormData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     await (supabase.from('games') as any).insert({
       season,
       week: formData.get('week') ? Number(formData.get('week')) : null,
@@ -56,6 +58,8 @@ export default async function AdminGamesPage() {
   async function updateGameStatus(formData: FormData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     const gameId = formData.get('game_id') as string
     const status = formData.get('status') as string
     const homeScore = formData.get('home_score') ? Number(formData.get('home_score')) : null
@@ -80,6 +84,8 @@ export default async function AdminGamesPage() {
   async function advanceWinner(formData: FormData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     const gameId = formData.get('game_id') as string
 
     const { data: game } = await supabase.from('games').select('*').eq('id', gameId).single()

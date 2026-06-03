@@ -42,6 +42,8 @@ export default async function EditPlayerPage({
   async function savePlayer(formData: FormData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     const positions = formData.getAll('positions') as string[]
     const data = {
       team_id: formData.get('team_id') as string || null,
@@ -76,6 +78,8 @@ export default async function EditPlayerPage({
   async function deletePlayer() {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     await supabase.from('players').delete().eq('id', id)
     redirect('/admin/players')
   }
