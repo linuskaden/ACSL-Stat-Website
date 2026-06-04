@@ -329,6 +329,7 @@ export default function OverlayControlPage() {
           loadingStats={loadingStats}
           overlayActiveId={overlay.active_player_id}
           overlayVisible={overlay.visible}
+          overlayMode={overlay.mode}
           onClose={() => setSelectedPlayer(null)}
           onShow={(mode) => showOnOverlay(selectedPlayer, mode)}
           onHide={() => pushOverlay({ visible: false })}
@@ -743,10 +744,10 @@ function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter
 /* ─────────────────────────────────
    Player Detail Modal
 ───────────────────────────────── */
-function PlayerModal({ player, team, careerStats, loadingStats, overlayActiveId, overlayVisible, onClose, onShow, onHide }: {
+function PlayerModal({ player, team, careerStats, loadingStats, overlayActiveId, overlayVisible, overlayMode, onClose, onShow, onHide }: {
   player: Player; team: Team | null | undefined
   careerStats: any; loadingStats: boolean
-  overlayActiveId: string | null; overlayVisible: boolean
+  overlayActiveId: string | null; overlayVisible: boolean; overlayMode: 'live' | 'career'
   onClose: () => void
   onShow: (mode: 'live' | 'career') => void
   onHide: () => void
@@ -805,18 +806,43 @@ function PlayerModal({ player, team, careerStats, loadingStats, overlayActiveId,
             </div>
           )}
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => onShow('live')} style={{ flex: 1, padding: '10px 8px', fontSize: 12, fontWeight: 800, border: 'none', borderRadius: 8, cursor: 'pointer', background: '#ff1d25', color: 'white' }}>
-              ▲ Live Stats einblenden
-            </button>
-            <button onClick={() => onShow('career')} style={{ flex: 1, padding: '10px 8px', fontSize: 12, fontWeight: 800, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#aaa' }}>
-              📊 Saisonwerte
-            </button>
+            {/* Live Stats — red when active, hides on second click */}
+            {(() => {
+              const isLiveActive = isOnAir && overlayVisible && overlayMode === 'live'
+              return (
+                <button
+                  onClick={() => isLiveActive ? onHide() : onShow('live')}
+                  style={{
+                    flex: 1, padding: '10px 8px', fontSize: 12, fontWeight: 800,
+                    border: isLiveActive ? '1px solid #ff1d25' : 'none',
+                    borderRadius: 8, cursor: 'pointer',
+                    background: isLiveActive ? 'rgba(255,29,37,0.15)' : '#ff1d25',
+                    color: isLiveActive ? '#ff1d25' : 'white',
+                  }}
+                >
+                  {isLiveActive ? '▼ Live Stats ausblenden' : '▲ Live Stats einblenden'}
+                </button>
+              )
+            })()}
+            {/* Saisonwerte — highlighted when active, hides on second click */}
+            {(() => {
+              const isCareerActive = isOnAir && overlayVisible && overlayMode === 'career'
+              return (
+                <button
+                  onClick={() => isCareerActive ? onHide() : onShow('career')}
+                  style={{
+                    flex: 1, padding: '10px 8px', fontSize: 12, fontWeight: 800,
+                    border: `1px solid ${isCareerActive ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                    borderRadius: 8, cursor: 'pointer',
+                    background: isCareerActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)',
+                    color: isCareerActive ? '#fff' : '#aaa',
+                  }}
+                >
+                  {isCareerActive ? '▼ Ausblenden' : '📊 Saisonwerte'}
+                </button>
+              )
+            })()}
           </div>
-          {isOnAir && overlayVisible && (
-            <button onClick={onHide} style={{ width: '100%', marginTop: 8, padding: '7px', fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, cursor: 'pointer', background: 'transparent', color: '#666' }}>
-              ▼ Ausblenden
-            </button>
-          )}
         </div>
 
         {/* ── Biografie ── */}
