@@ -589,14 +589,11 @@ function OperatorPreview({ player, team, stats, mode, visible,
           )
         })()}
 
-        {player && team ? (
+        {visible && player && team ? (
           <div style={{
             display: 'inline-flex',
             flexDirection: 'column',
             boxShadow: '0 6px 24px rgba(0,0,0,0.7)',
-            opacity: visible ? 1 : 0.3,
-            filter: visible ? 'none' : 'grayscale(0.6)',
-            transition: 'opacity 0.4s, filter 0.4s',
           }}>
             {/* Nameplate */}
             <div style={{ display: 'flex', alignItems: 'stretch', background: primaryColor, height: 62 }}>
@@ -651,13 +648,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
               </div>
             )}
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, opacity: 0.2, width: '100%', maxWidth: 700 }}>
-            <div style={{ height: 62, background: 'rgba(255,255,255,0.04)', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 10, color: '#444', letterSpacing: 2, textTransform: 'uppercase' }}>Kein Spieler ausgewählt</span>
-            </div>
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   )
