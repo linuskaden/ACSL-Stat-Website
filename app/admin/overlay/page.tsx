@@ -798,10 +798,21 @@ function PlayerModal({ player, team, careerStats, loadingStats, overlayActiveId,
         </div>
 
         {/* ── Overlay controls ── */}
-        <div style={{ margin: '0 16px 16px', background: isOnAir ? 'rgba(4,165,80,0.08)' : `${primaryColor}0a`, border: `1px solid ${isOnAir ? '#04a550' : `${primaryColor}30`}`, borderRadius: 10, padding: 12 }}>
+        {(() => {
+          const boxBg     = isOnAir && overlayVisible  ? 'rgba(4,165,80,0.08)'
+                          : isOnAir && !overlayVisible ? 'rgba(120,120,120,0.08)'
+                          : `${primaryColor}0a`
+          const boxBorder = isOnAir && overlayVisible  ? '#04a550'
+                          : isOnAir && !overlayVisible ? 'rgba(180,180,180,0.25)'
+                          : `${primaryColor}30`
+          const tagColor  = isOnAir && overlayVisible  ? '#04a550' : '#666'
+          const dotColor  = isOnAir && overlayVisible  ? '#04a550' : '#555'
+          const dotGlow   = isOnAir && overlayVisible  ? '0 0 5px #04a550' : 'none'
+          return (
+        <div style={{ margin: '0 16px 16px', background: boxBg, border: `1px solid ${boxBorder}`, borderRadius: 10, padding: 12 }}>
           {isOnAir && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 11, color: '#04a550', fontWeight: 700 }}>
-              <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#04a550', boxShadow: '0 0 5px #04a550' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 11, color: tagColor, fontWeight: 700 }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, boxShadow: dotGlow }} />
               AUF OVERLAY {overlayVisible ? '· SICHTBAR' : '· VERBORGEN'}
             </div>
           )}
@@ -844,6 +855,8 @@ function PlayerModal({ player, team, careerStats, loadingStats, overlayActiveId,
             })()}
           </div>
         </div>
+          )
+        })()}
 
         {/* ── Biografie ── */}
         <SectionHead title="Biografie" />
