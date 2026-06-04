@@ -271,9 +271,6 @@ export default function OverlayControlPage() {
         selectedGame={selectedGame}
         onPush={pushTeamOverlay}
         saving={savingTeam}
-        overlayUrl={teamOverlayUrl}
-        copied={copiedTeam}
-        onCopy={copyTeamUrl}
       />
 
       {/* ══ Player grid – two columns ══ */}
@@ -960,14 +957,11 @@ function BioCell({ label, value, span }: { label: string; value: string; span?: 
 /* ─────────────────────────────────
    Team Stats Overlay Control Panel
 ───────────────────────────────── */
-function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUrl, copied, onCopy }: {
+function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving }: {
   teamOverlay: TeamOverlayState
   selectedGame: Game | null
   onPush: (patch: Partial<TeamOverlayState>) => void
   saving: boolean
-  overlayUrl: string
-  copied: boolean
-  onCopy: () => void
 }) {
   const homeTeam = selectedGame?.home_team
   const awayTeam = selectedGame?.away_team
@@ -1020,24 +1014,6 @@ function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUr
           {teamOverlay.visible ? '▼ HIDE' : '▲ SHOW'}
         </button>
 
-        {/* URL copy */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-          <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 5, padding: '5px 9px', fontSize: 10, color: '#666', whiteSpace: 'nowrap' }}>
-            {overlayUrl || '…'}
-          </code>
-          <button
-            onClick={onCopy}
-            style={{
-              padding: '5px 12px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer',
-              background: copied ? '#04a550' : '#1a2040',
-              color: copied ? 'white' : '#888',
-              border: '1px solid rgba(255,255,255,0.08)',
-              transition: 'all 0.2s',
-            }}
-          >
-            {copied ? '✓ Copied' : 'Copy'}
-          </button>
-        </div>
       </div>
 
       {/* No game warning */}
