@@ -19,12 +19,13 @@ type TeamOverlayStateRow = {
 type StatItem = { label: string; value: string | number }
 
 /* ─── Helpers ─── */
-function textOn(hex: string): string {
+function lum(hex: string): number {
   const r = parseInt(hex.slice(1, 3), 16) / 255
   const g = parseInt(hex.slice(3, 5), 16) / 255
   const b = parseInt(hex.slice(5, 7), 16) / 255
-  return 0.299 * r + 0.587 * g + 0.114 * b > 0.48 ? '#000000' : '#ffffff'
+  return 0.299 * r + 0.587 * g + 0.114 * b
 }
+function textOn(hex: string): string { return lum(hex) > 0.48 ? '#000000' : '#ffffff' }
 
 function buildStats(positions: string[], s: any): StatItem[] {
   if (!s) return []
@@ -139,6 +140,7 @@ export default function LowerThirdOverlay() {
   const [teamState, setTeamState]           = useState<TeamOverlayStateRow | null>(null)
   const [homeTeam, setHomeTeam]             = useState<any>(null)
   const [awayTeam, setAwayTeam]             = useState<any>(null)
+  const [gameMeta, setGameMeta]             = useState<{ home_score: number|null; away_score: number|null; status: string } | null>(null)
   const [homePlayers, setHomePlayers]       = useState<any[]>([])
   const [awayPlayers, setAwayPlayers]       = useState<any[]>([])
   const [teamGameStats, setTeamGameStats]   = useState<any[]>([])
@@ -215,6 +217,7 @@ export default function LowerThirdOverlay() {
 
       setHomeTeam((game as any).home_team ?? null)
       setAwayTeam((game as any).away_team ?? null)
+      setGameMeta({ home_score: (game as any).home_score ?? null, away_score: (game as any).away_score ?? null, status: (game as any).status ?? '' })
 
       const teamIds = [(game as any).home_team?.id, (game as any).away_team?.id].filter(Boolean)
       const [{ data: players }, { data: gs }] = await Promise.all([
@@ -247,17 +250,32 @@ export default function LowerThirdOverlay() {
   const dimOnPrimary   = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)'
   const hairline       = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'
 
-  const showHome = teamState?.display_team === 'both' || teamState?.display_team === 'home'
-  const showAway = teamState?.display_team === 'both' || teamState?.display_team === 'away'
   const homeStats = calcTeamStats(homePlayers, teamGameStats)
   const awayStats = calcTeamStats(awayPlayers, teamGameStats)
-
-  /* ── How many team rows are visible (for spacing) ── */
-  const teamRowCount = (showHome && homeTeam ? 1 : 0) + (showAway && awayTeam ? 1 : 0)
-  const TEAM_ROW_H   = 60   // px per row
-  const TEAM_GAP     = 3    // px between rows
   const PLAYER_BOTTOM = 56  // px from bottom of screen
-  const TEAM_BOTTOM   = PLAYER_BOTTOM + 138 + 12  // above player card (nameplate ~80 + stats ~58 + 12 gap)
+
+  /* ── Team stats fullscreen layout constants ── */
+  const TW = 1760, TH = 900
+  const HEADER_H = 112, LOGO_W = 300
+  const hC = homeTeam?.primary_color ?? '#1a1a2e'
+  const aC = awayTeam?.primary_color ?? '#2e1a1a'
+  const hT = textOn(hC), aT = textOn(awayTeam?.primary_color ?? '#2e1a1a')
+  const homeDim = hT === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
+  const awayDim = aT === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
+  const statusLabel = gameMeta?.status === 'live' ? 'LIVE' : gameMeta?.status === 'final' ? 'FINAL' : null
+
+  type TStat = { label: string; h: string|number; a: string|number; accent?: string }
+  const STAT_ROWS: TStat[] = [
+    { label: 'PASS YDS',    h: homeStats.passYds,  a: awayStats.passYds  },
+    { label: 'RUSH YDS',    h: homeStats.rushYds,  a: awayStats.rushYds  },
+    { label: 'TOTAL YDS',   h: homeStats.totalYds, a: awayStats.totalYds },
+    { label: 'REC / TAR',   h: `${homeStats.receptions}/${homeStats.targets}`, a: `${awayStats.receptions}/${awayStats.targets}` },
+    { label: 'TOTAL TDs',   h: homeStats.tds,  a: awayStats.tds,  accent: '#04a550' },
+    { label: 'FIELD GOALS', h: homeStats.fgm,  a: awayStats.fgm  },
+    { label: 'INT',         h: homeStats.ints, a: awayStats.ints, accent: '#ff1d25' },
+    { label: 'FUMBLES',     h: homeStats.fumbles, a: awayStats.fumbles, accent: '#f59e0b' },
+  ]
+  const N_ROWS = STAT_ROWS.length
 
   return (
     <>
@@ -323,76 +341,107 @@ export default function LowerThirdOverlay() {
         )}
       </div>
 
-      {/* ══ TEAM STATS OVERLAY ══ */}
+      {/* ══ TEAM STATS OVERLAY — fullscreen comparison ══ */}
       <div style={{
         position: 'absolute',
-        bottom: TEAM_BOTTOM,
-        left: 72,
-        transition: 'transform 0.55s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease',
-        transform: teamVisible ? 'translateY(0)' : 'translateY(160%)',
-        opacity:   teamVisible ? 1 : 0,
+        top:  (1080 - TH) / 2,
+        left: (1920 - TW) / 2,
+        width: TW, height: TH,
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
+        boxShadow: '0 40px 120px rgba(0,0,0,0.95), 0 8px 40px rgba(0,0,0,0.8)',
+        opacity: teamVisible ? 1 : 0,
+        transform: teamVisible ? 'scale(1)' : 'scale(0.96)',
+        transition: 'opacity 0.45s cubic-bezier(0.22,1,0.36,1), transform 0.45s cubic-bezier(0.22,1,0.36,1)',
         pointerEvents: 'none',
-        display: 'inline-flex',
-        flexDirection: 'column',
-        gap: TEAM_GAP,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.85), 0 4px 20px rgba(0,0,0,0.6)',
       }}>
-        {showHome && homeTeam && <TeamStatsRow team={homeTeam} stats={homeStats} />}
-        {showAway && awayTeam && <TeamStatsRow team={awayTeam} stats={awayStats} />}
-      </div>
-    </>
-  )
-}
-
-/* ─── Team Stats Row ─── */
-function TeamStatsRow({ team, stats }: { team: any; stats: TeamStats }) {
-  const color      = team.primary_color ?? '#ff1d25'
-  const onColor    = textOn(color)
-  const dimOnColor = onColor === '#ffffff' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.50)'
-  const catchPct   = stats.targets > 0 ? Math.round(stats.receptions / stats.targets * 100) : 0
-
-  const cols: { label: string; value: string | number; accent?: string }[] = [
-    { label: 'PASS',    value: stats.passYds  },
-    { label: 'RUSH',    value: stats.rushYds  },
-    { label: 'REC',     value: stats.recYds   },
-    { label: 'TOTAL',   value: stats.totalYds },
-    { label: 'REC/TAR', value: `${stats.receptions}/${stats.targets}` },
-    { label: 'CATCH%',  value: stats.targets > 0 ? `${catchPct}%` : '—' },
-    { label: 'TDs',     value: stats.tds,     accent: '#04a550' },
-    { label: 'FG',      value: `${stats.fgm}/${stats.fga}` },
-    { label: 'EP',      value: `${stats.epm}/${stats.epa}` },
-    { label: 'INT',     value: stats.ints,    accent: '#ff1d25' },
-    { label: 'FUM',     value: stats.fumbles  },
-  ]
-
-  return (
-    <div style={{ display: 'inline-flex', alignItems: 'stretch' }}>
-      {/* Team identity */}
-      <div style={{ background: color, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px 8px 10px', minWidth: 160, flexShrink: 0 }}>
-        {team.logo_url && <img src={team.logo_url} alt="" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{ color: onColor, fontSize: 17, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.5, lineHeight: 1, whiteSpace: 'nowrap' }}>
-            {team.short_name.toUpperCase()}
-          </span>
-          <span style={{ color: dimOnColor, fontSize: 8, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', lineHeight: 1 }}>
-            {team.name}
-          </span>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div style={{ background: '#0b0e1a', display: 'flex', alignItems: 'center', padding: '0 12px', borderTop: `2px solid ${color}`, gap: 0 }}>
-        {cols.map((col, i) => (
-          <div key={col.label} style={{ textAlign: 'center', padding: '8px 12px', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
-            <div style={{ color: col.accent ?? '#ffffff', fontSize: 19, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, letterSpacing: -0.5 }}>
-              {col.value}
+        {/* Header: score */}
+        <div style={{ height: HEADER_H, flexShrink: 0, background: '#06080f', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}>
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, background: hC }} />
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 5, background: aC }} />
+          {/* Home */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 18, paddingRight: 48 }}>
+            {homeTeam?.logo_url && <img src={homeTeam.logo_url} alt="" style={{ width: 52, height: 52, objectFit: 'contain', opacity: 0.9 }} />}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>HOME</div>
+              <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 1, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1.2, marginTop: 2 }}>{homeTeam?.short_name?.toUpperCase() ?? '—'}</div>
             </div>
-            <div style={{ color: '#7a7a9a', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 3 }}>
-              {col.label}
+            <div style={{ fontSize: 62, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -2, lineHeight: 1, textShadow: `0 0 30px ${hC}80` }}>
+              {gameMeta?.home_score ?? 0}
             </div>
           </div>
-        ))}
+          {/* Center */}
+          <div style={{ width: 200, textAlign: 'center', flexShrink: 0 }}>
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 4, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', fontFamily: '"Arial Black", sans-serif' }}>TEAM STATS</div>
+            <div style={{ fontSize: 28, fontWeight: 900, color: 'rgba(255,255,255,0.15)', fontFamily: '"Arial Black", sans-serif', lineHeight: 1, marginTop: 2 }}>—</div>
+            {statusLabel && <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, color: gameMeta?.status === 'live' ? '#ff1d25' : '#04a550', textTransform: 'uppercase', fontFamily: '"Arial Black", sans-serif' }}>{statusLabel}</div>}
+          </div>
+          {/* Away */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 18, paddingLeft: 48 }}>
+            <div style={{ fontSize: 62, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -2, lineHeight: 1, textShadow: `0 0 30px ${aC}80` }}>
+              {gameMeta?.away_score ?? 0}
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>AWAY</div>
+              <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 1, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1.2, marginTop: 2 }}>{awayTeam?.short_name?.toUpperCase() ?? '—'}</div>
+            </div>
+            {awayTeam?.logo_url && <img src={awayTeam.logo_url} alt="" style={{ width: 52, height: 52, objectFit: 'contain', opacity: 0.9 }} />}
+          </div>
+        </div>
+
+        {/* Body: logo panels + stats */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {/* Home panel */}
+          <div style={{ width: LOGO_W, flexShrink: 0, background: hC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 70% 60% at 50% 45%, ${lum(hC) > 0.3 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)'} 0%, transparent 70%)` }} />
+            {homeTeam?.logo_url
+              ? <img src={homeTeam.logo_url} alt="" style={{ width: 200, height: 200, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 6px 24px rgba(0,0,0,0.45))' }} />
+              : <div style={{ fontSize: 56, fontWeight: 900, color: hT, fontFamily: '"Arial Black", sans-serif', position: 'relative', zIndex: 1 }}>{homeTeam?.short_name ?? '—'}</div>}
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 12px' }}>
+              <div style={{ fontSize: 24, fontWeight: 900, color: hT, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.5, lineHeight: 1, textTransform: 'uppercase' }}>{homeTeam?.short_name}</div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: homeDim, letterSpacing: 3, marginTop: 5, textTransform: 'uppercase', fontFamily: 'Arial' }}>{homeTeam?.name}</div>
+            </div>
+          </div>
+
+          {/* Center stats */}
+          <div style={{ flex: 1, background: '#080b14', display: 'flex', flexDirection: 'column' }}>
+            {STAT_ROWS.map(({ label, h, a, accent }, i) => {
+              const hNum = typeof h === 'number' ? h : null, aNum = typeof a === 'number' ? a : null
+              const hWins = hNum !== null && aNum !== null && hNum > aNum
+              const aWins = hNum !== null && aNum !== null && aNum > hNum
+              const rowH  = (TH - HEADER_H) / N_ROWS
+              const hi    = accent ?? '#ffffff'
+              return (
+                <div key={label} style={{ height: rowH, flexShrink: 0, display: 'flex', alignItems: 'center', background: i % 2 === 0 ? 'rgba(255,255,255,0.018)' : 'transparent', borderBottom: i < N_ROWS - 1 ? '1px solid rgba(255,255,255,0.038)' : 'none', padding: '0 12px', position: 'relative' }}>
+                  {hWins && <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: hi, borderRadius: '0 2px 2px 0', opacity: 0.7 }} />}
+                  {aWins && <div style={{ position: 'absolute', right: 0, top: '20%', bottom: '20%', width: 3, background: hi, borderRadius: '2px 0 0 2px', opacity: 0.7 }} />}
+                  <div style={{ flex: 1, textAlign: 'right', paddingRight: 36 }}>
+                    <span style={{ fontSize: hWins ? 40 : 34, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: hWins ? hi : 'rgba(255,255,255,0.55)', letterSpacing: -0.5, lineHeight: 1, textShadow: hWins && accent ? `0 0 24px ${accent}50` : 'none' }}>{h}</span>
+                  </div>
+                  <div style={{ width: 150, textAlign: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', fontFamily: '"Arial Black", Arial, sans-serif' }}>{label}</span>
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'left', paddingLeft: 36 }}>
+                    <span style={{ fontSize: aWins ? 40 : 34, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: aWins ? hi : 'rgba(255,255,255,0.55)', letterSpacing: -0.5, lineHeight: 1, textShadow: aWins && accent ? `0 0 24px ${accent}50` : 'none' }}>{a}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Away panel */}
+          <div style={{ width: LOGO_W, flexShrink: 0, background: aC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 70% 60% at 50% 45%, ${lum(aC) > 0.3 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)'} 0%, transparent 70%)` }} />
+            {awayTeam?.logo_url
+              ? <img src={awayTeam.logo_url} alt="" style={{ width: 200, height: 200, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 6px 24px rgba(0,0,0,0.45))' }} />
+              : <div style={{ fontSize: 56, fontWeight: 900, color: aT, fontFamily: '"Arial Black", sans-serif', position: 'relative', zIndex: 1 }}>{awayTeam?.short_name ?? '—'}</div>}
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 12px' }}>
+              <div style={{ fontSize: 24, fontWeight: 900, color: aT, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.5, lineHeight: 1, textTransform: 'uppercase' }}>{awayTeam?.short_name}</div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: awayDim, letterSpacing: 3, marginTop: 5, textTransform: 'uppercase', fontFamily: 'Arial' }}>{awayTeam?.name}</div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

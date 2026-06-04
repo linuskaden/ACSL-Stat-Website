@@ -36,8 +36,9 @@ export default function OverlayControlPage() {
   const [savingTeam, setSavingTeam] = useState(false)
 
   useEffect(() => {
-    setOverlayUrl(`${window.location.origin}/overlay/lower-third`)
-    setTeamOverlayUrl(`${window.location.origin}/overlay/team-stats`)
+    const combined = `${window.location.origin}/overlay/lower-third`
+    setOverlayUrl(combined)
+    setTeamOverlayUrl(combined)
   }, [])
 
   useEffect(() => {
@@ -996,32 +997,6 @@ function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUr
 
       {/* Controls row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-
-        {/* Display team selector */}
-        <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-          {([
-            { value: 'both', label: '⬛ Beide' },
-            { value: 'home', label: homeTeam ? `🏠 ${homeTeam.short_name}` : '🏠 Home' },
-            { value: 'away', label: awayTeam ? `✈️ ${awayTeam.short_name}` : '✈️ Away' },
-          ] as const).map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => onPush({ display_team: opt.value })}
-              style={{
-                padding: '7px 14px',
-                fontSize: 11,
-                fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer',
-                background: teamOverlay.display_team === opt.value ? '#ff1d25' : '#131826',
-                color: teamOverlay.display_team === opt.value ? 'white' : '#666',
-                transition: 'all 0.15s',
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
 
         {/* Show / Hide button */}
         <button
