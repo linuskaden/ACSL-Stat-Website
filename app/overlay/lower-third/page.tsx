@@ -256,7 +256,7 @@ export default function LowerThirdOverlay() {
 
   /* ── Team stats fullscreen layout constants ── */
   const TW = 1760, TH = 900
-  const HEADER_H = 112, LOGO_W = 300
+  const HEADER_H = 130, LOGO_W = 310
   const hC = homeTeam?.primary_color ?? '#1a1a2e'
   const aC = awayTeam?.primary_color ?? '#2e1a1a'
   const hT = textOn(hC), aT = textOn(awayTeam?.primary_color ?? '#2e1a1a')
@@ -355,51 +355,53 @@ export default function LowerThirdOverlay() {
         transition: 'opacity 0.45s cubic-bezier(0.22,1,0.36,1), transform 0.45s cubic-bezier(0.22,1,0.36,1)',
         pointerEvents: 'none',
       }}>
-        {/* Header: score */}
-        <div style={{ height: HEADER_H, flexShrink: 0, background: '#06080f', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, background: hC }} />
-          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 5, background: aC }} />
-          {/* Home */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 18, paddingRight: 48 }}>
-            {homeTeam?.logo_url && <img src={homeTeam.logo_url} alt="" style={{ width: 52, height: 52, objectFit: 'contain', opacity: 0.9 }} />}
+        {/* Header: score — no accent strips, no logos */}
+        <div style={{ height: HEADER_H, flexShrink: 0, background: '#06080f', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* Home score */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 20, paddingRight: 52 }}>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>HOME</div>
-              <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 1, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1.2, marginTop: 2 }}>{homeTeam?.short_name?.toUpperCase() ?? '—'}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>HOME</div>
+              <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1.15, marginTop: 3 }}>{homeTeam?.short_name?.toUpperCase() ?? '—'}</div>
             </div>
-            <div style={{ fontSize: 62, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -2, lineHeight: 1, textShadow: `0 0 30px ${hC}80` }}>
+            <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${hC}90` }}>
               {gameMeta?.home_score ?? 0}
             </div>
           </div>
-          {/* Center */}
-          <div style={{ width: 200, textAlign: 'center', flexShrink: 0 }}>
-            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 4, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', fontFamily: '"Arial Black", sans-serif' }}>TEAM STATS</div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: 'rgba(255,255,255,0.15)', fontFamily: '"Arial Black", sans-serif', lineHeight: 1, marginTop: 2 }}>—</div>
-            {statusLabel && <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, color: gameMeta?.status === 'live' ? '#ff1d25' : '#04a550', textTransform: 'uppercase', fontFamily: '"Arial Black", sans-serif' }}>{statusLabel}</div>}
+
+          {/* Center: big TEAM STATS title */}
+          <div style={{ width: 260, textAlign: 'center', flexShrink: 0 }}>
+            <div style={{ fontSize: 52, fontWeight: 900, letterSpacing: 2, color: 'rgba(255,255,255,0.12)', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, textTransform: 'uppercase' }}>TEAM</div>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 6, color: 'rgba(255,255,255,0.22)', fontFamily: '"Arial Black", sans-serif', lineHeight: 1, textTransform: 'uppercase', marginTop: -4 }}>STATS</div>
+            {statusLabel && (
+              <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 3, color: gameMeta?.status === 'live' ? '#ff1d25' : '#04a550', textTransform: 'uppercase', fontFamily: '"Arial Black", sans-serif', marginTop: 4 }}>
+                {statusLabel}
+              </div>
+            )}
           </div>
-          {/* Away */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 18, paddingLeft: 48 }}>
-            <div style={{ fontSize: 62, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -2, lineHeight: 1, textShadow: `0 0 30px ${aC}80` }}>
+
+          {/* Away score */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 20, paddingLeft: 52 }}>
+            <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${aC}90` }}>
               {gameMeta?.away_score ?? 0}
             </div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>AWAY</div>
-              <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 1, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1.2, marginTop: 2 }}>{awayTeam?.short_name?.toUpperCase() ?? '—'}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>AWAY</div>
+              <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1.15, marginTop: 3 }}>{awayTeam?.short_name?.toUpperCase() ?? '—'}</div>
             </div>
-            {awayTeam?.logo_url && <img src={awayTeam.logo_url} alt="" style={{ width: 52, height: 52, objectFit: 'contain', opacity: 0.9 }} />}
           </div>
         </div>
 
         {/* Body: logo panels + stats */}
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           {/* Home panel */}
-          <div style={{ width: LOGO_W, flexShrink: 0, background: hC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ width: LOGO_W, flexShrink: 0, background: hC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 70% 60% at 50% 45%, ${lum(hC) > 0.3 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)'} 0%, transparent 70%)` }} />
             {homeTeam?.logo_url
-              ? <img src={homeTeam.logo_url} alt="" style={{ width: 200, height: 200, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 6px 24px rgba(0,0,0,0.45))' }} />
-              : <div style={{ fontSize: 56, fontWeight: 900, color: hT, fontFamily: '"Arial Black", sans-serif', position: 'relative', zIndex: 1 }}>{homeTeam?.short_name ?? '—'}</div>}
-            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 12px' }}>
-              <div style={{ fontSize: 24, fontWeight: 900, color: hT, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.5, lineHeight: 1, textTransform: 'uppercase' }}>{homeTeam?.short_name}</div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: homeDim, letterSpacing: 3, marginTop: 5, textTransform: 'uppercase', fontFamily: 'Arial' }}>{homeTeam?.name}</div>
+              ? <img src={homeTeam.logo_url} alt="" style={{ width: 230, height: 230, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 8px 28px rgba(0,0,0,0.5))' }} />
+              : <div style={{ fontSize: 68, fontWeight: 900, color: hT, fontFamily: '"Arial Black", sans-serif', position: 'relative', zIndex: 1 }}>{homeTeam?.short_name ?? '—'}</div>}
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 14px' }}>
+              <div style={{ fontSize: 32, fontWeight: 900, color: hT, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 1, lineHeight: 1, textTransform: 'uppercase' }}>{homeTeam?.short_name}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: homeDim, letterSpacing: 3, marginTop: 6, textTransform: 'uppercase', fontFamily: 'Arial' }}>{homeTeam?.name}</div>
             </div>
           </div>
 
@@ -415,14 +417,14 @@ export default function LowerThirdOverlay() {
                 <div key={label} style={{ height: rowH, flexShrink: 0, display: 'flex', alignItems: 'center', background: i % 2 === 0 ? 'rgba(255,255,255,0.018)' : 'transparent', borderBottom: i < N_ROWS - 1 ? '1px solid rgba(255,255,255,0.038)' : 'none', padding: '0 12px', position: 'relative' }}>
                   {hWins && <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: hi, borderRadius: '0 2px 2px 0', opacity: 0.7 }} />}
                   {aWins && <div style={{ position: 'absolute', right: 0, top: '20%', bottom: '20%', width: 3, background: hi, borderRadius: '2px 0 0 2px', opacity: 0.7 }} />}
-                  <div style={{ flex: 1, textAlign: 'right', paddingRight: 36 }}>
-                    <span style={{ fontSize: hWins ? 40 : 34, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: hWins ? hi : 'rgba(255,255,255,0.55)', letterSpacing: -0.5, lineHeight: 1, textShadow: hWins && accent ? `0 0 24px ${accent}50` : 'none' }}>{h}</span>
+                  <div style={{ flex: 1, textAlign: 'right', paddingRight: 40 }}>
+                    <span style={{ fontSize: hWins ? 52 : 44, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: hWins ? hi : 'rgba(255,255,255,0.55)', letterSpacing: -1, lineHeight: 1, textShadow: hWins && accent ? `0 0 28px ${accent}60` : 'none' }}>{h}</span>
                   </div>
-                  <div style={{ width: 150, textAlign: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', fontFamily: '"Arial Black", Arial, sans-serif' }}>{label}</span>
+                  <div style={{ width: 170, textAlign: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2, color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', fontFamily: '"Arial Black", Arial, sans-serif' }}>{label}</span>
                   </div>
-                  <div style={{ flex: 1, textAlign: 'left', paddingLeft: 36 }}>
-                    <span style={{ fontSize: aWins ? 40 : 34, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: aWins ? hi : 'rgba(255,255,255,0.55)', letterSpacing: -0.5, lineHeight: 1, textShadow: aWins && accent ? `0 0 24px ${accent}50` : 'none' }}>{a}</span>
+                  <div style={{ flex: 1, textAlign: 'left', paddingLeft: 40 }}>
+                    <span style={{ fontSize: aWins ? 52 : 44, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: aWins ? hi : 'rgba(255,255,255,0.55)', letterSpacing: -1, lineHeight: 1, textShadow: aWins && accent ? `0 0 28px ${accent}60` : 'none' }}>{a}</span>
                   </div>
                 </div>
               )
@@ -430,14 +432,14 @@ export default function LowerThirdOverlay() {
           </div>
 
           {/* Away panel */}
-          <div style={{ width: LOGO_W, flexShrink: 0, background: aC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ width: LOGO_W, flexShrink: 0, background: aC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 70% 60% at 50% 45%, ${lum(aC) > 0.3 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)'} 0%, transparent 70%)` }} />
             {awayTeam?.logo_url
-              ? <img src={awayTeam.logo_url} alt="" style={{ width: 200, height: 200, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 6px 24px rgba(0,0,0,0.45))' }} />
-              : <div style={{ fontSize: 56, fontWeight: 900, color: aT, fontFamily: '"Arial Black", sans-serif', position: 'relative', zIndex: 1 }}>{awayTeam?.short_name ?? '—'}</div>}
-            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 12px' }}>
-              <div style={{ fontSize: 24, fontWeight: 900, color: aT, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.5, lineHeight: 1, textTransform: 'uppercase' }}>{awayTeam?.short_name}</div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: awayDim, letterSpacing: 3, marginTop: 5, textTransform: 'uppercase', fontFamily: 'Arial' }}>{awayTeam?.name}</div>
+              ? <img src={awayTeam.logo_url} alt="" style={{ width: 230, height: 230, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 8px 28px rgba(0,0,0,0.5))' }} />
+              : <div style={{ fontSize: 68, fontWeight: 900, color: aT, fontFamily: '"Arial Black", sans-serif', position: 'relative', zIndex: 1 }}>{awayTeam?.short_name ?? '—'}</div>}
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 14px' }}>
+              <div style={{ fontSize: 32, fontWeight: 900, color: aT, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 1, lineHeight: 1, textTransform: 'uppercase' }}>{awayTeam?.short_name}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: awayDim, letterSpacing: 3, marginTop: 6, textTransform: 'uppercase', fontFamily: 'Arial' }}>{awayTeam?.name}</div>
             </div>
           </div>
         </div>
