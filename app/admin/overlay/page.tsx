@@ -114,6 +114,11 @@ export default function OverlayControlPage() {
 
   const pushOverlay = useCallback(async (patch: Partial<OverlayState>) => {
     const supabase = createClient()
+    // Mutually exclusive: hide team stats whenever player overlay becomes visible
+    if (patch.visible === true) {
+      setTeamOverlay(prev => ({ ...prev, visible: false }))
+      supabase.from('team_overlay_state').update({ visible: false, updated_at: new Date().toISOString() }).eq('id', 1)
+    }
     const next = { ...overlay, ...patch }
     setOverlay(next)
     setSaving(true)
