@@ -159,6 +159,8 @@ export default function LowerThirdOverlay() {
       }
       setOverlayState(state)
       setPlayerVisible(state.visible)
+      // Mutual exclusion: showing player hides team stats
+      if (state.visible) setTeamVisible(false)
       if (!state.active_player_id) { setPlayer(null); setPlayerStats(null); return }
 
       const { data: p } = await supabase
@@ -207,6 +209,8 @@ export default function LowerThirdOverlay() {
       }
       setTeamState(s)
       setTeamVisible(s.visible)
+      // Mutual exclusion: showing team stats hides player card
+      if (s.visible) setPlayerVisible(false)
       if (!s.game_id) return
 
       const { data: game } = await supabase
