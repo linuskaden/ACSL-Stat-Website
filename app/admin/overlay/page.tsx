@@ -123,6 +123,11 @@ export default function OverlayControlPage() {
 
   const pushTeamOverlay = useCallback(async (patch: Partial<TeamOverlayState>) => {
     const supabase = createClient()
+    // Mutually exclusive: hide player overlay whenever team stats become visible
+    if (patch.visible === true) {
+      setOverlay(prev => ({ ...prev, visible: false }))
+      supabase.from('overlay_state').update({ visible: false, updated_at: new Date().toISOString() }).eq('id', 1)
+    }
     setTeamOverlay(prev => ({ ...prev, ...patch }))
     setSavingTeam(true)
     await supabase.from('team_overlay_state').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1)
@@ -138,6 +143,8 @@ export default function OverlayControlPage() {
   }
 
   async function showOnOverlay(player: Player, mode: 'live' | 'career') {
+    // Mutually exclusive: hide team stats overlay whenever a player becomes visible
+    void pushTeamOverlay({ visible: false })
     await pushOverlay({ active_player_id: player.id, game_id: selectedGame?.id ?? overlay.game_id, mode, visible: true })
   }
 
