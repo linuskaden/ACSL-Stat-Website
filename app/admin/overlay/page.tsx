@@ -36,9 +36,8 @@ export default function OverlayControlPage() {
   const [savingTeam, setSavingTeam] = useState(false)
 
   useEffect(() => {
-    const combined = `${window.location.origin}/overlay/lower-third`
-    setOverlayUrl(combined)
-    setTeamOverlayUrl(combined)
+    setOverlayUrl(`${window.location.origin}/overlay/lower-third`)
+    setTeamOverlayUrl(`${window.location.origin}/overlay/team-stats`)
   }, [])
 
   useEffect(() => {
@@ -283,6 +282,9 @@ export default function OverlayControlPage() {
         selectedGame={selectedGame}
         onPush={pushTeamOverlay}
         saving={savingTeam}
+        overlayUrl={teamOverlayUrl}
+        copied={copiedTeam}
+        onCopy={copyTeamUrl}
       />
 
       {/* ══ Player grid – two columns ══ */}
@@ -988,15 +990,15 @@ function BioCell({ label, value, span }: { label: string; value: string; span?: 
 /* ─────────────────────────────────
    Team Stats Overlay Control Panel
 ───────────────────────────────── */
-function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving }: {
+function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUrl, copied, onCopy }: {
   teamOverlay: TeamOverlayState
   selectedGame: Game | null
   onPush: (patch: Partial<TeamOverlayState>) => void
   saving: boolean
+  overlayUrl: string
+  copied: boolean
+  onCopy: () => void
 }) {
-  const homeTeam = selectedGame?.home_team
-  const awayTeam = selectedGame?.away_team
-
   return (
     <div style={{
       background: '#080b14',
@@ -1044,6 +1046,16 @@ function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving }: {
         >
           {teamOverlay.visible ? '▼ HIDE' : '▲ SHOW'}
         </button>
+
+        {/* vMix URL */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+          <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '5px 8px', fontSize: 11, color: '#888', whiteSpace: 'nowrap' }}>
+            {overlayUrl || '…'}
+          </code>
+          <button onClick={onCopy} style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700, borderRadius: 4, background: copied ? '#04a550' : '#1a2040', color: copied ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+            {copied ? '✓' : 'Copy'}
+          </button>
+        </div>
 
       </div>
 
