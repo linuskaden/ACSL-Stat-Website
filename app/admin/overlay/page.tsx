@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 type Team = { id: string; name: string; short_name: string; slug: string; primary_color: string; secondary_color: string; logo_url: string | null }
 type Player = { id: string; first_name: string; last_name: string; nickname: string | null; jersey_number: string | null; positions: string[]; team_id: string; is_active: boolean; height_cm: number | null; weight_kg: number | null; country: string | null; hometown: string | null; field_of_study: string | null; semester: string | null; acsl_since: string | null; fun_fact: string | null; football_experience: string | null }
 type Game = { id: string; status: 'scheduled' | 'live' | 'final'; game_type: string; season: number; home_score: number | null; away_score: number | null; scheduled_at: string | null; home_team: Team; away_team: Team | null }
-type OverlayState = { active_player_id: string | null; game_id: string | null; mode: 'live' | 'career'; visible: boolean }
+type OverlayState = { active_player_id: string | null; game_id: string | null; mode: 'live' | 'career' | 'intro'; visible: boolean }
 
 const POSITIONS = ['Alle', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
@@ -147,7 +147,7 @@ export default function OverlayControlPage() {
     pushTeamOverlay({ game_id: gameId })
   }
 
-  async function showOnOverlay(player: Player, mode: 'live' | 'career') {
+  async function showOnOverlay(player: Player, mode: 'live' | 'career' | 'intro') {
     // Mutually exclusive: hide team stats overlay whenever a player becomes visible
     void pushTeamOverlay({ visible: false })
     await pushOverlay({ active_player_id: player.id, game_id: selectedGame?.id ?? overlay.game_id, mode, visible: true })
@@ -449,7 +449,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
   player: Player | null
   team: Team | null | undefined
   stats: any
-  mode: 'live' | 'career'
+  mode: 'live' | 'career' | 'intro'
   visible: boolean
   teamOverlay: TeamOverlayState
   homeTeam: Team | null | undefined
@@ -463,7 +463,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
   const onPrimary      = team ? textOn(primaryColor) : '#ffffff'
   const dimOnPrimary   = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)'
   const hairline       = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'
-  const statItems      = player ? buildStatItems(player.positions, stats) : []
+  const statItems      = player && mode !== 'intro' ? buildStatItems(player.positions, stats) : []
   const modeLabel      = mode === 'career' ? '2026 SEASON' : 'GAME STATS'
   const hasStats       = statItems.length > 0
 
@@ -791,9 +791,9 @@ function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter
 function PlayerModal({ player, team, careerStats, loadingStats, overlayActiveId, overlayVisible, overlayMode, onClose, onShow, onHide }: {
   player: Player; team: Team | null | undefined
   careerStats: any; loadingStats: boolean
-  overlayActiveId: string | null; overlayVisible: boolean; overlayMode: 'live' | 'career'
+  overlayActiveId: string | null; overlayVisible: boolean; overlayMode: 'live' | 'career' | 'intro'
   onClose: () => void
-  onShow: (mode: 'live' | 'career') => void
+  onShow: (mode: 'live' | 'career' | 'intro') => void
   onHide: () => void
 }) {
   const isOnAir = player.id === overlayActiveId
@@ -898,6 +898,25 @@ function PlayerModal({ player, team, careerStats, loadingStats, overlayActiveId,
               )
             })()}
           </div>
+
+          {/* Nur Karte — nameplate only, no stats bar */}
+          {(() => {
+            const isIntroActive = isOnAir && overlayVisible && overlayMode === 'intro'
+            return (
+              <button
+                onClick={() => isIntroActive ? onHide() : onShow('intro')}
+                style={{
+                  width: '100%', marginTop: 8, padding: '9px 8px', fontSize: 12, fontWeight: 800,
+                  border: `1px solid ${isIntroActive ? primaryColor : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: 8, cursor: 'pointer',
+                  background: isIntroActive ? `${primaryColor}22` : 'rgba(255,255,255,0.03)',
+                  color: isIntroActive ? primaryColor : '#888',
+                }}
+              >
+                {isIntroActive ? '▼ Ausblenden' : '👤 Nur Karte einblenden'}
+              </button>
+            )
+          })()}
         </div>
           )
         })()}

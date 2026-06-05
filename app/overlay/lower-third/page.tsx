@@ -8,7 +8,7 @@ type OverlayStateRow = {
   id: number
   active_player_id: string | null
   game_id: string | null
-  mode: 'live' | 'career'
+  mode: 'live' | 'career' | 'intro'
   visible: boolean
 }
 type TeamOverlayStateRow = {
@@ -167,7 +167,9 @@ export default function LowerThirdOverlay() {
         .from('players').select('*, team:teams(*)').eq('id', state.active_player_id).single()
       setPlayer(p)
 
-      if (state.mode === 'live' && state.game_id) {
+      if (state.mode === 'intro') {
+        setPlayerStats(null) // no stats in intro/nameplate-only mode
+      } else if (state.mode === 'live' && state.game_id) {
         const { data: gs } = await supabase
           .from('game_stats').select('*')
           .eq('game_id', state.game_id).eq('player_id', state.active_player_id)
