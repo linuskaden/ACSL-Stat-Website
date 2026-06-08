@@ -382,8 +382,8 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
           )}
         </td>
         <td className="text-center px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-mono">{player.jersey_number ?? '—'}</td>
-        {fields.map(field => (
-          <td key={field} className="stats-cell text-center px-1 py-1">
+        {fields.map((field, i) => (
+          <td key={field} className={`stats-cell text-center px-1 py-1${pos === 'QB' && i === 5 ? ' border-l-2 border-l-black/20 dark:border-l-white/[0.1]' : ''}`}>
             {readOnly ? (
               <span className="font-semibold">{getV(field as string)}</span>
             ) : (
@@ -431,8 +431,8 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
             <span style={{ color: teamColor }}>{pos}</span>
           </th>
           <th className="px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] border-b border-black/10 dark:border-white/10 w-8">#</th>
-          {headers.map(h => (
-            <th key={h} className="text-center px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-medium border-b border-black/10 dark:border-white/10 min-w-[56px]">{h}</th>
+          {headers.map((h, i) => (
+            <th key={h} className={`text-center px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-medium border-b border-black/10 dark:border-white/10 min-w-[56px]${pos === 'QB' && i === 5 ? ' border-l-2 border-l-black/25 dark:border-l-white/[0.15]' : ''}`}>{h}</th>
           ))}
           {pos === 'QB' && <><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[52px]">Total YDS</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">Y/Comp</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[52px]">Comp%</th></>}
           {pos === 'RB' && <th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">YPC</th>}
