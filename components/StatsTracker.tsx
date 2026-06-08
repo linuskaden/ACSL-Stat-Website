@@ -388,7 +388,7 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
               <span className="font-semibold">{getV(field as string)}</span>
             ) : (
               <input
-                type="number" min="0" step={field === 'sacks' ? '0.5' : '1'}
+                type="number" step={field === 'sacks' ? '0.5' : '1'}
                 value={getStat(player.id, field as string) || ''}
                 placeholder="0"
                 onChange={e => setStat(player.id, field as string, Number(e.target.value) || 0)}
