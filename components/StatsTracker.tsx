@@ -11,13 +11,13 @@ type AllStats = Record<string, Record<string, StatRow>> // [quarter][playerId] =
 
 const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4', 'OT']
 
-const QB_FIELDS = ['pass_yards','pass_completions','pass_attempts','pass_tds','interceptions_thrown','qb_rush_yards','rush_carries','qb_rush_tds'] as const
+const QB_FIELDS = ['pass_yards','pass_completions','pass_attempts','pass_tds','interceptions_thrown','qb_rush_yards','rush_carries','qb_rush_tds','qb_fumbles'] as const
 const RB_FIELDS = ['rush_carries','rush_yards','rush_tds','rb_rec_yards','rb_receptions','rb_targets','rb_fumbles'] as const
 const REC_FIELDS = ['rec_yards','receptions','rec_targets','rec_tds','rec_fumbles'] as const
 const DEF_FIELDS = ['sacks','def_interceptions'] as const
 const K_FIELDS = ['fg_made','fg_attempts','ep_made','ep_attempts'] as const
 
-const QB_HEADERS = ['Pass YDS','Comp','Att','Pass TD','INT','Rush YDS','Carries','Rush TD']
+const QB_HEADERS = ['Pass YDS','Comp','Att','Pass TD','INT','Rush YDS','Carries','Rush TD','Fumbles']
 const RB_HEADERS = ['Carries','Rush YDS','Rush TD','Rec YDS','Rec','Tar','Fumbles']
 const REC_HEADERS = ['Rec YDS','Rec','Tar','Rec TD','Fumbles']
 const DEF_HEADERS = ['Sacks','INT']
