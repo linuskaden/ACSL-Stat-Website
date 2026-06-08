@@ -11,13 +11,13 @@ type AllStats = Record<string, Record<string, StatRow>> // [quarter][playerId] =
 
 const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4', 'OT']
 
-const QB_FIELDS = ['pass_yards','pass_completions','pass_attempts','pass_tds','interceptions_thrown','qb_rush_yards','qb_rush_tds'] as const
+const QB_FIELDS = ['pass_yards','pass_completions','pass_attempts','pass_tds','interceptions_thrown','qb_rush_yards','rush_carries','qb_rush_tds'] as const
 const RB_FIELDS = ['rush_carries','rush_yards','rush_tds','rb_rec_yards','rb_receptions','rb_targets','rb_fumbles'] as const
 const REC_FIELDS = ['rec_yards','receptions','rec_targets','rec_tds','rec_fumbles'] as const
 const DEF_FIELDS = ['sacks','def_interceptions'] as const
 const K_FIELDS = ['fg_made','fg_attempts','ep_made','ep_attempts'] as const
 
-const QB_HEADERS = ['Pass YDS','Comp','Att','Pass TD','INT','Rush YDS','Rush TD']
+const QB_HEADERS = ['Pass YDS','Comp','Att','Pass TD','INT','Rush YDS','Carries','Rush TD']
 const RB_HEADERS = ['Carries','Rush YDS','Rush TD','Rec YDS','Rec','Tar','Fumbles']
 const REC_HEADERS = ['Rec YDS','Rec','Tar','Rec TD','Fumbles']
 const DEF_HEADERS = ['Sacks','INT']
@@ -401,7 +401,7 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
         {pos === 'QB' && <>
           <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold border-l-2 border-black/[0.12] dark:border-white/[0.08] bg-black/[0.025] dark:bg-white/[0.025]">{getV('pass_yards') + getV('qb_rush_yards')}</td>
           <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold bg-black/[0.025] dark:bg-white/[0.025]">{getV('pass_tds') + getV('qb_rush_tds')}</td>
-          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] bg-black/[0.025] dark:bg-white/[0.025]">{calcYPA(getV('pass_yards'), getV('pass_attempts'))}</td>
+          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] bg-black/[0.025] dark:bg-white/[0.025]">{calcYPC(getV('pass_yards'), getV('pass_completions'))}</td>
           <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] bg-black/[0.025] dark:bg-white/[0.025]">{calcCompPct(getV('pass_completions'), getV('pass_attempts'))}</td>
         </>}
         {pos === 'RB' && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-l-2 border-black/[0.12] dark:border-white/[0.08] bg-black/[0.025] dark:bg-white/[0.025]">{calcYPC(getV('rush_yards'), getV('rush_carries'))}</td>}
@@ -434,7 +434,7 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
           {headers.map(h => (
             <th key={h} className="text-center px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-medium border-b border-black/10 dark:border-white/10 min-w-[56px]">{h}</th>
           ))}
-          {pos === 'QB' && <><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[52px]">Total YDS</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">YPA</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[52px]">Comp%</th></>}
+          {pos === 'QB' && <><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[52px]">Total YDS</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">Y/Comp</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[52px]">Comp%</th></>}
           {pos === 'RB' && <th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">YPC</th>}
           {['WR','TE'].includes(pos) && <th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">YPR</th>}
         </tr>
