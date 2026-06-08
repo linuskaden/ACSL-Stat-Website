@@ -144,6 +144,36 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const scoreTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Realtime sync: merge incoming stat changes from other tracker instances
+  useEffect(() => {
+    const supabase = createClient()
+    const ch = supabase.channel(`stats-sync-${game.id}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'game_stats', filter: `game_id=eq.${game.id}` },
+        ({ new: row, eventType }) => {
+          if (eventType === 'DELETE') return
+          const r = row as any
+          if (!r.player_id || !r.quarter) return
+          const key = `${r.quarter}-${r.player_id}`
+          // Skip if we have a pending local save for this player/quarter —
+          // our in-flight changes take priority over the incoming remote row
+          if (saveTimers.current[key]) return
+          setAllStats(prev => {
+            const next = { ...prev }
+            if (!next[r.quarter]) next[r.quarter] = {}
+            // Field-level merge: keep local values, apply remote values on top
+            next[r.quarter] = {
+              ...next[r.quarter],
+              [r.player_id]: { ...(next[r.quarter][r.player_id] ?? {}), ...r },
+            }
+            return next
+          })
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [game.id]) // eslint-disable-line
+
   // Auto-calculate score from TDs and kicker stats
   useEffect(() => {
     const newHome = calcTeamScore(allStats, homePlayers)

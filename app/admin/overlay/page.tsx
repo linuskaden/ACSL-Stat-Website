@@ -40,6 +40,18 @@ export default function OverlayControlPage() {
     setTeamOverlayUrl(`${window.location.origin}/overlay/team-stats`)
   }, [])
 
+  // Realtime sync: keep local state in sync if another admin operates the overlay
+  useEffect(() => {
+    const supabase = createClient()
+    const ch = supabase.channel('admin-overlay-sync')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'overlay_state' },
+        ({ new: row }) => setOverlay(row as OverlayState))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'team_overlay_state' },
+        ({ new: row }) => setTeamOverlay(row as TeamOverlayState))
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [])
+
   useEffect(() => {
     const supabase = createClient()
     async function init() {
