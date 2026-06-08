@@ -397,16 +397,16 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
             )}
           </td>
         ))}
-        {/* Auto-calculated */}
+        {/* Auto-calculated — separated with left border + tinted bg */}
         {pos === 'QB' && <>
-          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold">{getV('pass_yards') + getV('qb_rush_yards')}</td>
-          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold">{getV('pass_tds') + getV('qb_rush_tds')}</td>
-          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a]">{calcYPA(getV('pass_yards'), getV('pass_attempts'))}</td>
-          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a]">{calcCompPct(getV('pass_completions'), getV('pass_attempts'))}</td>
+          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold border-l-2 border-black/[0.12] dark:border-white/[0.08] bg-black/[0.025] dark:bg-white/[0.025]">{getV('pass_yards') + getV('qb_rush_yards')}</td>
+          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold bg-black/[0.025] dark:bg-white/[0.025]">{getV('pass_tds') + getV('qb_rush_tds')}</td>
+          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] bg-black/[0.025] dark:bg-white/[0.025]">{calcYPA(getV('pass_yards'), getV('pass_attempts'))}</td>
+          <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] bg-black/[0.025] dark:bg-white/[0.025]">{calcCompPct(getV('pass_completions'), getV('pass_attempts'))}</td>
         </>}
-        {pos === 'RB' && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a]">{calcYPC(getV('rush_yards'), getV('rush_carries'))}</td>}
-        {['WR','TE'].includes(pos) && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a]">{calcYPR(getV('rec_yards'), getV('receptions'))}</td>}
-        {pos === 'K/P' && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold">{getV('fg_made') * 3 + getV('ep_made')}</td>}
+        {pos === 'RB' && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-l-2 border-black/[0.12] dark:border-white/[0.08] bg-black/[0.025] dark:bg-white/[0.025]">{calcYPC(getV('rush_yards'), getV('rush_carries'))}</td>}
+        {['WR','TE'].includes(pos) && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-l-2 border-black/[0.12] dark:border-white/[0.08] bg-black/[0.025] dark:bg-white/[0.025]">{calcYPR(getV('rec_yards'), getV('receptions'))}</td>}
+        {pos === 'K/P' && <td className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] font-semibold border-l-2 border-black/[0.12] dark:border-white/[0.08] bg-black/[0.025] dark:bg-white/[0.025]">{getV('fg_made') * 3 + getV('ep_made')}</td>}
       </tr>
     )
   }
@@ -434,9 +434,9 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
           {headers.map(h => (
             <th key={h} className="text-center px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-medium border-b border-black/10 dark:border-white/10 min-w-[56px]">{h}</th>
           ))}
-          {pos === 'QB' && <><th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[52px]">Total YDS</th><th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">YPA</th><th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[52px]">Comp%</th></>}
-          {pos === 'RB' && <th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">YPC</th>}
-          {['WR','TE'].includes(pos) && <th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">YPR</th>}
+          {pos === 'QB' && <><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[52px]"><span className="block text-[8px] not-italic tracking-wider text-slate-400/70 dark:text-[#3a3a3a] leading-none mb-0.5">auto</span>Total YDS</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">Total TD</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]">YPA</th><th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-black/10 dark:border-white/10 bg-black/[0.025] dark:bg-white/[0.03] min-w-[52px]">Comp%</th></>}
+          {pos === 'RB' && <th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]"><span className="block text-[8px] not-italic tracking-wider text-slate-400/70 dark:text-[#3a3a3a] leading-none mb-0.5">auto</span>YPC</th>}
+          {['WR','TE'].includes(pos) && <th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]"><span className="block text-[8px] not-italic tracking-wider text-slate-400/70 dark:text-[#3a3a3a] leading-none mb-0.5">auto</span>YPR</th>}
         </tr>
         {posPlayers.map(p => renderPlayerRow(p, fields, pos))}
       </React.Fragment>
@@ -460,7 +460,7 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
               {K_HEADERS.map(h => (
                 <th key={h} className="text-center px-2 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-medium border-b border-black/10 dark:border-white/10 min-w-[56px]">{h}</th>
               ))}
-              <th className="text-center px-2 py-1.5 text-slate-400 dark:text-[#5a5a5a] border-b border-black/10 dark:border-white/10 min-w-[48px]">PTS</th>
+              <th className="text-center px-2 py-1.5 italic text-slate-400 dark:text-[#4a4a4a] border-b border-l-2 border-black/10 dark:border-white/10 border-l-black/20 dark:border-l-white/[0.12] bg-black/[0.025] dark:bg-white/[0.03] min-w-[48px]"><span className="block text-[8px] not-italic tracking-wider text-slate-400/70 dark:text-[#3a3a3a] leading-none mb-0.5">auto</span>PTS</th>
             </tr>
             {kickerPlayers.map(p => renderPlayerRow(p, K_FIELDS, 'K/P'))}
           </React.Fragment>
