@@ -355,8 +355,8 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
   const posGroups: Record<string, Player[]> = {}
   players.forEach(p => {
     const primaryPos = p.positions[0] ?? 'DEF'
-    // Reine Kicker/Punter kommen nur in den Kicker-Abschnitt unten
-    if (['K', 'P'].includes(primaryPos)) return
+    // Reine Kicker/Punter kommen nur in den Kicker-Abschnitt unten; OL hat keine Stats
+    if (['K', 'P', 'OL'].includes(primaryPos)) return
     if (!posGroups[primaryPos]) posGroups[primaryPos] = []
     posGroups[primaryPos].push(p)
   })
@@ -413,7 +413,7 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
 
   // Feste Anzeigereihenfolge: Offense → K/P → Defense
   const OFFENSE_ORDER = ['QB', 'RB', 'WR', 'TE']
-  const DEFENSE_ORDER = ['DB', 'DL', 'LB', 'OL']
+  const DEFENSE_ORDER = ['DB', 'DL', 'LB']
   // Alles was nicht explizit eingeordnet ist kommt ganz am Ende
   const OTHER_KEYS = Object.keys(posGroups).filter(
     p => !OFFENSE_ORDER.includes(p) && !DEFENSE_ORDER.includes(p)
