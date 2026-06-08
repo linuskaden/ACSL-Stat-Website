@@ -426,7 +426,7 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
     const { fields, headers } = getPositionFields(nonKickerPos)
     return (
       <React.Fragment key={pos}>
-        <tr className="bg-[#f1f5f9] dark:bg-[#1a1a1a] sticky top-0 z-10">
+        <tr className="bg-[#f1f5f9] dark:bg-[#1a1a1a]">
           <th className="text-left px-3 py-1.5 text-slate-500 dark:text-[#7a7a7a] font-semibold uppercase tracking-wider border-b border-black/10 dark:border-white/10 w-32">
             <span style={{ color: teamColor }}>{pos}</span>
           </th>
@@ -452,7 +452,7 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
         {/* K / P (zwischen Offense und Defense) */}
         {kickerPlayers.length > 0 && (
           <React.Fragment key="K/P">
-            <tr className="bg-[#f1f5f9] dark:bg-[#1a1a1a] sticky top-0 z-10">
+            <tr className="bg-[#f1f5f9] dark:bg-[#1a1a1a]">
               <th className="text-left px-3 py-1.5 font-semibold uppercase tracking-wider border-b border-black/10 dark:border-white/10 w-32">
                 <span style={{ color: teamColor }}>K / P</span>
               </th>
