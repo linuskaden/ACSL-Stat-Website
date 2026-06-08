@@ -94,7 +94,7 @@ function n(v: number | undefined, decimals = 0): string {
 function ypa(yards: number | undefined, att: number | undefined): string {
   const y = yards ?? 0
   const a = att ?? 0
-  return a > 0 ? (y / a).toFixed(1) : '—'
+  return a > 0 ? (y / a).toFixed(1) : '0.0'
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────

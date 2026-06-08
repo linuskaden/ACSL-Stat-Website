@@ -215,7 +215,7 @@ function LiveStatsTable({ title, players, teamColor }: { title: string; players:
                             : 'text-slate-900 dark:text-white'
                           return (
                             <td key={c.h} className={`text-center px-2 py-2 font-semibold tabular-nums ${color}`}>
-                              {zeroAccent ? '—' : v}
+                              {v}
                             </td>
                           )
                         })}
