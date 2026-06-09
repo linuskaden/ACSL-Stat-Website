@@ -556,14 +556,14 @@ function OperatorPreview({ player, team, stats, mode, visible,
                       <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>HOME</div>
                       <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 1, lineHeight: 1.15, marginTop: 3 }}>{homeTeam?.short_name?.toUpperCase() ?? '—'}</div>
                     </div>
-                    <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${hC}90` }}>0</div>
+                    <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${hC}90` }}>{hS.tds * 6 + hS.fgm * 3 + hS.epm}</div>
                   </div>
                   <div style={{ width: 260, textAlign: 'center', flexShrink: 0 }}>
                     <div style={{ fontSize: 52, fontWeight: 900, letterSpacing: 2, color: 'rgba(255,255,255,0.12)', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, textTransform: 'uppercase' }}>TEAM</div>
                     <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 6, color: 'rgba(255,255,255,0.22)', fontFamily: '"Arial Black", sans-serif', lineHeight: 1, textTransform: 'uppercase', marginTop: -4 }}>STATS</div>
                   </div>
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 20, paddingLeft: 52 }}>
-                    <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${aC}90` }}>0</div>
+                    <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${aC}90` }}>{aS.tds * 6 + aS.fgm * 3 + aS.epm}</div>
                     <div>
                       <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>AWAY</div>
                       <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 1, lineHeight: 1.15, marginTop: 3 }}>{awayTeam?.short_name?.toUpperCase() ?? '—'}</div>

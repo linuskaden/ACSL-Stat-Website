@@ -18,13 +18,13 @@ type TeamOverlayState = {
 }
 type TeamStats = {
   passYds: number; rushYds: number; totalYds: number
-  tds: number; fgMade: number; ints: number; fumbles: number
+  tds: number; fgMade: number; epMade: number; ints: number; fumbles: number
   completions: number; attempts: number
 }
 
 // ── Stat calculation ──────────────────────────────────────────────────────────
 function emptyStats(): TeamStats {
-  return { passYds: 0, rushYds: 0, totalYds: 0, tds: 0, fgMade: 0, ints: 0, fumbles: 0, completions: 0, attempts: 0 }
+  return { passYds: 0, rushYds: 0, totalYds: 0, tds: 0, fgMade: 0, epMade: 0, ints: 0, fumbles: 0, completions: 0, attempts: 0 }
 }
 
 function calcStats(players: any[], rows: any[]): TeamStats {
@@ -57,6 +57,7 @@ function calcStats(players: any[], rows: any[]): TeamStats {
       s.fumbles += q.rec_fumbles ?? 0
     } else if (pos.some(pp => ['K', 'P'].includes(pp))) {
       s.fgMade += q.fg_made ?? 0
+      s.epMade += q.ep_made ?? 0
     }
   }
   s.totalYds = s.passYds + s.rushYds
@@ -195,7 +196,7 @@ export default function TeamStatsOverlay() {
             <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1.15, marginTop: 3 }}>{homeTeam?.short_name?.toUpperCase() ?? '—'}</div>
           </div>
           <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${hC}90` }}>
-            {gameMeta?.home_score ?? 0}
+            {homeStats.tds * 6 + homeStats.fgMade * 3 + homeStats.epMade}
           </div>
         </div>
 
@@ -213,7 +214,7 @@ export default function TeamStatsOverlay() {
         {/* Away side */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 20, paddingLeft: 52 }}>
           <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${aC}90` }}>
-            {gameMeta?.away_score ?? 0}
+            {awayStats.tds * 6 + awayStats.fgMade * 3 + awayStats.epMade}
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>AWAY</div>
