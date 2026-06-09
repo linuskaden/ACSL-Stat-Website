@@ -25,10 +25,11 @@ function textOn(hex: string): string { return lum(hex) > 0.48 ? '#000000' : '#ff
 function buildStats(positions: string[], s: any): StatItem[] {
   if (!s) return []
   const items: StatItem[] = []
+  const primaryPos = positions[0] ?? ''
   const hasKP  = positions.some((p: string) => ['K', 'P'].includes(p))
   const hasDef = positions.some((p: string) => ['DB', 'LB', 'DL', 'OL'].includes(p))
 
-  if (positions.includes('QB')) {
+  if (primaryPos === 'QB') {
     items.push(
       { label: 'PASS YDS', value: s.pass_yards ?? 0 },
       { label: 'TDs',      value: (s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0) },
@@ -36,7 +37,7 @@ function buildStats(positions: string[], s: any): StatItem[] {
       { label: 'COMP/ATT', value: `${s.pass_completions ?? 0}/${s.pass_attempts ?? 0}` },
       { label: 'RUSH YDS', value: s.qb_rush_yards ?? 0 },
     )
-  } else if (positions.includes('RB')) {
+  } else if (primaryPos === 'RB') {
     items.push(
       { label: 'RUSH YDS', value: s.rush_yards ?? 0 },
       { label: 'TDs',      value: s.rush_tds ?? 0 },
@@ -44,7 +45,7 @@ function buildStats(positions: string[], s: any): StatItem[] {
       { label: 'YPC',      value: calcYPC(s.rush_yards ?? 0, s.rush_carries ?? 0) },
       { label: 'REC YDS',  value: s.rb_rec_yards ?? 0 },
     )
-  } else if (positions.some((p: string) => ['WR', 'TE'].includes(p))) {
+  } else if (['WR', 'TE'].includes(primaryPos)) {
     items.push(
       { label: 'REC YDS', value: s.rec_yards ?? 0 },
       { label: 'TDs',     value: s.rec_tds ?? 0 },

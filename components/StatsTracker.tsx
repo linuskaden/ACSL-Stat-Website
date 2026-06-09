@@ -46,10 +46,11 @@ function darkSafe(hex?: string | null): string {
 }
 
 function getPositionFields(pos: string[]): { fields: readonly string[]; headers: string[] } {
-  if (pos.includes('QB')) return { fields: QB_FIELDS, headers: QB_HEADERS }
-  if (pos.includes('RB')) return { fields: RB_FIELDS, headers: RB_HEADERS }
-  if (pos.some(p => ['WR','TE'].includes(p))) return { fields: REC_FIELDS, headers: REC_HEADERS }
-  if (pos.some(p => ['K','P'].includes(p))) return { fields: K_FIELDS, headers: K_HEADERS }
+  const primaryPos = pos[0] ?? ''
+  if (primaryPos === 'QB') return { fields: QB_FIELDS, headers: QB_HEADERS }
+  if (primaryPos === 'RB') return { fields: RB_FIELDS, headers: RB_HEADERS }
+  if (['WR', 'TE'].includes(primaryPos)) return { fields: REC_FIELDS, headers: REC_HEADERS }
+  if (['K', 'P'].includes(primaryPos)) return { fields: K_FIELDS, headers: K_HEADERS }
   return { fields: DEF_FIELDS, headers: DEF_HEADERS }
 }
 
@@ -59,8 +60,9 @@ function calcTeamScore(stats: AllStats, players: Player[]): number {
     QUARTERS.forEach(q => {
       const s = stats[q]?.[p.id] ?? {}
       const pos = p.positions as string[]
-      if (pos.includes('QB')) score += ((s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0)) * 6
-      else if (pos.includes('RB')) score += (s.rush_tds ?? 0) * 6
+      const primaryPos = pos[0] ?? ''
+      if (primaryPos === 'QB') score += ((s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0)) * 6
+      else if (primaryPos === 'RB') score += (s.rush_tds ?? 0) * 6
       // WR/TE rec_tds = selbe TDs wie QB pass_tds → nicht nochmal zählen
       // K/P als separates if (nicht else if) — Dual-Position-Spieler wie RB/K zählen hier auch
       if (pos.some((pp: string) => ['K','P'].includes(pp))) score += (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0)
@@ -90,20 +92,21 @@ function teamTotals(allStats: AllStats, players: Player[], quarter: string) {
       ? QUARTERS.reduce((acc, q) => ({ ...acc, ...Object.fromEntries(Object.entries(allStats[q]?.[p.id] ?? {}).map(([k, v]) => [k, (acc[k] ?? 0) + (v ?? 0)])) }), {} as StatRow)
       : allStats[quarter]?.[p.id]) ?? {}
     const pos = p.positions
+    const primaryPos = pos[0] ?? ''
 
-    if (pos.includes('QB')) {
+    if (primaryPos === 'QB') {
       totalPassYds += qs.pass_yards     ?? 0
       totalRushYds += qs.qb_rush_yards  ?? 0
       totalTDs     += (qs.pass_tds ?? 0) + (qs.qb_rush_tds ?? 0)
       totalINTs    += qs.interceptions_thrown ?? 0
-    } else if (pos.includes('RB')) {
+    } else if (primaryPos === 'RB') {
       totalRushYds    += qs.rush_yards    ?? 0
       totalRecYds     += qs.rb_rec_yards  ?? 0
       totalTDs        += qs.rush_tds      ?? 0
       totalFumbles    += qs.rb_fumbles    ?? 0
       totalTargets    += qs.rb_targets    ?? 0
       totalReceptions += qs.rb_receptions ?? 0
-    } else if (pos.some(pp => ['WR','TE'].includes(pp))) {
+    } else if (['WR', 'TE'].includes(primaryPos)) {
       totalRecYds     += qs.rec_yards     ?? 0
       totalFumbles    += qs.rec_fumbles   ?? 0
       totalTargets    += qs.rec_targets   ?? 0

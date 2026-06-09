@@ -369,10 +369,11 @@ export default function OverlayControlPage() {
 function buildStatItems(positions: string[], s: any): { label: string; value: string | number }[] {
   if (!s) return []
   const items: { label: string; value: string | number }[] = []
+  const primaryPos = positions[0] ?? ''
   const hasKP  = positions.some((p: string) => ['K', 'P'].includes(p))
   const hasDef = positions.some((p: string) => ['DB', 'LB', 'DL', 'OL'].includes(p))
 
-  if (positions.includes('QB')) {
+  if (primaryPos === 'QB') {
     items.push(
       { label: 'PASS YDS', value: s.pass_yards ?? 0 },
       { label: 'TDs', value: (s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0) },
@@ -380,7 +381,7 @@ function buildStatItems(positions: string[], s: any): { label: string; value: st
       { label: 'C/ATT', value: `${s.pass_completions ?? 0}/${s.pass_attempts ?? 0}` },
       { label: 'RUSH', value: s.qb_rush_yards ?? 0 },
     )
-  } else if (positions.includes('RB')) {
+  } else if (primaryPos === 'RB') {
     items.push(
       { label: 'RUSH YDS', value: s.rush_yards ?? 0 },
       { label: 'TDs', value: s.rush_tds ?? 0 },
@@ -388,7 +389,7 @@ function buildStatItems(positions: string[], s: any): { label: string; value: st
       { label: 'REC YDS', value: s.rb_rec_yards ?? 0 },
       { label: 'REC', value: s.rb_receptions ?? 0 },
     )
-  } else if (positions.some((p: string) => ['WR', 'TE'].includes(p))) {
+  } else if (['WR', 'TE'].includes(primaryPos)) {
     items.push(
       { label: 'REC YDS', value: s.rec_yards ?? 0 },
       { label: 'TDs', value: s.rec_tds ?? 0 },
@@ -437,14 +438,15 @@ function calcTeamTotals(players: Player[], gsRows: any[]) {
     const qs: Record<string, number> = {}
     rows.forEach(r => Object.entries(r).forEach(([k, v]) => { if (typeof v === 'number') qs[k] = (qs[k] ?? 0) + v }))
     const pos = p.positions as string[]
-    if (pos.includes('QB')) {
+    const primaryPos = pos[0] ?? ''
+    if (primaryPos === 'QB') {
       passYds += qs.pass_yards ?? 0; rushYds += qs.qb_rush_yards ?? 0
       tds += (qs.pass_tds ?? 0) + (qs.qb_rush_tds ?? 0); ints += qs.interceptions_thrown ?? 0
-    } else if (pos.includes('RB')) {
+    } else if (primaryPos === 'RB') {
       rushYds += qs.rush_yards ?? 0; recYds += qs.rb_rec_yards ?? 0
       tds += qs.rush_tds ?? 0; fumbles += qs.rb_fumbles ?? 0
       targets += qs.rb_targets ?? 0; receptions += qs.rb_receptions ?? 0
-    } else if (pos.some(pp => ['WR', 'TE'].includes(pp))) {
+    } else if (['WR', 'TE'].includes(primaryPos)) {
       recYds += qs.rec_yards ?? 0; fumbles += qs.rec_fumbles ?? 0
       targets += qs.rec_targets ?? 0; receptions += qs.receptions ?? 0
     }
@@ -1083,16 +1085,19 @@ function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUr
 
 function CareerStats({ cs, positions }: { cs: any; positions: string[] }) {
   const items: { label: string; value: string | number }[] = []
-  if (positions.includes('QB')) {
+  const primaryPos = positions[0] ?? ''
+  const hasKP = positions.some(p => ['K', 'P'].includes(p))
+  if (primaryPos === 'QB') {
     items.push({ label: 'Pass YDS', value: cs.pass_yards ?? 0 }, { label: 'TDs', value: (cs.pass_tds ?? 0) + (cs.qb_rush_tds ?? 0) }, { label: 'INT', value: cs.interceptions_thrown ?? 0 }, { label: 'Comp/Att', value: `${cs.pass_completions ?? 0}/${cs.pass_attempts ?? 0}` }, { label: 'Rush YDS', value: cs.qb_rush_yards ?? 0 })
-  } else if (positions.includes('RB')) {
+  } else if (primaryPos === 'RB') {
     items.push({ label: 'Rush YDS', value: cs.rush_yards ?? 0 }, { label: 'TDs', value: cs.rush_tds ?? 0 }, { label: 'Carries', value: cs.rush_carries ?? 0 }, { label: 'Rec YDS', value: cs.rb_rec_yards ?? 0 })
-  } else if (positions.some(p => ['WR', 'TE'].includes(p))) {
+  } else if (['WR', 'TE'].includes(primaryPos)) {
     items.push({ label: 'Rec YDS', value: cs.rec_yards ?? 0 }, { label: 'TDs', value: cs.rec_tds ?? 0 }, { label: 'Rec', value: cs.receptions ?? 0 }, { label: 'Targets', value: cs.rec_targets ?? 0 })
-  } else if (positions.some(p => ['K', 'P'].includes(p))) {
-    items.push({ label: 'FG', value: `${cs.fg_made ?? 0}/${cs.fg_attempts ?? 0}` }, { label: 'EP', value: `${cs.ep_made ?? 0}/${cs.ep_attempts ?? 0}` }, { label: 'Pts', value: (cs.fg_made ?? 0) * 3 + (cs.ep_made ?? 0) })
-  } else {
+  } else if (!hasKP) {
     items.push({ label: 'Sacks', value: cs.sacks ?? 0 }, { label: 'INT', value: cs.def_interceptions ?? 0 })
+  }
+  if (hasKP) {
+    items.push({ label: 'FG', value: `${cs.fg_made ?? 0}/${cs.fg_attempts ?? 0}` }, { label: 'EP', value: `${cs.ep_made ?? 0}/${cs.ep_attempts ?? 0}` }, { label: 'Pts', value: (cs.fg_made ?? 0) * 3 + (cs.ep_made ?? 0) })
   }
   return (
     <div>
