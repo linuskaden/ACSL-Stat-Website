@@ -19,12 +19,12 @@ type TeamOverlayState = {
 type TeamStats = {
   passYds: number; rushYds: number; totalYds: number
   tds: number; fgMade: number; ints: number; fumbles: number
-  receptions: number; targets: number
+  completions: number; attempts: number
 }
 
 // ── Stat calculation ──────────────────────────────────────────────────────────
 function emptyStats(): TeamStats {
-  return { passYds: 0, rushYds: 0, totalYds: 0, tds: 0, fgMade: 0, ints: 0, fumbles: 0, receptions: 0, targets: 0 }
+  return { passYds: 0, rushYds: 0, totalYds: 0, tds: 0, fgMade: 0, ints: 0, fumbles: 0, completions: 0, attempts: 0 }
 }
 
 function calcStats(players: any[], rows: any[]): TeamStats {
@@ -38,25 +38,24 @@ function calcStats(players: any[], rows: any[]): TeamStats {
       }
     }
     const pos: string[] = p.positions ?? []
+    const primaryPos = pos[0] ?? ''
 
-    if (pos.includes('QB')) {
-      s.passYds += q.pass_yards ?? 0
-      s.rushYds += q.qb_rush_yards ?? 0
+    if (primaryPos === 'QB') {
+      s.passYds     += q.pass_yards ?? 0
+      s.rushYds     += q.qb_rush_yards ?? 0
+      s.completions += q.pass_completions ?? 0
+      s.attempts    += q.pass_attempts ?? 0
       // pass_tds counted from QB side only — avoids double-counting with rec_tds
       s.tds += (q.pass_tds ?? 0) + (q.qb_rush_tds ?? 0)
       s.ints += q.interceptions_thrown ?? 0
-    } else if (pos.includes('RB')) {
+    } else if (primaryPos === 'RB') {
       s.rushYds += q.rush_yards ?? 0
-      s.tds += q.rush_tds ?? 0
+      s.tds     += q.rush_tds ?? 0
       s.fumbles += q.rb_fumbles ?? 0
-      s.targets += q.rb_targets ?? 0
-      s.receptions += q.rb_receptions ?? 0
-    } else if (pos.some(pp => ['WR', 'TE'].includes(pp))) {
+    } else if (['WR', 'TE'].includes(primaryPos)) {
       // rec_tds skipped (already counted via QB's pass_tds)
       s.fumbles += q.rec_fumbles ?? 0
-      s.targets += q.rec_targets ?? 0
-      s.receptions += q.receptions ?? 0
-    } else if (pos.includes('K')) {
+    } else if (pos.some(pp => ['K', 'P'].includes(pp))) {
       s.fgMade += q.fg_made ?? 0
     }
   }
@@ -160,7 +159,7 @@ export default function TeamStatsOverlay() {
     { label: 'PASS YDS',    h: homeStats.passYds,  a: awayStats.passYds  },
     { label: 'RUSH YDS',    h: homeStats.rushYds,  a: awayStats.rushYds  },
     { label: 'TOTAL YDS',   h: homeStats.totalYds, a: awayStats.totalYds },
-    { label: 'REC / TAR',   h: `${homeStats.receptions}/${homeStats.targets}`, a: `${awayStats.receptions}/${awayStats.targets}` },
+    { label: 'COMP / ATT',  h: `${homeStats.completions}/${homeStats.attempts}`, a: `${awayStats.completions}/${awayStats.attempts}` },
     { label: 'TOTAL TDs',   h: homeStats.tds,      a: awayStats.tds,      accent: '#04a550' },
     { label: 'FIELD GOALS', h: homeStats.fgMade,   a: awayStats.fgMade   },
     { label: 'INT',         h: homeStats.ints,     a: awayStats.ints,     accent: '#ff1d25' },

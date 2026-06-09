@@ -432,6 +432,7 @@ function textOn(hex: string): string {
 /* ─── Team stats calc (mirrors overlay logic) ─── */
 function calcTeamTotals(players: Player[], gsRows: any[]) {
   let passYds = 0, rushYds = 0, recYds = 0, tds = 0, ints = 0, fumbles = 0, targets = 0, receptions = 0
+  let completions = 0, attempts = 0
   let fgm = 0, fga = 0, epm = 0, epa = 0
   players.forEach(p => {
     const rows = gsRows.filter(r => r.player_id === p.id)
@@ -441,6 +442,7 @@ function calcTeamTotals(players: Player[], gsRows: any[]) {
     const primaryPos = pos[0] ?? ''
     if (primaryPos === 'QB') {
       passYds += qs.pass_yards ?? 0; rushYds += qs.qb_rush_yards ?? 0
+      completions += qs.pass_completions ?? 0; attempts += qs.pass_attempts ?? 0
       tds += (qs.pass_tds ?? 0) + (qs.qb_rush_tds ?? 0); ints += qs.interceptions_thrown ?? 0
     } else if (primaryPos === 'RB') {
       rushYds += qs.rush_yards ?? 0; recYds += qs.rb_rec_yards ?? 0
@@ -457,7 +459,7 @@ function calcTeamTotals(players: Player[], gsRows: any[]) {
   })
   const totalYds = passYds + rushYds
   const catchPct = targets > 0 ? Math.round(receptions / targets * 100) : 0
-  return { passYds, rushYds, recYds, totalYds, tds, ints, fumbles, targets, receptions, catchPct, fgm, fga, epm, epa }
+  return { passYds, rushYds, recYds, totalYds, tds, ints, fumbles, targets, receptions, catchPct, completions, attempts, fgm, fga, epm, epa }
 }
 
 function OperatorPreview({ player, team, stats, mode, visible,
@@ -538,7 +540,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
             { label: 'PASS YDS',   h: hS.passYds,  a: aS.passYds  },
             { label: 'RUSH YDS',   h: hS.rushYds,  a: aS.rushYds  },
             { label: 'TOTAL YDS',  h: hS.totalYds, a: aS.totalYds },
-            { label: 'REC/TAR',    h: `${hS.receptions}/${hS.targets}`, a: `${aS.receptions}/${aS.targets}` },
+            { label: 'COMP/ATT',   h: `${hS.completions}/${hS.attempts}`, a: `${aS.completions}/${aS.attempts}` },
             { label: 'TOTAL TDs',  h: hS.tds,      a: aS.tds,      accent: '#04a550' },
             { label: 'FIELD GOALS',h: hS.fgm,      a: aS.fgm      },
             { label: 'INT',        h: hS.ints,      a: aS.ints,     accent: '#ff1d25' },
