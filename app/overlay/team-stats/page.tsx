@@ -267,10 +267,7 @@ export default function TeamStatsOverlay() {
                   position: 'relative',
                 }}
               >
-                {hWins && <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: hiColor, borderRadius: '0 2px 2px 0', opacity: 0.7 }} />}
-                {aWins && <div style={{ position: 'absolute', right: 0, top: '20%', bottom: '20%', width: 3, background: hiColor, borderRadius: '2px 0 0 2px', opacity: 0.7 }} />}
-
-                <div style={{ flex: 1, textAlign: 'right', paddingRight: 40 }}>
+<div style={{ flex: 1, textAlign: 'right', paddingRight: 40 }}>
                   <span style={{
                     fontSize: hWins ? 52 : 44,
                     fontWeight: 900,

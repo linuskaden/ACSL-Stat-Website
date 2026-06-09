@@ -590,8 +590,6 @@ function OperatorPreview({ player, team, stats, mode, visible,
                       const hi = accent ?? '#fff'
                       return (
                         <div key={label} style={{ flex: 1, display: 'flex', alignItems: 'center', background: i % 2 === 0 ? 'rgba(255,255,255,0.018)' : 'transparent', borderBottom: i < N - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', padding: '0 12px', position: 'relative' }}>
-                          {hW && <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: hi, borderRadius: '0 2px 2px 0', opacity: 0.7 }} />}
-                          {aW && <div style={{ position: 'absolute', right: 0, top: '20%', bottom: '20%', width: 3, background: hi, borderRadius: '2px 0 0 2px', opacity: 0.7 }} />}
                           <div style={{ flex: 1, textAlign: 'right', paddingRight: 40 }}>
                             <span style={{ fontSize: hW ? 52 : 44, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: hW ? hi : 'rgba(255,255,255,0.55)', lineHeight: 1 }}>{h}</span>
                           </div>
