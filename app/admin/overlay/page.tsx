@@ -216,95 +216,20 @@ export default function OverlayControlPage() {
   return (
     <div className="min-h-screen bg-[#0c0f1a] text-white" style={{ fontFamily: 'system-ui, sans-serif' }}>
 
-      {/* ══ Top bar ══ */}
+      {/* ══ Top bar — match selector only ══ */}
       <div className="sticky top-0 z-20 bg-[#080b14] border-b border-white/5 px-5 py-3 flex flex-wrap items-center gap-4">
         <div>
           <div className="text-base font-black tracking-tight">vMix Overlay Control</div>
-          <div className="text-[11px] text-[#555] mt-0.5">ACSL Media — Lower Third Player Card</div>
+          <div className="text-[11px] text-[#555] mt-0.5">ACSL Media</div>
         </div>
 
         {/* Game */}
         <select value={selectedGame?.id ?? ''} onChange={e => handleGameChange(e.target.value)}
-          className="bg-[#131826] border border-white/8 rounded-lg px-3 py-2 text-white text-xs outline-none flex-1 min-w-[200px] max-w-xs">
+          className="bg-[#131826] border border-white/8 rounded-lg px-3 py-2 text-white text-sm outline-none flex-1 min-w-[240px] max-w-lg">
           <option value="">Spiel auswählen…</option>
           {games.map(g => <option key={g.id} value={g.id}>{gameLabel(g)}</option>)}
         </select>
-
-        {/* Mode */}
-        <div className="flex rounded-lg overflow-hidden border border-white/8">
-          {(['live', 'career'] as const).map(m => (
-            <button key={m} onClick={() => pushOverlay({ mode: m })}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
-              style={{ background: overlay.mode === m ? '#ff1d25' : '#131826', color: overlay.mode === m ? 'white' : '#666' }}>
-              {m === 'live' ? '⚡ Live' : '📊 Career'}
-            </button>
-          ))}
-        </div>
-
-        {/* Show/Hide */}
-        <button onClick={() => pushOverlay({ visible: !overlay.visible })}
-          className="px-5 py-2 text-xs font-black rounded-lg transition-all"
-          style={{
-            background: overlay.visible ? 'rgba(4,165,80,0.15)' : 'rgba(255,255,255,0.04)',
-            color: overlay.visible ? '#04a550' : '#888',
-            border: `1px solid ${overlay.visible ? '#04a550' : 'rgba(255,255,255,0.1)'}`,
-            boxShadow: overlay.visible ? '0 0 12px rgba(4,165,80,0.2)' : 'none',
-          }}>
-          {overlay.visible ? '▼ HIDE' : '▲ SHOW'}
-        </button>
-
-        {/* Status */}
-        <div className="flex items-center gap-2 ml-auto">
-          {saving && <span className="text-[10px] text-[#444] tracking-wider">saving…</span>}
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full transition-all" style={{ background: overlay.visible ? '#04a550' : '#333', boxShadow: overlay.visible ? '0 0 6px #04a550' : 'none' }} />
-            <span className="text-[11px] font-bold tracking-widest" style={{ color: overlay.visible ? '#04a550' : '#555' }}>
-              {overlay.visible ? 'ON AIR' : 'HIDDEN'}
-            </span>
-          </div>
-        </div>
-
-        {/* vMix URL */}
-        <div className="flex items-center gap-2">
-          <code className="bg-[#131826] border border-white/7 rounded px-2 py-1.5 text-[11px] text-[#888] whitespace-nowrap">
-            {overlayUrl || '…'}
-          </code>
-          <button onClick={copyUrl} className="px-3 py-1.5 text-[11px] font-bold rounded transition-all"
-            style={{ background: copied ? '#04a550' : '#1a2040', color: copied ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {copied ? '✓' : 'Copy'}
-          </button>
-        </div>
       </div>
-
-      {/* ══ vMix Inputs — three separate browser-input links in one place ══ */}
-      <VmixLinksBar
-        links={[
-          { label: 'Lower Third', sub: 'Spieler-Karte', url: overlayUrl, copied, onCopy: copyUrl, on: overlay.visible },
-          { label: 'Team Stats', sub: 'Vergleich', url: teamOverlayUrl, copied: copiedTeam, onCopy: copyTeamUrl, on: teamOverlay.visible },
-          { label: 'Key Player Ticker', sub: 'permanent', url: keyPlayerUrl, copied: copiedKey, onCopy: copyKeyUrl, on: keyPlayerOverlay.visible },
-        ]}
-      />
-
-      {/* ══ Active player banner ══ */}
-      {activePlayer && (
-        <div className="bg-[#0f1420] border-b border-white/5 px-5 py-3 flex items-center gap-3">
-          <div className="w-2 h-8 rounded-full" style={{ background: [...homePlayers].find(p => p.id === activePlayer.id) ? selectedGame?.home_team.primary_color : selectedGame?.away_team?.primary_color ?? '#ff1d25' }} />
-          <div>
-            <div className="text-[10px] text-[#555] font-bold tracking-widest uppercase mb-0.5">Now on Overlay</div>
-            <div className="font-black text-white text-sm">
-              {activePlayer.jersey_number && <span className="text-[#555] mr-1.5">#{activePlayer.jersey_number}</span>}
-              {activePlayer.first_name} {activePlayer.last_name}
-              <span className="text-[#555] text-xs font-normal ml-2">{activePlayer.positions.join(' / ')}</span>
-            </div>
-          </div>
-          <div className="ml-auto">
-            <span className="text-[10px] font-bold tracking-widest px-2 py-1 rounded"
-              style={{ background: overlay.mode === 'live' ? 'rgba(255,29,37,0.12)' : 'rgba(255,255,255,0.05)', color: overlay.mode === 'live' ? '#ff1d25' : '#888' }}>
-              {overlay.mode === 'live' ? '⚡ GAME STATS' : '📊 SEASON'}
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* ══ Operator Preview ══ */}
       <OperatorPreview
@@ -347,6 +272,63 @@ export default function OverlayControlPage() {
         copied={copiedKey}
         onCopy={copyKeyUrl}
       />
+
+      {/* ══ Player overlay (Lower Third) — controls ══ */}
+      <div style={{ background: '#080b14', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '14px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
+            Spieler-Einblendung · Lower Third
+          </span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+          {saving && <span style={{ fontSize: 10, color: '#444' }}>saving…</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: overlay.visible ? '#04a550' : '#333', boxShadow: overlay.visible ? '0 0 6px #04a550' : 'none', transition: 'all 0.3s' }} />
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: overlay.visible ? '#04a550' : '#444', textTransform: 'uppercase' }}>
+              {overlay.visible ? 'On Air' : 'Hidden'}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {/* Mode */}
+          <div className="flex rounded-lg overflow-hidden border border-white/8">
+            {(['live', 'career'] as const).map(m => (
+              <button key={m} onClick={() => pushOverlay({ mode: m })}
+                className="px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+                style={{ background: overlay.mode === m ? '#ff1d25' : '#131826', color: overlay.mode === m ? 'white' : '#666' }}>
+                {m === 'live' ? '⚡ Live' : '📊 Career'}
+              </button>
+            ))}
+          </div>
+
+          {/* Show/Hide */}
+          <button onClick={() => pushOverlay({ visible: !overlay.visible })}
+            className="px-5 py-2 text-xs font-black rounded-lg transition-all"
+            style={{
+              background: overlay.visible ? 'rgba(4,165,80,0.15)' : 'rgba(255,255,255,0.04)',
+              color: overlay.visible ? '#04a550' : '#888',
+              border: `1px solid ${overlay.visible ? '#04a550' : 'rgba(255,255,255,0.1)'}`,
+              boxShadow: overlay.visible ? '0 0 12px rgba(4,165,80,0.2)' : 'none',
+            }}>
+            {overlay.visible ? '▼ HIDE' : '▲ SHOW'}
+          </button>
+
+          <span style={{ fontSize: 11, color: '#555' }}>
+            {selectedGame ? 'Klick auf eine Karte für Einblende-Optionen' : ''}
+          </span>
+
+          {/* vMix URL */}
+          <div className="flex items-center gap-2" style={{ marginLeft: 'auto' }}>
+            <code className="bg-[#131826] border border-white/7 rounded px-2 py-1.5 text-[11px] text-[#888] whitespace-nowrap">
+              {overlayUrl || '…'}
+            </code>
+            <button onClick={copyUrl} className="px-3 py-1.5 text-[11px] font-bold rounded transition-all"
+              style={{ background: copied ? '#04a550' : '#1a2040', color: copied ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {copied ? '✓' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* ══ Player grid – two columns ══ */}
       {selectedGame ? (
@@ -500,44 +482,6 @@ function textOn(hex: string): string {
   const g = parseInt(hex.slice(3, 5), 16) / 255
   const b = parseInt(hex.slice(5, 7), 16) / 255
   return 0.299 * r + 0.587 * g + 0.114 * b > 0.48 ? '#000000' : '#ffffff'
-}
-
-/* ─────────────────────────────────
-   vMix Inputs bar — all three separate links in one place
-───────────────────────────────── */
-function VmixLinksBar({ links }: {
-  links: { label: string; sub: string; url: string; copied: boolean; onCopy: () => void; on: boolean }[]
-}) {
-  return (
-    <div style={{ background: '#080b14', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '12px 20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
-          vMix Browser-Inputs · 3 separate Quellen
-        </span>
-        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
-        <span style={{ fontSize: 9, fontWeight: 700, color: '#444', letterSpacing: 1 }}>1920×1080 · transparent</span>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 8 }}>
-        {links.map(l => (
-          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0f1420', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 10px' }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: l.on ? '#04a550' : '#333', boxShadow: l.on ? '0 0 6px #04a550' : 'none' }} />
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 800, color: '#ddd' }}>{l.label}</span>
-                <span style={{ fontSize: 9, fontWeight: 700, color: '#555', letterSpacing: 1, textTransform: 'uppercase' }}>{l.sub}</span>
-              </div>
-              <code style={{ display: 'block', fontSize: 10, color: '#777', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>
-                {l.url || '…'}
-              </code>
-            </div>
-            <button onClick={l.onCopy} style={{ flexShrink: 0, padding: '6px 12px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', background: l.copied ? '#04a550' : '#1a2040', color: l.copied ? 'white' : '#999', border: '1px solid rgba(255,255,255,0.08)' }}>
-              {l.copied ? '✓ Kopiert' : 'Copy'}
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
 }
 
 /* ─────────────────────────────────
@@ -1256,6 +1200,7 @@ function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPla
   onCopy: () => void
 }) {
   const selected = keyPlayerOverlay.player_ids ?? []
+  const [pickerOpen, setPickerOpen] = useState(false)
   const eligible = (players: Player[]) => players.filter(p => KEY_PLAYER_POSITIONS.includes(p.positions[0] ?? ''))
 
   function toggle(player: Player, teamPlayers: Player[]) {
@@ -1273,6 +1218,15 @@ function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPla
   const awayEligible = eligible(awayPlayers)
   const homeSelCount = homePlayers.filter(p => selected.includes(p.id)).length
   const awaySelCount = awayPlayers.filter(p => selected.includes(p.id)).length
+
+  // Selected players in order, with their team colour (for the compact chips)
+  const selectedChips = selected.map(id => {
+    const p = [...homePlayers, ...awayPlayers].find(x => x.id === id)
+    if (!p) return null
+    const isHome = homePlayers.some(x => x.id === id)
+    const color = (isHome ? selectedGame?.home_team : selectedGame?.away_team)?.primary_color ?? '#888'
+    return { p, color }
+  }).filter(Boolean) as { p: Player; color: string }[]
 
   return (
     <div style={{ background: '#080b14', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '14px 20px' }}>
@@ -1334,18 +1288,56 @@ function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPla
         </div>
       </div>
 
-      {/* Player selection */}
+      {/* Player selection — compact: button opens popup, selection shown as chips */}
       {!selectedGame ? (
         <div style={{ fontSize: 11, color: '#555', fontStyle: 'italic' }}>
           Wähle oben ein Spiel aus um Key Player auszuwählen
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <KeyPlayerColumn label="HOME" team={selectedGame.home_team} players={homeEligible} selected={selected}
-            count={homeSelCount} onToggle={p => toggle(p, homePlayers)} />
-          <KeyPlayerColumn label="AWAY" team={selectedGame.away_team} players={awayEligible} selected={selected}
-            count={awaySelCount} onToggle={p => toggle(p, awayPlayers)} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={() => setPickerOpen(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', fontSize: 12, fontWeight: 800, borderRadius: 8, cursor: 'pointer', background: '#1a2040', color: '#ccc', border: '1px solid rgba(255,255,255,0.12)' }}>
+            ＋ Spieler auswählen
+          </button>
+          {selectedChips.length === 0 && (
+            <span style={{ fontSize: 11, color: '#555', fontStyle: 'italic' }}>Noch keine Key Player ausgewählt</span>
+          )}
+          {selectedChips.map(({ p, color }) => (
+            <button key={p.id} onClick={() => onPush({ player_ids: selected.filter(id => id !== p.id) })}
+              title="Entfernen"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 9px', borderRadius: 8, cursor: 'pointer', background: `${color}22`, border: `1px solid ${color}`, color: '#fff', fontSize: 12, fontWeight: 600 }}>
+              <span style={{ fontWeight: 900, fontFamily: '"Arial Black", sans-serif', color: '#fff' }}>{p.jersey_number ?? '—'}</span>
+              <span>{p.first_name.charAt(0)}. {p.last_name}</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginLeft: 2 }}>×</span>
+            </button>
+          ))}
         </div>
+      )}
+
+      {/* Player picker popup */}
+      {pickerOpen && selectedGame && (
+        <>
+          <div onClick={() => setPickerOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 60, backdropFilter: 'blur(2px)' }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 'min(880px, 92vw)', maxHeight: '82vh', overflowY: 'auto', background: '#0c0f1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, zIndex: 61, boxShadow: '0 24px 80px rgba(0,0,0,0.7)' }}>
+            <div style={{ position: 'sticky', top: 0, background: '#0c0f1a', padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, zIndex: 1 }}>
+              <span style={{ fontSize: 13, fontWeight: 900, color: '#fff' }}>Key Player auswählen</span>
+              <span style={{ fontSize: 11, color: '#666' }}>max. {MAX_KEY_PER_TEAM} pro Team · nur QB/WR/TE/RB</span>
+              <span style={{ fontSize: 11, color: '#555', marginLeft: 'auto' }}>{selected.length} ausgewählt</span>
+              <button onClick={() => setPickerOpen(false)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 6, width: 28, height: 28, color: '#aaa', fontSize: 17, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+            </div>
+            <div style={{ padding: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <KeyPlayerColumn label="HOME" team={selectedGame.home_team} players={homeEligible} selected={selected}
+                count={homeSelCount} onToggle={p => toggle(p, homePlayers)} />
+              <KeyPlayerColumn label="AWAY" team={selectedGame.away_team} players={awayEligible} selected={selected}
+                count={awaySelCount} onToggle={p => toggle(p, awayPlayers)} />
+            </div>
+            <div style={{ position: 'sticky', bottom: 0, background: '#0c0f1a', padding: '12px 18px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setPickerOpen(false)} style={{ padding: '8px 22px', fontSize: 12, fontWeight: 800, borderRadius: 8, cursor: 'pointer', background: '#1a2040', color: '#fff', border: '1px solid rgba(255,255,255,0.12)' }}>
+                Fertig
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
