@@ -307,6 +307,7 @@ export default function OverlayControlPage() {
         mode={overlay.mode}
         visible={overlay.visible}
         teamOverlay={teamOverlay}
+        keyPlayerOverlay={keyPlayerOverlay}
         homeTeam={selectedGame?.home_team ?? null}
         awayTeam={selectedGame?.away_team ?? null}
         homePlayers={homePlayers}
@@ -331,7 +332,6 @@ export default function OverlayControlPage() {
         selectedGame={selectedGame}
         homePlayers={homePlayers}
         awayPlayers={awayPlayers}
-        gameStatsRows={gameStatsRows}
         onPush={pushKeyPlayerOverlay}
         saving={savingKey}
         overlayUrl={keyPlayerUrl}
@@ -530,13 +530,14 @@ function calcTeamTotals(players: Player[], gsRows: any[]) {
 }
 
 function OperatorPreview({ player, team, stats, mode, visible,
-  teamOverlay, homeTeam, awayTeam, homePlayers, awayPlayers, gameStatsRows }: {
+  teamOverlay, keyPlayerOverlay, homeTeam, awayTeam, homePlayers, awayPlayers, gameStatsRows }: {
   player: Player | null
   team: Team | null | undefined
   stats: any
   mode: 'live' | 'career' | 'intro'
   visible: boolean
   teamOverlay: TeamOverlayState
+  keyPlayerOverlay: KeyPlayerOverlayState
   homeTeam: Team | null | undefined
   awayTeam: Team | null | undefined
   homePlayers: Player[]
@@ -544,13 +545,39 @@ function OperatorPreview({ player, team, stats, mode, visible,
   gameStatsRows: any[]
 }) {
   const primaryColor   = team?.primary_color   ?? '#ff1d25'
-  const secondaryColor = team?.secondary_color ?? '#ffffff'
   const onPrimary      = team ? textOn(primaryColor) : '#ffffff'
   const dimOnPrimary   = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)'
   const hairline       = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'
   const statItems      = player && mode !== 'intro' ? buildStatItems(player.positions, stats) : []
-  const modeLabel      = mode === 'career' ? '2026 SEASON' : 'GAME STATS'
   const hasStats       = statItems.length > 0
+
+  /* ── Key player ticker items (selection order, live-aggregated) ── */
+  const tickerItems = (keyPlayerOverlay.player_ids ?? []).map(id => {
+    const p = [...homePlayers, ...awayPlayers].find(x => x.id === id)
+    if (!p) return null
+    const isHome = homePlayers.some(x => x.id === id)
+    const tTeam = isHome ? homeTeam ?? null : awayTeam ?? null
+    const totals: Record<string, number> = {}
+    gameStatsRows.filter(r => r.player_id === id).forEach(r =>
+      Object.entries(r).forEach(([k, v]) => { if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v }))
+    return { player: p, team: tTeam, stats: buildKeyTickerStats(p.positions, totals) }
+  }).filter(Boolean) as { player: Player; team: Team | null; stats: { label: string; value: string | number }[] }[]
+
+  const [tIdx, setTIdx] = useState(0)
+  const [tShown, setTShown] = useState(true)
+  useEffect(() => { setTIdx(0); setTShown(true) }, [tickerItems.length])
+  useEffect(() => {
+    if (tickerItems.length <= 1) return
+    const ms = Math.max(2, keyPlayerOverlay.rotation_seconds ?? 6) * 1000
+    const t = setInterval(() => { setTShown(false); setTimeout(() => { setTIdx(i => (i + 1) % tickerItems.length); setTShown(true) }, 380) }, ms)
+    return () => clearInterval(t)
+  }, [tickerItems.length, keyPlayerOverlay.rotation_seconds])
+  const tCur = tickerItems[tIdx] ?? null
+
+  /* ── 16:9 broadcast stage (true 1920×1080, scaled to fit) ── */
+  const STAGE_W = 760, W = 1920, H = 1080, SCALE = STAGE_W / W
+  const STAGE_H = Math.round(H * SCALE)
+  const anyOnAir = (visible && player && team) || teamOverlay.visible || (keyPlayerOverlay.visible && tCur)
 
   return (
     <div style={{
@@ -561,91 +588,90 @@ function OperatorPreview({ player, team, stats, mode, visible,
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
-          Overlay Vorschau
+          Overlay Vorschau · wie im vMix-Fenster
         </span>
         <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+        <span style={{ fontSize: 9, fontWeight: 700, color: '#444', letterSpacing: 1 }}>16:9 · 1920×1080</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{
             width: 7, height: 7, borderRadius: '50%',
-            background: visible ? '#04a550' : '#333',
-            boxShadow: visible ? '0 0 6px #04a550' : 'none',
+            background: anyOnAir ? '#04a550' : '#333',
+            boxShadow: anyOnAir ? '0 0 6px #04a550' : 'none',
             transition: 'all 0.3s',
           }} />
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: visible ? '#04a550' : '#444', textTransform: 'uppercase' }}>
-            {visible ? 'On Air' : 'Hidden'}
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: anyOnAir ? '#04a550' : '#444', textTransform: 'uppercase' }}>
+            {anyOnAir ? 'On Air' : 'Hidden'}
           </span>
         </div>
       </div>
 
-      {/* Broadcast mock frame */}
-      <div style={{
-        background: '#131825',
-        borderRadius: 8,
-        padding: '20px 20px 20px 20px',
-        position: 'relative',
-        overflow: 'hidden',
-        minHeight: 88,
-        display: 'flex',
-        alignItems: 'flex-end',
-      }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 15% 50%, rgba(255,255,255,0.012) 0%, transparent 60%)' }} />
-        <div style={{ position: 'absolute', top: 7, right: 10, fontSize: 8, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.06)', textTransform: 'uppercase' }}>
-          ACSL Broadcast
-        </div>
+      {/* 16:9 broadcast window */}
+      <div style={{ width: STAGE_W, maxWidth: '100%', height: STAGE_H, borderRadius: 8, overflow: 'hidden', position: 'relative', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 30px rgba(0,0,0,0.5)' }}>
+        {/* faux video background so white overlays read like over live footage */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1d3a26 0%, #0c1c12 55%, #07120b 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(105deg, rgba(255,255,255,0.045) 0 2px, transparent 2px 64px)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 90% 70% at 50% 38%, rgba(255,255,255,0.06) 0%, transparent 70%)' }} />
+        <div style={{ position: 'absolute', top: 6, right: 9, fontSize: 8, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase', zIndex: 5 }}>ACSL Broadcast</div>
 
-        {/* Team stats — scaled-down fullscreen comparison preview */}
-        {teamOverlay.visible && (homeTeam || awayTeam) && (() => {
-          const hS = calcTeamTotals(homePlayers, gameStatsRows)
-          const aS = calcTeamTotals(awayPlayers, gameStatsRows)
-          const hC = homeTeam?.primary_color ?? '#1a1a2e'
-          const aC = awayTeam?.primary_color ?? '#2e1a1a'
-          const hT = textOn(hC), aT = textOn(aC)
-          const W = 1760, H = 900, SCALE = 0.235
-          const sw = Math.round(W * SCALE), sh = Math.round(H * SCALE)
-          const HEADER_H = 130, LOGO_W = 310, N = 8
-          const STAT_ROWS = [
-            { label: 'PASS YDS',   h: hS.passYds,  a: aS.passYds  },
-            { label: 'RUSH YDS',   h: hS.rushYds,  a: aS.rushYds  },
-            { label: 'TOTAL YDS',  h: hS.totalYds, a: aS.totalYds },
-            { label: 'COMP/ATT',   h: `${hS.completions}/${hS.attempts}`, a: `${aS.completions}/${aS.attempts}` },
-            { label: 'TOTAL TDs',  h: hS.tds,      a: aS.tds,      accent: '#04a550' },
-            { label: 'FIELD GOALS',h: hS.fgm,      a: aS.fgm      },
-            { label: 'INT',        h: hS.ints,      a: aS.ints,     accent: '#ff1d25' },
-            { label: 'FUMBLES',    h: hS.fumbles,   a: aS.fumbles,  accent: '#f59e0b' },
-          ]
-          return (
-            <div style={{ width: sw, height: sh, overflow: 'hidden', marginBottom: 8, flexShrink: 0, borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>
-              <div style={{ width: W, height: H, transform: `scale(${SCALE})`, transformOrigin: 'top left', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                {/* Header — no accent strips, no logos */}
+        {!anyOnAir && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 600, letterSpacing: 1 }}>
+            Kein Overlay aktiv
+          </div>
+        )}
+
+        {/* 1920×1080 stage — every overlay at its real broadcast coordinates */}
+        <div style={{ width: W, height: H, transform: `scale(${SCALE})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }}>
+
+          {/* ── TEAM STATS — fullscreen comparison ── */}
+          {teamOverlay.visible && (homeTeam || awayTeam) && (() => {
+            const hS = calcTeamTotals(homePlayers, gameStatsRows)
+            const aS = calcTeamTotals(awayPlayers, gameStatsRows)
+            const hC = homeTeam?.primary_color ?? '#1a1a2e'
+            const aC = awayTeam?.primary_color ?? '#2e1a1a'
+            const hT = textOn(hC), aT = textOn(aC)
+            const HEADER_H = 150, LOGO_W = 360, N = 8
+            const STAT_ROWS = [
+              { label: 'PASS YDS',   h: hS.passYds,  a: aS.passYds  },
+              { label: 'RUSH YDS',   h: hS.rushYds,  a: aS.rushYds  },
+              { label: 'TOTAL YDS',  h: hS.totalYds, a: aS.totalYds },
+              { label: 'COMP/ATT',   h: `${hS.completions}/${hS.attempts}`, a: `${aS.completions}/${aS.attempts}` },
+              { label: 'TOTAL TDs',  h: hS.tds,      a: aS.tds,      accent: '#04a550' },
+              { label: 'FIELD GOALS',h: hS.fgm,      a: aS.fgm      },
+              { label: 'INT',        h: hS.ints,      a: aS.ints,     accent: '#ff1d25' },
+              { label: 'FUMBLES',    h: hS.fumbles,   a: aS.fumbles,  accent: '#f59e0b' },
+            ]
+            return (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {/* Header */}
                 <div style={{ height: HEADER_H, flexShrink: 0, background: '#06080f', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 20, paddingRight: 52 }}>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 22, paddingRight: 60 }}>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>HOME</div>
-                      <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 1, lineHeight: 1.15, marginTop: 3 }}>{homeTeam?.short_name?.toUpperCase() ?? '—'}</div>
+                      <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>HOME</div>
+                      <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 1, lineHeight: 1.15, marginTop: 4 }}>{homeTeam?.short_name?.toUpperCase() ?? '—'}</div>
                     </div>
-                    <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${hC}90` }}>{hS.tds * 6 + hS.fgm * 3 + hS.epm}</div>
+                    <div style={{ fontSize: 92, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${hC}90` }}>{hS.tds * 6 + hS.fgm * 3 + hS.epm}</div>
                   </div>
-                  <div style={{ width: 260, textAlign: 'center', flexShrink: 0 }}>
-                    <div style={{ fontSize: 52, fontWeight: 900, letterSpacing: 2, color: 'rgba(255,255,255,0.12)', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, textTransform: 'uppercase' }}>TEAM</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 6, color: 'rgba(255,255,255,0.22)', fontFamily: '"Arial Black", sans-serif', lineHeight: 1, textTransform: 'uppercase', marginTop: -4 }}>STATS</div>
+                  <div style={{ width: 300, textAlign: 'center', flexShrink: 0 }}>
+                    <div style={{ fontSize: 60, fontWeight: 900, letterSpacing: 2, color: 'rgba(255,255,255,0.12)', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, textTransform: 'uppercase' }}>TEAM</div>
+                    <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: 7, color: 'rgba(255,255,255,0.22)', fontFamily: '"Arial Black", sans-serif', lineHeight: 1, textTransform: 'uppercase', marginTop: -4 }}>STATS</div>
                   </div>
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 20, paddingLeft: 52 }}>
-                    <div style={{ fontSize: 80, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${aC}90` }}>{aS.tds * 6 + aS.fgm * 3 + aS.epm}</div>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 22, paddingLeft: 60 }}>
+                    <div style={{ fontSize: 92, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -3, lineHeight: 1, textShadow: `0 0 40px ${aC}90` }}>{aS.tds * 6 + aS.fgm * 3 + aS.epm}</div>
                     <div>
-                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>AWAY</div>
-                      <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 1, lineHeight: 1.15, marginTop: 3 }}>{awayTeam?.short_name?.toUpperCase() ?? '—'}</div>
+                      <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', fontFamily: 'Arial', lineHeight: 1 }}>AWAY</div>
+                      <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 1, lineHeight: 1.15, marginTop: 4 }}>{awayTeam?.short_name?.toUpperCase() ?? '—'}</div>
                     </div>
                   </div>
                 </div>
                 {/* Body */}
                 <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
                   {/* Home panel */}
-                  <div style={{ width: LOGO_W, flexShrink: 0, background: hC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ width: LOGO_W, flexShrink: 0, background: hC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26, position: 'relative', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255,255,255,0.1) 0%, transparent 70%)` }} />
-                    {homeTeam?.logo_url && <img src={homeTeam.logo_url} alt="" style={{ width: 230, height: 230, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 6px 24px rgba(0,0,0,0.45))' }} />}
-                    <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 14px' }}>
-                      <div style={{ fontSize: 32, fontWeight: 900, color: hT, fontFamily: '"Arial Black"', textTransform: 'uppercase', letterSpacing: 1 }}>{homeTeam?.short_name}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: hT === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)', letterSpacing: 3, marginTop: 6, textTransform: 'uppercase', fontFamily: 'Arial' }}>{homeTeam?.name}</div>
+                    {homeTeam?.logo_url && <img src={homeTeam.logo_url} alt="" style={{ width: 270, height: 270, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 6px 24px rgba(0,0,0,0.45))' }} />}
+                    <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 16px' }}>
+                      <div style={{ fontSize: 38, fontWeight: 900, color: hT, fontFamily: '"Arial Black"', textTransform: 'uppercase', letterSpacing: 1 }}>{homeTeam?.short_name}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: hT === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)', letterSpacing: 3, marginTop: 6, textTransform: 'uppercase', fontFamily: 'Arial' }}>{homeTeam?.name}</div>
                     </div>
                   </div>
                   {/* Stats */}
@@ -656,95 +682,113 @@ function OperatorPreview({ player, team, stats, mode, visible,
                       const aW = hNum !== null && aNum !== null && aNum > hNum
                       const hi = accent ?? '#fff'
                       return (
-                        <div key={label} style={{ flex: 1, display: 'flex', alignItems: 'center', background: i % 2 === 0 ? 'rgba(255,255,255,0.018)' : 'transparent', borderBottom: i < N - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', padding: '0 12px', position: 'relative' }}>
-                          <div style={{ flex: 1, textAlign: 'right', paddingRight: 40 }}>
-                            <span style={{ fontSize: hW ? 52 : 44, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: hW ? hi : 'rgba(255,255,255,0.55)', lineHeight: 1 }}>{h}</span>
+                        <div key={label} style={{ flex: 1, display: 'flex', alignItems: 'center', background: i % 2 === 0 ? 'rgba(255,255,255,0.018)' : 'transparent', borderBottom: i < N - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', padding: '0 14px', position: 'relative' }}>
+                          <div style={{ flex: 1, textAlign: 'right', paddingRight: 44 }}>
+                            <span style={{ fontSize: hW ? 58 : 48, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: hW ? hi : 'rgba(255,255,255,0.55)', lineHeight: 1 }}>{h}</span>
                           </div>
-                          <div style={{ width: 170, textAlign: 'center', flexShrink: 0 }}>
-                            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', fontFamily: '"Arial Black"' }}>{label}</span>
+                          <div style={{ width: 200, textAlign: 'center', flexShrink: 0 }}>
+                            <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: 2, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', fontFamily: '"Arial Black"' }}>{label}</span>
                           </div>
-                          <div style={{ flex: 1, textAlign: 'left', paddingLeft: 40 }}>
-                            <span style={{ fontSize: aW ? 52 : 44, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: aW ? hi : 'rgba(255,255,255,0.55)', lineHeight: 1 }}>{a}</span>
+                          <div style={{ flex: 1, textAlign: 'left', paddingLeft: 44 }}>
+                            <span style={{ fontSize: aW ? 58 : 48, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', color: aW ? hi : 'rgba(255,255,255,0.55)', lineHeight: 1 }}>{a}</span>
                           </div>
                         </div>
                       )
                     })}
                   </div>
                   {/* Away panel */}
-                  <div style={{ width: LOGO_W, flexShrink: 0, background: aC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ width: LOGO_W, flexShrink: 0, background: aC, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26, position: 'relative', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255,255,255,0.1) 0%, transparent 70%)` }} />
-                    {awayTeam?.logo_url && <img src={awayTeam.logo_url} alt="" style={{ width: 230, height: 230, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 6px 24px rgba(0,0,0,0.45))' }} />}
-                    <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 14px' }}>
-                      <div style={{ fontSize: 32, fontWeight: 900, color: aT, fontFamily: '"Arial Black"', textTransform: 'uppercase', letterSpacing: 1 }}>{awayTeam?.short_name}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: aT === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)', letterSpacing: 3, marginTop: 6, textTransform: 'uppercase', fontFamily: 'Arial' }}>{awayTeam?.name}</div>
+                    {awayTeam?.logo_url && <img src={awayTeam.logo_url} alt="" style={{ width: 270, height: 270, objectFit: 'contain', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 6px 24px rgba(0,0,0,0.45))' }} />}
+                    <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 16px' }}>
+                      <div style={{ fontSize: 38, fontWeight: 900, color: aT, fontFamily: '"Arial Black"', textTransform: 'uppercase', letterSpacing: 1 }}>{awayTeam?.short_name}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: aT === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)', letterSpacing: 3, marginTop: 6, textTransform: 'uppercase', fontFamily: 'Arial' }}>{awayTeam?.name}</div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )
-        })()}
+            )
+          })()}
 
-        {visible && player && team ? (
-          <div style={{
-            display: 'inline-flex',
-            flexDirection: 'column',
-            boxShadow: '0 6px 24px rgba(0,0,0,0.7)',
-          }}>
-            {/* Nameplate */}
-            <div style={{ display: 'flex', alignItems: 'stretch', background: primaryColor, height: 62 }}>
-              {/* Logo */}
-              <div style={{ width: 62, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, flexShrink: 0 }}>
-                {team.logo_url
-                  ? <img src={team.logo_url} alt="" style={{ width: 50, height: 50, objectFit: 'contain' }} />
-                  : <div style={{ width: 50, height: 50, borderRadius: 3, background: hairline }} />}
-              </div>
-              {/* Divider */}
-              <div style={{ width: 1, background: hairline, margin: '10px 0', flexShrink: 0 }} />
-              {/* Info */}
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 16px', gap: 4 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, lineHeight: 1 }}>
-                  {player.jersey_number != null && (
-                    <span style={{ color: dimOnPrimary, fontSize: 13, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif' }}>
-                      #{player.jersey_number}
+          {/* ── LOWER THIRD — bottom-left (real overlay sizes) ── */}
+          {visible && player && team && (
+            <div style={{ position: 'absolute', bottom: 56, left: 72, display: 'inline-flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.85)' }}>
+              {/* Nameplate */}
+              <div style={{ display: 'flex', alignItems: 'stretch', background: primaryColor, height: 80 }}>
+                <div style={{ width: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 10 }}>
+                  {team.logo_url
+                    ? <img src={team.logo_url} alt="" style={{ width: 66, height: 66, objectFit: 'contain' }} />
+                    : <div style={{ width: 66, height: 66, borderRadius: 4, background: hairline }} />}
+                </div>
+                <div style={{ width: 1, background: hairline, margin: '12px 0', flexShrink: 0 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 22px', gap: 5 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, lineHeight: 1 }}>
+                    {player.jersey_number != null && (
+                      <span style={{ color: dimOnPrimary, fontSize: 18, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.5 }}>#{player.jersey_number}</span>
+                    )}
+                    <span style={{ color: onPrimary, fontSize: 26, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.4, whiteSpace: 'nowrap' }}>
+                      {player.first_name.toUpperCase()} {player.last_name.toUpperCase()}
                     </span>
-                  )}
-                  <span style={{ color: onPrimary, fontSize: 18, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', whiteSpace: 'nowrap', letterSpacing: 0.3 }}>
-                    {player.first_name.toUpperCase()} {player.last_name.toUpperCase()}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ color: onPrimary, fontSize: 9, fontWeight: 900, letterSpacing: 2, textTransform: 'uppercase', background: hairline, padding: '2px 5px', borderRadius: 2 }}>
-                    {player.positions.join(' · ')}
-                  </span>
-                  <span style={{ color: hairline, fontSize: 10 }}>·</span>
-                  <span style={{ color: dimOnPrimary, fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                    {team.short_name}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Stats bar */}
-            {hasStats && (
-              <div style={{
-                background: '#0b0e1a',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px 14px 8px 79px',
-                gap: 0,
-                borderTop: `2px solid ${primaryColor}`,
-              }}>
-                {statItems.map((item, i) => (
-                  <div key={item.label} style={{ textAlign: 'center', paddingRight: 14, paddingLeft: i === 0 ? 0 : 14, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
-                    <div style={{ color: '#fff', fontSize: 16, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1 }}>{item.value}</div>
-                    <div style={{ color: '#7a7a9a', fontSize: 7, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 2 }}>{item.label}</div>
                   </div>
-                ))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, lineHeight: 1 }}>
+                    <span style={{ color: onPrimary, fontSize: 11, fontWeight: 900, letterSpacing: 2.5, textTransform: 'uppercase', background: hairline, padding: '3px 7px', borderRadius: 2 }}>
+                      {player.positions.join(' · ')}
+                    </span>
+                    <span style={{ color: hairline, fontSize: 12 }}>·</span>
+                    <span style={{ color: dimOnPrimary, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' }}>{team.short_name}</span>
+                  </div>
+                </div>
               </div>
-            )}
+              {/* Stats bar */}
+              {hasStats && (
+                <div style={{ background: '#0b0e1a', display: 'flex', alignItems: 'center', padding: '10px 22px 10px 102px', borderTop: `2px solid ${primaryColor}` }}>
+                  {statItems.map((item, i) => (
+                    <div key={item.label} style={{ textAlign: 'center', paddingRight: 20, paddingLeft: i === 0 ? 0 : 20, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
+                      <div style={{ color: '#fff', fontSize: 22, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, letterSpacing: -0.5 }}>{item.value}</div>
+                      <div style={{ color: '#7a7a9a', fontSize: 8, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 3 }}>{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── KEY PLAYER TICKER — bottom-right (real overlay sizes) ── */}
+          {keyPlayerOverlay.visible && tCur && (
+            <div style={{ position: 'absolute', bottom: 64, right: 72, textAlign: 'right', transition: 'opacity 0.34s ease', opacity: tShown ? 1 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 12, lineHeight: 1, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
+                {tCur.player.jersey_number != null && (
+                  <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 22, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif' }}>#{tCur.player.jersey_number}</span>
+                )}
+                <span style={{ color: '#fff', fontSize: 34, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.4, whiteSpace: 'nowrap' }}>
+                  {tCur.player.first_name.charAt(0).toUpperCase()}. {tCur.player.last_name.toUpperCase()}
+                </span>
+              </div>
+              <div style={{ marginTop: 6, lineHeight: 1, color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: 'uppercase', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                {tCur.team?.short_name ?? ''} · {tCur.player.positions[0] ?? ''}
+              </div>
+              {tCur.stats.length > 0 && (
+                <div style={{ marginTop: 12, display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 26, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
+                  {tCur.stats.map(item => (
+                    <div key={item.label} style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+                      <span style={{ color: '#fff', fontSize: 30, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, letterSpacing: -0.5 }}>{item.value}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Ticker rotation dots */}
+        {keyPlayerOverlay.visible && tickerItems.length > 1 && (
+          <div style={{ position: 'absolute', bottom: 6, right: 8, display: 'flex', gap: 4, zIndex: 5 }}>
+            {tickerItems.map((_, i) => (
+              <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: i === tIdx ? '#fff' : 'rgba(255,255,255,0.3)' }} />
+            ))}
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   )
@@ -1153,12 +1197,11 @@ function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUr
 /* ─────────────────────────────────
    Key Player Ticker Control Panel
 ───────────────────────────────── */
-function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPlayers, gameStatsRows, onPush, saving, overlayUrl, copied, onCopy }: {
+function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPlayers, onPush, saving, overlayUrl, copied, onCopy }: {
   keyPlayerOverlay: KeyPlayerOverlayState
   selectedGame: Game | null
   homePlayers: Player[]
   awayPlayers: Player[]
-  gameStatsRows: any[]
   onPush: (patch: Partial<KeyPlayerOverlayState>) => void
   saving: boolean
   overlayUrl: string
@@ -1183,18 +1226,6 @@ function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPla
   const awayEligible = eligible(awayPlayers)
   const homeSelCount = homePlayers.filter(p => selected.includes(p.id)).length
   const awaySelCount = awayPlayers.filter(p => selected.includes(p.id)).length
-
-  // Build the rotating preview items in selection order, with live-aggregated stats
-  const previewItems = selected.map(id => {
-    const player = [...homePlayers, ...awayPlayers].find(p => p.id === id)
-    if (!player) return null
-    const isHome = homePlayers.some(p => p.id === id)
-    const team = isHome ? selectedGame?.home_team ?? null : selectedGame?.away_team ?? null
-    const totals: Record<string, number> = {}
-    gameStatsRows.filter(r => r.player_id === id).forEach(r =>
-      Object.entries(r).forEach(([k, v]) => { if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v }))
-    return { player, team, stats: buildKeyTickerStats(player.positions, totals) }
-  }).filter(Boolean) as { player: Player; team: Team | null; stats: { label: string; value: string | number }[] }[]
 
   return (
     <div style={{ background: '#080b14', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '14px 20px' }}>
@@ -1269,116 +1300,6 @@ function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPla
             count={awaySelCount} onToggle={p => toggle(p, awayPlayers)} />
         </div>
       )}
-
-      {/* vMix-accurate preview */}
-      {selectedGame && (
-        <KeyTickerPreview items={previewItems} rotationSeconds={keyPlayerOverlay.rotation_seconds} visible={keyPlayerOverlay.visible} />
-      )}
-    </div>
-  )
-}
-
-/* ─────────────────────────────────
-   Key Player Ticker — vMix-accurate preview
-   Renders a 1920×1080 broadcast canvas scaled to 16:9, with the exact
-   ticker markup used by /overlay/key-players (same positions, fonts, rotation).
-───────────────────────────────── */
-function KeyTickerPreview({ items, rotationSeconds, visible }: {
-  items: { player: Player; team: Team | null; stats: { label: string; value: string | number }[] }[]
-  rotationSeconds: number
-  visible: boolean
-}) {
-  const [idx, setIdx] = useState(0)
-  const [shown, setShown] = useState(true)
-
-  useEffect(() => { setIdx(0); setShown(true) }, [items.length])
-  useEffect(() => {
-    if (items.length <= 1) return
-    const ms = Math.max(2, rotationSeconds ?? 6) * 1000
-    const t = setInterval(() => {
-      setShown(false)
-      setTimeout(() => { setIdx(i => (i + 1) % items.length); setShown(true) }, 380)
-    }, ms)
-    return () => clearInterval(t)
-  }, [items.length, rotationSeconds])
-
-  const SCALE = 0.26, W = 1920, H = 1080
-  const sw = Math.round(W * SCALE), sh = Math.round(H * SCALE)
-  const cur = items[idx] ?? null
-
-  return (
-    <div style={{ marginTop: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
-          Vorschau · wie im vMix-Fenster
-        </span>
-        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
-        <span style={{ fontSize: 9, fontWeight: 700, color: '#444', letterSpacing: 1 }}>16:9 · 1920×1080</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: visible ? '#04a550' : '#555', boxShadow: visible ? '0 0 5px #04a550' : 'none' }} />
-          <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: visible ? '#04a550' : '#555', textTransform: 'uppercase' }}>
-            {visible ? 'On Air' : 'Hidden'}
-          </span>
-        </div>
-      </div>
-
-      {/* Scaled broadcast canvas */}
-      <div style={{ width: sw, height: sh, overflow: 'hidden', borderRadius: 6, boxShadow: '0 4px 20px rgba(0,0,0,0.6)', position: 'relative', border: '1px solid rgba(255,255,255,0.08)' }}>
-        {/* Faux video background so the white text reads like over live footage */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1d3a26 0%, #0c1c12 55%, #07120b 100%)' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(105deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 62px)' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 90% 70% at 50% 40%, rgba(255,255,255,0.06) 0%, transparent 70%)' }} />
-
-        {/* 1920×1080 stage scaled down — ticker positioned exactly like the real overlay */}
-        <div style={{ width: W, height: H, transform: `scale(${SCALE})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }}>
-          {items.length === 0 ? (
-            <div style={{ position: 'absolute', bottom: 64, right: 72, textAlign: 'right', color: 'rgba(255,255,255,0.45)', fontSize: 30, fontWeight: 700, fontFamily: 'Arial' }}>
-              Keine Key Player ausgewählt
-            </div>
-          ) : cur && (
-            <div style={{
-              position: 'absolute', bottom: 64, right: 72, textAlign: 'right',
-              transition: 'opacity 0.34s ease', opacity: shown ? 1 : 0,
-            }}>
-              {/* Name line */}
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 12, lineHeight: 1, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
-                {cur.player.jersey_number != null && (
-                  <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 22, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif' }}>
-                    #{cur.player.jersey_number}
-                  </span>
-                )}
-                <span style={{ color: '#ffffff', fontSize: 34, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.4, whiteSpace: 'nowrap' }}>
-                  {cur.player.first_name.charAt(0).toUpperCase()}. {cur.player.last_name.toUpperCase()}
-                </span>
-              </div>
-              {/* Team · position line */}
-              <div style={{ marginTop: 6, lineHeight: 1, color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: 'uppercase', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
-                {cur.team?.short_name ?? ''} · {cur.player.positions[0] ?? ''}
-              </div>
-              {/* Stats line */}
-              {cur.stats.length > 0 && (
-                <div style={{ marginTop: 12, display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 26, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
-                  {cur.stats.map(item => (
-                    <div key={item.label} style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-                      <span style={{ color: '#ffffff', fontSize: 30, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, letterSpacing: -0.5 }}>{item.value}</span>
-                      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Rotation dots */}
-        {items.length > 1 && (
-          <div style={{ position: 'absolute', bottom: 6, left: 8, display: 'flex', gap: 4 }}>
-            {items.map((_, i) => (
-              <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: i === idx ? '#fff' : 'rgba(255,255,255,0.3)' }} />
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   )
 }
