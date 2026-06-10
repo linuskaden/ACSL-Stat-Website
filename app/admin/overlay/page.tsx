@@ -331,6 +331,7 @@ export default function OverlayControlPage() {
         selectedGame={selectedGame}
         homePlayers={homePlayers}
         awayPlayers={awayPlayers}
+        gameStatsRows={gameStatsRows}
         onPush={pushKeyPlayerOverlay}
         saving={savingKey}
         overlayUrl={keyPlayerUrl}
@@ -453,6 +454,33 @@ function buildStatItems(positions: string[], s: any): { label: string; value: st
   }
 
   return items
+}
+
+/* ─── Key player ticker stats (mirrors /overlay/key-players) ─── */
+function buildKeyTickerStats(positions: string[], s: any): { label: string; value: string | number }[] {
+  if (!s) return []
+  const primaryPos = positions[0] ?? ''
+  if (primaryPos === 'QB') {
+    return [
+      { label: 'COMP/ATT', value: `${s.pass_completions ?? 0}/${s.pass_attempts ?? 0}` },
+      { label: 'TOTAL YDS', value: (s.pass_yards ?? 0) + (s.qb_rush_yards ?? 0) },
+    ]
+  }
+  if (['WR', 'TE'].includes(primaryPos)) {
+    return [
+      { label: 'REC/TAR', value: `${s.receptions ?? 0}/${s.rec_targets ?? 0}` },
+      { label: 'REC YDS', value: s.rec_yards ?? 0 },
+    ]
+  }
+  if (primaryPos === 'RB') {
+    const yds = s.rush_yards ?? 0, car = s.rush_carries ?? 0
+    return [
+      { label: 'CAR', value: car },
+      { label: 'RUSH YDS', value: yds },
+      { label: 'YPC', value: car ? (yds / car).toFixed(1) : '0.0' },
+    ]
+  }
+  return []
 }
 
 /* ─────────────────────────────────
@@ -1125,11 +1153,12 @@ function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUr
 /* ─────────────────────────────────
    Key Player Ticker Control Panel
 ───────────────────────────────── */
-function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPlayers, onPush, saving, overlayUrl, copied, onCopy }: {
+function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPlayers, gameStatsRows, onPush, saving, overlayUrl, copied, onCopy }: {
   keyPlayerOverlay: KeyPlayerOverlayState
   selectedGame: Game | null
   homePlayers: Player[]
   awayPlayers: Player[]
+  gameStatsRows: any[]
   onPush: (patch: Partial<KeyPlayerOverlayState>) => void
   saving: boolean
   overlayUrl: string
@@ -1154,6 +1183,18 @@ function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPla
   const awayEligible = eligible(awayPlayers)
   const homeSelCount = homePlayers.filter(p => selected.includes(p.id)).length
   const awaySelCount = awayPlayers.filter(p => selected.includes(p.id)).length
+
+  // Build the rotating preview items in selection order, with live-aggregated stats
+  const previewItems = selected.map(id => {
+    const player = [...homePlayers, ...awayPlayers].find(p => p.id === id)
+    if (!player) return null
+    const isHome = homePlayers.some(p => p.id === id)
+    const team = isHome ? selectedGame?.home_team ?? null : selectedGame?.away_team ?? null
+    const totals: Record<string, number> = {}
+    gameStatsRows.filter(r => r.player_id === id).forEach(r =>
+      Object.entries(r).forEach(([k, v]) => { if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v }))
+    return { player, team, stats: buildKeyTickerStats(player.positions, totals) }
+  }).filter(Boolean) as { player: Player; team: Team | null; stats: { label: string; value: string | number }[] }[]
 
   return (
     <div style={{ background: '#080b14', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '14px 20px' }}>
@@ -1228,6 +1269,116 @@ function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPla
             count={awaySelCount} onToggle={p => toggle(p, awayPlayers)} />
         </div>
       )}
+
+      {/* vMix-accurate preview */}
+      {selectedGame && (
+        <KeyTickerPreview items={previewItems} rotationSeconds={keyPlayerOverlay.rotation_seconds} visible={keyPlayerOverlay.visible} />
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────
+   Key Player Ticker — vMix-accurate preview
+   Renders a 1920×1080 broadcast canvas scaled to 16:9, with the exact
+   ticker markup used by /overlay/key-players (same positions, fonts, rotation).
+───────────────────────────────── */
+function KeyTickerPreview({ items, rotationSeconds, visible }: {
+  items: { player: Player; team: Team | null; stats: { label: string; value: string | number }[] }[]
+  rotationSeconds: number
+  visible: boolean
+}) {
+  const [idx, setIdx] = useState(0)
+  const [shown, setShown] = useState(true)
+
+  useEffect(() => { setIdx(0); setShown(true) }, [items.length])
+  useEffect(() => {
+    if (items.length <= 1) return
+    const ms = Math.max(2, rotationSeconds ?? 6) * 1000
+    const t = setInterval(() => {
+      setShown(false)
+      setTimeout(() => { setIdx(i => (i + 1) % items.length); setShown(true) }, 380)
+    }, ms)
+    return () => clearInterval(t)
+  }, [items.length, rotationSeconds])
+
+  const SCALE = 0.26, W = 1920, H = 1080
+  const sw = Math.round(W * SCALE), sh = Math.round(H * SCALE)
+  const cur = items[idx] ?? null
+
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
+          Vorschau · wie im vMix-Fenster
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+        <span style={{ fontSize: 9, fontWeight: 700, color: '#444', letterSpacing: 1 }}>16:9 · 1920×1080</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: visible ? '#04a550' : '#555', boxShadow: visible ? '0 0 5px #04a550' : 'none' }} />
+          <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: visible ? '#04a550' : '#555', textTransform: 'uppercase' }}>
+            {visible ? 'On Air' : 'Hidden'}
+          </span>
+        </div>
+      </div>
+
+      {/* Scaled broadcast canvas */}
+      <div style={{ width: sw, height: sh, overflow: 'hidden', borderRadius: 6, boxShadow: '0 4px 20px rgba(0,0,0,0.6)', position: 'relative', border: '1px solid rgba(255,255,255,0.08)' }}>
+        {/* Faux video background so the white text reads like over live footage */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1d3a26 0%, #0c1c12 55%, #07120b 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(105deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 62px)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 90% 70% at 50% 40%, rgba(255,255,255,0.06) 0%, transparent 70%)' }} />
+
+        {/* 1920×1080 stage scaled down — ticker positioned exactly like the real overlay */}
+        <div style={{ width: W, height: H, transform: `scale(${SCALE})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }}>
+          {items.length === 0 ? (
+            <div style={{ position: 'absolute', bottom: 64, right: 72, textAlign: 'right', color: 'rgba(255,255,255,0.45)', fontSize: 30, fontWeight: 700, fontFamily: 'Arial' }}>
+              Keine Key Player ausgewählt
+            </div>
+          ) : cur && (
+            <div style={{
+              position: 'absolute', bottom: 64, right: 72, textAlign: 'right',
+              transition: 'opacity 0.34s ease', opacity: shown ? 1 : 0,
+            }}>
+              {/* Name line */}
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 12, lineHeight: 1, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
+                {cur.player.jersey_number != null && (
+                  <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 22, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif' }}>
+                    #{cur.player.jersey_number}
+                  </span>
+                )}
+                <span style={{ color: '#ffffff', fontSize: 34, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.4, whiteSpace: 'nowrap' }}>
+                  {cur.player.first_name.charAt(0).toUpperCase()}. {cur.player.last_name.toUpperCase()}
+                </span>
+              </div>
+              {/* Team · position line */}
+              <div style={{ marginTop: 6, lineHeight: 1, color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: 'uppercase', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+                {cur.team?.short_name ?? ''} · {cur.player.positions[0] ?? ''}
+              </div>
+              {/* Stats line */}
+              {cur.stats.length > 0 && (
+                <div style={{ marginTop: 12, display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 26, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
+                  {cur.stats.map(item => (
+                    <div key={item.label} style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
+                      <span style={{ color: '#ffffff', fontSize: 30, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, letterSpacing: -0.5 }}>{item.value}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Rotation dots */}
+        {items.length > 1 && (
+          <div style={{ position: 'absolute', bottom: 6, left: 8, display: 'flex', gap: 4 }}>
+            {items.map((_, i) => (
+              <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: i === idx ? '#fff' : 'rgba(255,255,255,0.3)' }} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
