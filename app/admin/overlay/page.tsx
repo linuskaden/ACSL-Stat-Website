@@ -276,6 +276,15 @@ export default function OverlayControlPage() {
         </div>
       </div>
 
+      {/* ══ vMix Inputs — three separate browser-input links in one place ══ */}
+      <VmixLinksBar
+        links={[
+          { label: 'Lower Third', sub: 'Spieler-Karte', url: overlayUrl, copied, onCopy: copyUrl, on: overlay.visible },
+          { label: 'Team Stats', sub: 'Vergleich', url: teamOverlayUrl, copied: copiedTeam, onCopy: copyTeamUrl, on: teamOverlay.visible },
+          { label: 'Key Player Ticker', sub: 'permanent', url: keyPlayerUrl, copied: copiedKey, onCopy: copyKeyUrl, on: keyPlayerOverlay.visible },
+        ]}
+      />
+
       {/* ══ Active player banner ══ */}
       {activePlayer && (
         <div className="bg-[#0f1420] border-b border-white/5 px-5 py-3 flex items-center gap-3">
@@ -491,6 +500,44 @@ function textOn(hex: string): string {
   const g = parseInt(hex.slice(3, 5), 16) / 255
   const b = parseInt(hex.slice(5, 7), 16) / 255
   return 0.299 * r + 0.587 * g + 0.114 * b > 0.48 ? '#000000' : '#ffffff'
+}
+
+/* ─────────────────────────────────
+   vMix Inputs bar — all three separate links in one place
+───────────────────────────────── */
+function VmixLinksBar({ links }: {
+  links: { label: string; sub: string; url: string; copied: boolean; onCopy: () => void; on: boolean }[]
+}) {
+  return (
+    <div style={{ background: '#080b14', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '12px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
+          vMix Browser-Inputs · 3 separate Quellen
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+        <span style={{ fontSize: 9, fontWeight: 700, color: '#444', letterSpacing: 1 }}>1920×1080 · transparent</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 8 }}>
+        {links.map(l => (
+          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0f1420', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 10px' }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: l.on ? '#04a550' : '#333', boxShadow: l.on ? '0 0 6px #04a550' : 'none' }} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#ddd' }}>{l.label}</span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#555', letterSpacing: 1, textTransform: 'uppercase' }}>{l.sub}</span>
+              </div>
+              <code style={{ display: 'block', fontSize: 10, color: '#777', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>
+                {l.url || '…'}
+              </code>
+            </div>
+            <button onClick={l.onCopy} style={{ flexShrink: 0, padding: '6px 12px', fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: 'pointer', background: l.copied ? '#04a550' : '#1a2040', color: l.copied ? 'white' : '#999', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {l.copied ? '✓ Kopiert' : 'Copy'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 /* ─────────────────────────────────
