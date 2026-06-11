@@ -27,12 +27,43 @@ function toEmbeddable(raw: string): string {
   return u
 }
 
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, isNaN(n) ? lo : n))
+
+function LayoutField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 1, textTransform: 'uppercase' }}>{label}</span>
+        <span style={{ fontSize: 11, color: '#888' }}>{value}%</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input type="range" min={0} max={100} value={value} onChange={e => onChange(clamp(Number(e.target.value), 0, 100))} style={{ flex: 1, accentColor: '#ff1d25' }} />
+        <input type="number" min={0} max={100} value={value} onChange={e => onChange(clamp(Number(e.target.value), 0, 100))}
+          style={{ width: 58, background: '#131826', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '4px 6px', color: '#fff', fontSize: 12, outline: 'none' }} />
+      </div>
+    </div>
+  )
+}
+
+type Layout = { x: number; y: number; w: number; h: number } // all in % of the stage
+
+const PRESETS: { label: string; layout: Layout }[] = [
+  { label: 'Vollbild',     layout: { x: 0,  y: 0,  w: 100, h: 100 } },
+  { label: 'Unten Mitte',  layout: { x: 30, y: 62, w: 40,  h: 34 } },
+  { label: 'Oben Mitte',   layout: { x: 30, y: 4,  w: 40,  h: 34 } },
+  { label: 'Unten Links',  layout: { x: 3,  y: 60, w: 34,  h: 36 } },
+  { label: 'Unten Rechts', layout: { x: 63, y: 60, w: 34,  h: 36 } },
+]
+
 export default function BroadcastMonitor() {
   const [input, setInput]         = useState('')
   const [bgUrl, setBgUrl]         = useState('')
   const [bgVisible, setBgVisible] = useState(true)
+  const [layout, setLayout]       = useState<Layout>({ x: 0, y: 0, w: 100, h: 100 })
+  const [editorOpen, setEditorOpen] = useState(false)
   const [scale, setScale]         = useState(0.5)
   const stageRef = useRef<HTMLDivElement>(null)
+  const isFull = layout.x === 0 && layout.y === 0 && layout.w === 100 && layout.h === 100
 
   // Keep the 1920×1080 stage scaled to whatever width the monitor has
   useEffect(() => {
@@ -86,6 +117,10 @@ export default function BroadcastMonitor() {
             style={{ background: bgVisible && bgUrl ? 'rgba(4,165,80,0.12)' : 'transparent', color: bgVisible && bgUrl ? '#04a550' : undefined }}>
             {bgVisible ? '▼ Hintergrund aus' : '▲ Hintergrund an'}
           </button>
+          <button onClick={() => setEditorOpen(true)} disabled={!bgUrl}
+            className="px-4 py-2 text-sm font-bold rounded-lg border border-black/10 dark:border-white/15 text-slate-700 dark:text-[#ccc] disabled:opacity-40 transition">
+            ⚙ Größe &amp; Position
+          </button>
           <button onClick={clear} disabled={!bgUrl && !input}
             className="px-4 py-2 text-sm font-bold rounded-lg border border-black/10 dark:border-white/15 text-slate-500 dark:text-[#888] disabled:opacity-40 transition">
             Leeren
@@ -110,13 +145,21 @@ export default function BroadcastMonitor() {
           boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
         }}
       >
-        {/* Background web input */}
+        {/* Background web input — positioned/sized like a vMix input */}
         {bgUrl && bgVisible ? (
           <iframe
             src={bgUrl}
             title="Web input"
             allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
+            style={{
+              position: 'absolute',
+              left: `${layout.x}%`, top: `${layout.y}%`,
+              width: `${layout.w}%`, height: `${layout.h}%`,
+              border: 0,
+              borderRadius: isFull ? 0 : 6,
+              boxShadow: isFull ? 'none' : '0 6px 24px rgba(0,0,0,0.6)',
+              background: '#000',
+            }}
           />
         ) : (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.18)', fontSize: 13, fontWeight: 600, letterSpacing: 1 }}>
@@ -146,6 +189,50 @@ export default function BroadcastMonitor() {
       <p className="text-xs text-slate-400 dark:text-[#666] mt-3">
         Die Overlays werden live aus dem vMix-Overlay-Control gesteuert (Spieler-Karte, Team-Stats, Key-Player-Ticker) und erscheinen hier sofort.
       </p>
+
+      {/* Floating size & position editor — monitor stays visible for live preview */}
+      {editorOpen && (
+        <div style={{
+          position: 'fixed', top: 84, right: 24, width: 340, zIndex: 70,
+          background: '#0c0f1a', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
+          boxShadow: '0 24px 70px rgba(0,0,0,0.65)', color: '#fff',
+          fontFamily: 'system-ui, sans-serif',
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <span style={{ fontSize: 13, fontWeight: 900 }}>Web-Input · Größe &amp; Position</span>
+            <button onClick={() => setEditorOpen(false)} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 6, width: 26, height: 26, color: '#aaa', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+          </div>
+
+          <div style={{ padding: 14 }}>
+            {/* Presets */}
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: '#555', textTransform: 'uppercase', marginBottom: 6 }}>Presets</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+              {PRESETS.map(p => {
+                const active = layout.x === p.layout.x && layout.y === p.layout.y && layout.w === p.layout.w && layout.h === p.layout.h
+                return (
+                  <button key={p.label} onClick={() => setLayout(p.layout)}
+                    style={{ padding: '6px 10px', fontSize: 11, fontWeight: 700, borderRadius: 7, cursor: 'pointer',
+                      background: active ? '#ff1d25' : '#131826', color: active ? '#fff' : '#999',
+                      border: `1px solid ${active ? '#ff1d25' : 'rgba(255,255,255,0.1)'}` }}>
+                    {p.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Sliders */}
+            <LayoutField label="Position X" value={layout.x} onChange={v => setLayout(l => ({ ...l, x: v }))} />
+            <LayoutField label="Position Y" value={layout.y} onChange={v => setLayout(l => ({ ...l, y: v }))} />
+            <LayoutField label="Breite"     value={layout.w} onChange={v => setLayout(l => ({ ...l, w: v }))} />
+            <LayoutField label="Höhe"       value={layout.h} onChange={v => setLayout(l => ({ ...l, h: v }))} />
+
+            <div style={{ fontSize: 10, color: '#555', marginTop: 4 }}>
+              Werte in % des 16:9-Fensters. Änderungen erscheinen sofort im Monitor.
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
