@@ -91,6 +91,8 @@ export default function NavBar() {
             <Link href="/admin"         className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">Dashboard</Link>
             <Link href="/admin/players" className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">Players</Link>
             <Link href="/admin/games"   className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">Games</Link>
+            <Link href="/admin/overlay" className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">Overlay</Link>
+            <Link href="/admin/broadcast" className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">Broadcast</Link>
           </div>
         )}
 
