@@ -1,6 +1,8 @@
 'use client'
 import React, { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { buildLineupScreens, groupsForSide, STARTER_TARGETS, POSITION_ORDER, type LineupSide } from '@/lib/lineup'
+import LineupBand from '@/components/LineupBand'
 
 /* ─── Types ─── */
 type Team = { id: string; name: string; short_name: string; slug: string; primary_color: string; secondary_color: string; logo_url: string | null }
@@ -16,6 +18,11 @@ type KeyPlayerOverlayState = { game_id: string | null; player_ids: string[]; rot
 const KEY_PLAYER_POSITIONS = ['QB', 'WR', 'TE', 'RB']
 const MAX_KEY_PER_TEAM = 4
 
+const SEASON = 2026
+type LineupOverlayState = { team_id: string | null; side: LineupSide; rotation_seconds: number; visible: boolean }
+type TeamStarters = { offense: string[]; defense: string[] }
+type SortMode = 'number' | 'starter'
+
 export default function OverlayControlPage() {
   const [games, setGames] = useState<Game[]>([])
   const [selectedGame, setSelectedGame] = useState<Game | null>(null)
@@ -24,6 +31,11 @@ export default function OverlayControlPage() {
   const [overlay, setOverlay] = useState<OverlayState>({ active_player_id: null, game_id: null, mode: 'live', visible: false })
   const [teamOverlay, setTeamOverlay] = useState<TeamOverlayState>({ game_id: null, display_team: 'both', visible: false })
   const [keyPlayerOverlay, setKeyPlayerOverlay] = useState<KeyPlayerOverlayState>({ game_id: null, player_ids: [], rotation_seconds: 6, visible: false })
+  const [lineupOverlay, setLineupOverlay] = useState<LineupOverlayState>({ team_id: null, side: 'offense', rotation_seconds: 8, visible: false })
+  const [startersByTeam, setStartersByTeam] = useState<Record<string, TeamStarters>>({})
+  const [starterEditorOpen, setStarterEditorOpen] = useState(false)
+  const [sortHome, setSortHome] = useState<SortMode>('number')
+  const [sortAway, setSortAway] = useState<SortMode>('number')
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [careerStats, setCareerStats] = useState<any>(null)
   const [loadingStats, setLoadingStats] = useState(false)
@@ -36,17 +48,21 @@ export default function OverlayControlPage() {
   const [overlayUrl, setOverlayUrl] = useState('')
   const [teamOverlayUrl, setTeamOverlayUrl] = useState('')
   const [keyPlayerUrl, setKeyPlayerUrl] = useState('')
+  const [lineupUrl, setLineupUrl] = useState('')
   const [copied, setCopied] = useState(false)
   const [copiedTeam, setCopiedTeam] = useState(false)
   const [copiedKey, setCopiedKey] = useState(false)
+  const [copiedLineup, setCopiedLineup] = useState(false)
   const [saving, setSaving] = useState(false)
   const [savingTeam, setSavingTeam] = useState(false)
   const [savingKey, setSavingKey] = useState(false)
+  const [savingLineup, setSavingLineup] = useState(false)
 
   useEffect(() => {
     setOverlayUrl(`${window.location.origin}/overlay/lower-third`)
     setTeamOverlayUrl(`${window.location.origin}/overlay/team-stats`)
     setKeyPlayerUrl(`${window.location.origin}/overlay/key-players`)
+    setLineupUrl(`${window.location.origin}/overlay/lineup`)
   }, [])
 
   // Realtime sync: keep local state in sync if another admin operates the overlay
@@ -59,6 +75,8 @@ export default function OverlayControlPage() {
         ({ new: row }) => setTeamOverlay(row as TeamOverlayState))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'key_player_overlay_state' },
         ({ new: row }) => setKeyPlayerOverlay(row as KeyPlayerOverlayState))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'lineup_overlay_state' },
+        ({ new: row }) => setLineupOverlay(row as LineupOverlayState))
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [])
@@ -66,16 +84,18 @@ export default function OverlayControlPage() {
   useEffect(() => {
     const supabase = createClient()
     async function init() {
-      const [{ data: gs }, { data: os }, { data: tos }, { data: kps }] = await Promise.all([
+      const [{ data: gs }, { data: os }, { data: tos }, { data: kps }, { data: los }] = await Promise.all([
         supabase.from('games').select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)').eq('season', 2026).order('scheduled_at', { ascending: false }),
         supabase.from('overlay_state').select('*').eq('id', 1).single(),
         supabase.from('team_overlay_state').select('*').eq('id', 1).single(),
         supabase.from('key_player_overlay_state').select('*').eq('id', 1).single(),
+        supabase.from('lineup_overlay_state').select('*').eq('id', 1).single(),
       ])
       if (gs) setGames(gs as Game[])
       if (os) setOverlay(os as OverlayState)
       if (tos) setTeamOverlay(tos as TeamOverlayState)
       if (kps) setKeyPlayerOverlay(kps as KeyPlayerOverlayState)
+      if (los) setLineupOverlay(los as LineupOverlayState)
       const list = (gs ?? []) as Game[]
       const auto = list.find(g => g.status === 'live') ?? (os?.game_id ? list.find(g => g.id === os.game_id) : null) ?? null
       if (auto) { setSelectedGame(auto); loadPlayers(auto) }
@@ -86,15 +106,19 @@ export default function OverlayControlPage() {
   async function loadPlayers(game: Game) {
     const supabase = createClient()
     const teamIds = [game.home_team.id, game.away_team?.id].filter(Boolean) as string[]
-    const [{ data: players }, { data: gs }] = await Promise.all([
+    const [{ data: players }, { data: gs }, { data: ts }] = await Promise.all([
       supabase.from('players').select('*').in('team_id', teamIds).eq('is_active', true).order('jersey_number', { nullsFirst: false }),
       supabase.from('game_stats').select('*').eq('game_id', game.id),
+      supabase.from('team_starters').select('team_id, offense, defense').in('team_id', teamIds).eq('season', SEASON),
     ])
     if (players) {
       setHomePlayers((players as Player[]).filter(p => p.team_id === game.home_team.id))
       setAwayPlayers(game.away_team ? (players as Player[]).filter(p => p.team_id === game.away_team!.id) : [])
     }
     setGameStatsRows(gs ?? [])
+    const map: Record<string, TeamStarters> = {}
+    ;(ts ?? []).forEach((r: any) => { map[r.team_id] = { offense: r.offense ?? [], defense: r.defense ?? [] } })
+    setStartersByTeam(map)
   }
 
   // Load career stats when player selected (for modal)
@@ -138,10 +162,12 @@ export default function OverlayControlPage() {
 
   const pushOverlay = useCallback(async (patch: Partial<OverlayState>) => {
     const supabase = createClient()
-    // Mutually exclusive: hide team stats whenever player overlay becomes visible
+    // Mutually exclusive: hide other big graphics whenever player overlay becomes visible
     if (patch.visible === true) {
       setTeamOverlay(prev => ({ ...prev, visible: false }))
       supabase.from('team_overlay_state').update({ visible: false, updated_at: new Date().toISOString() }).eq('id', 1)
+      setLineupOverlay(prev => ({ ...prev, visible: false }))
+      supabase.from('lineup_overlay_state').update({ visible: false, updated_at: new Date().toISOString() }).eq('id', 1)
     }
     const next = { ...overlay, ...patch }
     setOverlay(next)
@@ -152,10 +178,12 @@ export default function OverlayControlPage() {
 
   const pushTeamOverlay = useCallback(async (patch: Partial<TeamOverlayState>) => {
     const supabase = createClient()
-    // Mutually exclusive: hide player overlay whenever team stats become visible
+    // Mutually exclusive: hide other big graphics whenever team stats become visible
     if (patch.visible === true) {
       setOverlay(prev => ({ ...prev, visible: false }))
       supabase.from('overlay_state').update({ visible: false, updated_at: new Date().toISOString() }).eq('id', 1)
+      setLineupOverlay(prev => ({ ...prev, visible: false }))
+      supabase.from('lineup_overlay_state').update({ visible: false, updated_at: new Date().toISOString() }).eq('id', 1)
     }
     setTeamOverlay(prev => ({ ...prev, ...patch }))
     setSavingTeam(true)
@@ -171,6 +199,31 @@ export default function OverlayControlPage() {
     setSavingKey(false)
   }, [])
 
+  const pushLineupOverlay = useCallback(async (patch: Partial<LineupOverlayState>) => {
+    const supabase = createClient()
+    // Mutually exclusive: hide lower-third + team stats whenever lineup becomes visible
+    if (patch.visible === true) {
+      setOverlay(prev => ({ ...prev, visible: false }))
+      supabase.from('overlay_state').update({ visible: false, updated_at: new Date().toISOString() }).eq('id', 1)
+      setTeamOverlay(prev => ({ ...prev, visible: false }))
+      supabase.from('team_overlay_state').update({ visible: false, updated_at: new Date().toISOString() }).eq('id', 1)
+    }
+    setLineupOverlay(prev => ({ ...prev, ...patch }))
+    setSavingLineup(true)
+    await supabase.from('lineup_overlay_state').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1)
+    setSavingLineup(false)
+  }, [])
+
+  // Persist a team's starting lineup (reusable per season) and update local state
+  const saveStarters = useCallback(async (teamId: string, next: TeamStarters) => {
+    setStartersByTeam(prev => ({ ...prev, [teamId]: next }))
+    const supabase = createClient()
+    await supabase.from('team_starters').upsert(
+      { team_id: teamId, season: SEASON, offense: next.offense, defense: next.defense, updated_at: new Date().toISOString() },
+      { onConflict: 'team_id,season' },
+    )
+  }, [])
+
   async function handleGameChange(gameId: string) {
     const game = games.find(g => g.id === gameId)
     if (!game) return
@@ -179,6 +232,10 @@ export default function OverlayControlPage() {
     pushTeamOverlay({ game_id: gameId })
     // Key player ticker follows the selected game; clear stale selection from another game
     pushKeyPlayerOverlay({ game_id: gameId, player_ids: [] })
+    // Point the lineup overlay at this game's home team unless it already shows one of the two teams
+    if (lineupOverlay.team_id !== game.home_team.id && lineupOverlay.team_id !== game.away_team?.id) {
+      pushLineupOverlay({ team_id: game.home_team.id })
+    }
   }
 
   async function showOnOverlay(player: Player, mode: 'live' | 'career' | 'intro') {
@@ -196,6 +253,9 @@ export default function OverlayControlPage() {
   function copyKeyUrl() {
     navigator.clipboard.writeText(keyPlayerUrl).then(() => { setCopiedKey(true); setTimeout(() => setCopiedKey(false), 2000) })
   }
+  function copyLineupUrl() {
+    navigator.clipboard.writeText(lineupUrl).then(() => { setCopiedLineup(true); setTimeout(() => setCopiedLineup(false), 2000) })
+  }
 
   function filterPlayers(players: Player[], search: string, filter: string) {
     const q = search.toLowerCase()
@@ -212,6 +272,13 @@ export default function OverlayControlPage() {
   const filteredHome = filterPlayers(homePlayers, searchHome, filterHome)
   const filteredAway = filterPlayers(awayPlayers, searchAway, filterAway)
   const activePlayer = [...homePlayers, ...awayPlayers].find(p => p.id === overlay.active_player_id)
+
+  const starterSet = (teamId?: string) => {
+    const s = teamId ? startersByTeam[teamId] : undefined
+    return new Set<string>([...(s?.offense ?? []), ...(s?.defense ?? [])])
+  }
+  const homeStarterIds = starterSet(selectedGame?.home_team.id)
+  const awayStarterIds = starterSet(selectedGame?.away_team?.id)
 
   return (
     <div className="min-h-screen bg-[#0c0f1a] text-white" style={{ fontFamily: 'system-ui, sans-serif' }}>
@@ -242,6 +309,8 @@ export default function OverlayControlPage() {
         visible={overlay.visible}
         teamOverlay={teamOverlay}
         keyPlayerOverlay={keyPlayerOverlay}
+        lineupOverlay={lineupOverlay}
+        startersByTeam={startersByTeam}
         homeTeam={selectedGame?.home_team ?? null}
         awayTeam={selectedGame?.away_team ?? null}
         homePlayers={homePlayers}
@@ -271,6 +340,19 @@ export default function OverlayControlPage() {
         overlayUrl={keyPlayerUrl}
         copied={copiedKey}
         onCopy={copyKeyUrl}
+      />
+
+      {/* ══ Starting Lineup Control ══ */}
+      <LineupControl
+        lineupOverlay={lineupOverlay}
+        selectedGame={selectedGame}
+        startersByTeam={startersByTeam}
+        onPush={pushLineupOverlay}
+        onEdit={() => setStarterEditorOpen(true)}
+        saving={savingLineup}
+        overlayUrl={lineupUrl}
+        copied={copiedLineup}
+        onCopy={copyLineupUrl}
       />
 
       {/* ══ Player overlay (Lower Third) — controls ══ */}
@@ -344,6 +426,9 @@ export default function OverlayControlPage() {
             onSearch={setSearchHome}
             filter={filterHome}
             onFilter={setFilterHome}
+            sort={sortHome}
+            onSort={setSortHome}
+            starterIds={homeStarterIds}
             activeId={overlay.active_player_id}
             onSelect={p => setSelectedPlayer(p)}
             selectedId={selectedPlayer?.id ?? null}
@@ -362,6 +447,9 @@ export default function OverlayControlPage() {
             onSearch={setSearchAway}
             filter={filterAway}
             onFilter={setFilterAway}
+            sort={sortAway}
+            onSort={setSortAway}
+            starterIds={awayStarterIds}
             activeId={overlay.active_player_id}
             onSelect={p => setSelectedPlayer(p)}
             selectedId={selectedPlayer?.id ?? null}
@@ -388,6 +476,20 @@ export default function OverlayControlPage() {
           onClose={() => setSelectedPlayer(null)}
           onShow={(mode) => showOnOverlay(selectedPlayer, mode)}
           onHide={() => pushOverlay({ visible: false })}
+        />
+      )}
+
+      {/* ══ Starter editor (pre-game lineup selection) ══ */}
+      {starterEditorOpen && selectedGame && (
+        <StarterEditor
+          teams={[selectedGame.home_team, selectedGame.away_team].filter(Boolean) as Team[]}
+          playersByTeam={{
+            [selectedGame.home_team.id]: homePlayers,
+            ...(selectedGame.away_team ? { [selectedGame.away_team.id]: awayPlayers } : {}),
+          }}
+          startersByTeam={startersByTeam}
+          onSave={saveStarters}
+          onClose={() => setStarterEditorOpen(false)}
         />
       )}
     </div>
@@ -521,7 +623,7 @@ function calcTeamTotals(players: Player[], gsRows: any[]) {
 }
 
 function OperatorPreview({ player, team, stats, mode, visible,
-  teamOverlay, keyPlayerOverlay, homeTeam, awayTeam, homePlayers, awayPlayers, gameStatsRows }: {
+  teamOverlay, keyPlayerOverlay, lineupOverlay, startersByTeam, homeTeam, awayTeam, homePlayers, awayPlayers, gameStatsRows }: {
   player: Player | null
   team: Team | null | undefined
   stats: any
@@ -529,6 +631,8 @@ function OperatorPreview({ player, team, stats, mode, visible,
   visible: boolean
   teamOverlay: TeamOverlayState
   keyPlayerOverlay: KeyPlayerOverlayState
+  lineupOverlay: LineupOverlayState
+  startersByTeam: Record<string, TeamStarters>
   homeTeam: Team | null | undefined
   awayTeam: Team | null | undefined
   homePlayers: Player[]
@@ -565,10 +669,31 @@ function OperatorPreview({ player, team, stats, mode, visible,
   }, [tickerItems.length, keyPlayerOverlay.rotation_seconds])
   const tCur = tickerItems[tIdx] ?? null
 
+  /* ── Lineup band (selection-ordered, grouped into position screens) ── */
+  const lineupTeam = lineupOverlay.team_id === homeTeam?.id ? homeTeam ?? null
+                   : lineupOverlay.team_id === awayTeam?.id ? awayTeam ?? null : null
+  const lineupRoster = lineupOverlay.team_id === homeTeam?.id ? homePlayers
+                     : lineupOverlay.team_id === awayTeam?.id ? awayPlayers : []
+  const lineupStarterIds = (lineupOverlay.team_id ? startersByTeam[lineupOverlay.team_id] : undefined)?.[lineupOverlay.side] ?? []
+  const lineupPlayers = lineupStarterIds
+    .map(id => lineupRoster.find(p => p.id === id))
+    .filter(Boolean) as Player[]
+  const lineupScreens = buildLineupScreens(lineupOverlay.side, lineupPlayers)
+
+  const [lIdx, setLIdx] = useState(0)
+  const [lShown, setLShown] = useState(true)
+  useEffect(() => { setLIdx(0); setLShown(true) }, [lineupScreens.length, lineupOverlay.side, lineupOverlay.team_id])
+  useEffect(() => {
+    if (lineupScreens.length <= 1) return
+    const ms = Math.max(3, lineupOverlay.rotation_seconds ?? 8) * 1000
+    const t = setInterval(() => { setLShown(false); setTimeout(() => { setLIdx(i => (i + 1) % lineupScreens.length); setLShown(true) }, 400) }, ms)
+    return () => clearInterval(t)
+  }, [lineupScreens.length, lineupOverlay.rotation_seconds])
+
   /* ── 16:9 broadcast stage (true 1920×1080, scaled to fit) ── */
   const STAGE_W = 760, W = 1920, H = 1080, SCALE = STAGE_W / W
   const STAGE_H = Math.round(H * SCALE)
-  const anyOnAir = (visible && player && team) || teamOverlay.visible || (keyPlayerOverlay.visible && tCur)
+  const anyOnAir = (visible && player && team) || teamOverlay.visible || (keyPlayerOverlay.visible && tCur) || (lineupOverlay.visible && lineupTeam && lineupScreens.length > 0)
 
   return (
     <div style={{
@@ -770,6 +895,16 @@ function OperatorPreview({ player, team, stats, mode, visible,
               )}
             </div>
           )}
+
+          {/* ── STARTING LINEUP — bottom band (real overlay sizes) ── */}
+          <LineupBand
+            team={lineupTeam}
+            side={lineupOverlay.side}
+            screens={lineupScreens}
+            idx={lIdx}
+            shown={lShown}
+            visible={lineupOverlay.visible}
+          />
         </div>
 
         {/* Ticker rotation dots */}
@@ -788,12 +923,17 @@ function OperatorPreview({ player, team, stats, mode, visible,
 /* ─────────────────────────────────
    Team Column
 ───────────────────────────────── */
-function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter, onFilter, activeId, onSelect, selectedId }: {
+function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter, onFilter, sort, onSort, starterIds, activeId, onSelect, selectedId }: {
   team: Team | null; players: Player[]; allPlayers: Player[]; label: string
   search: string; onSearch: (v: string) => void; filter: string; onFilter: (v: string) => void
+  sort: SortMode; onSort: (v: SortMode) => void; starterIds: Set<string>
   activeId: string | null; onSelect: (p: Player) => void; selectedId: string | null
 }) {
   const color = team?.primary_color ?? '#444'
+  // 'starter' sort: starters first (preserving the incoming jersey order), then the rest
+  const sortedPlayers = sort === 'starter'
+    ? [...players.filter(p => starterIds.has(p.id)), ...players.filter(p => !starterIds.has(p.id))]
+    : players
   if (!team) {
     return (
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden items-center justify-center" style={{ minHeight: 200 }}>
@@ -834,17 +974,32 @@ function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter
             </button>
           ))}
         </div>
+
+        {/* Sort toggle: by jersey number (default) or starters first */}
+        <div className="flex items-center gap-2 mt-2">
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#555', textTransform: 'uppercase' }}>Sortierung</span>
+          <div className="flex rounded-md overflow-hidden border border-white/8">
+            {([['number', 'Nummer'], ['starter', '★ Starter']] as const).map(([val, txt]) => (
+              <button key={val} onClick={() => onSort(val)}
+                className="px-2.5 py-0.5 text-[10px] font-bold transition-all"
+                style={{ background: sort === val ? color : '#131826', color: sort === val ? textOn(color) : '#666' }}>
+                {txt}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Player card grid */}
       <div className="overflow-y-auto p-3 flex-1">
-        {players.length === 0 ? (
+        {sortedPlayers.length === 0 ? (
           <div className="text-center text-[#333] text-xs py-8">Keine Spieler</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8 }}>
-            {players.map(p => {
+            {sortedPlayers.map(p => {
               const isActive = p.id === activeId
               const isSelected = p.id === selectedId
+              const isStarter = starterIds.has(p.id)
               return (
                 <button key={p.id} onClick={() => onSelect(p)}
                   style={{
@@ -889,6 +1044,7 @@ function TeamColumn({ team, players, allPlayers, label, search, onSearch, filter
                       <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.55)', lineHeight: 1.2 }}>{p.last_name}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+                      {isStarter && <div title="Starter" style={{ fontSize: 11, color: '#f5b50a', lineHeight: 1 }}>★</div>}
                       {p.is_active && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#04a550', boxShadow: '0 0 4px #04a550' }} />}
                       {isActive && <div style={{ fontSize: 7, fontWeight: 800, letterSpacing: 0.5, color: color }}>AIR</div>}
                     </div>
@@ -1419,6 +1575,277 @@ function CareerStats({ cs, positions }: { cs: any; positions: string[] }) {
             <div style={{ fontSize: 8, color: '#555', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 3 }}>{item.label}</div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────
+   Starting Lineup Control Panel
+───────────────────────────────── */
+function LineupControl({ lineupOverlay, selectedGame, startersByTeam, onPush, onEdit, saving, overlayUrl, copied, onCopy }: {
+  lineupOverlay: LineupOverlayState
+  selectedGame: Game | null
+  startersByTeam: Record<string, TeamStarters>
+  onPush: (patch: Partial<LineupOverlayState>) => void
+  onEdit: () => void
+  saving: boolean
+  overlayUrl: string
+  copied: boolean
+  onCopy: () => void
+}) {
+  const home = selectedGame?.home_team ?? null
+  const away = selectedGame?.away_team ?? null
+  const teamOptions = [home, away].filter(Boolean) as Team[]
+  const activeTeamId = lineupOverlay.team_id ?? home?.id ?? null
+  const activeTeam = teamOptions.find(t => t.id === activeTeamId) ?? null
+  const starters = activeTeamId ? startersByTeam[activeTeamId] : undefined
+  const sideCount = (starters?.[lineupOverlay.side] ?? []).length
+
+  return (
+    <div style={{ background: '#080b14', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '14px 20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>
+          Starting Lineup · Aufstellung
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+        {saving && <span style={{ fontSize: 10, color: '#444' }}>saving…</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: lineupOverlay.visible ? '#04a550' : '#333', boxShadow: lineupOverlay.visible ? '0 0 6px #04a550' : 'none', transition: 'all 0.3s' }} />
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: lineupOverlay.visible ? '#04a550' : '#444', textTransform: 'uppercase' }}>
+            {lineupOverlay.visible ? 'On Air' : 'Hidden'}
+          </span>
+        </div>
+      </div>
+
+      {!selectedGame ? (
+        <div style={{ fontSize: 11, color: '#555', fontStyle: 'italic' }}>Wähle oben ein Spiel aus um die Aufstellung zu senden</div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {/* Show / Hide */}
+          <button
+            onClick={() => onPush({ visible: !lineupOverlay.visible, team_id: activeTeamId })}
+            disabled={sideCount === 0}
+            style={{
+              padding: '8px 20px', fontSize: 12, fontWeight: 900, borderRadius: 8,
+              border: `1px solid ${lineupOverlay.visible ? '#04a550' : 'rgba(255,255,255,0.1)'}`,
+              background: lineupOverlay.visible ? 'rgba(4,165,80,0.15)' : 'rgba(255,255,255,0.04)',
+              color: lineupOverlay.visible ? '#04a550' : sideCount === 0 ? '#444' : '#888',
+              cursor: sideCount === 0 ? 'not-allowed' : 'pointer', opacity: sideCount === 0 ? 0.5 : 1,
+              boxShadow: lineupOverlay.visible ? '0 0 12px rgba(4,165,80,0.2)' : 'none', transition: 'all 0.2s',
+            }}>
+            {lineupOverlay.visible ? '▼ HIDE' : '▲ SHOW'}
+          </button>
+
+          {/* Team selector */}
+          <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+            {teamOptions.map(t => {
+              const isActive = t.id === activeTeamId
+              return (
+                <button key={t.id} onClick={() => onPush({ team_id: t.id })}
+                  style={{ padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', border: 'none',
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    background: isActive ? t.primary_color : '#131826', color: isActive ? textOn(t.primary_color) : '#666' }}>
+                  {t.logo_url && <img src={t.logo_url} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />}
+                  {t.short_name}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Side selector */}
+          <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+            {(['offense', 'defense'] as const).map(s => (
+              <button key={s} onClick={() => onPush({ side: s })}
+                style={{ padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', border: 'none', textTransform: 'uppercase', letterSpacing: 1,
+                  background: lineupOverlay.side === s ? '#ff1d25' : '#131826', color: lineupOverlay.side === s ? 'white' : '#666' }}>
+                {s === 'offense' ? 'Offense' : 'Defense'}
+              </button>
+            ))}
+          </div>
+
+          {/* Rotation speed */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 10, color: '#555', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Wechsel</span>
+            <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {[6, 8, 10, 12].map(sec => (
+                <button key={sec} onClick={() => onPush({ rotation_seconds: sec })}
+                  style={{ padding: '6px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer', border: 'none',
+                    background: lineupOverlay.rotation_seconds === sec ? '#ff1d25' : '#131826', color: lineupOverlay.rotation_seconds === sec ? 'white' : '#666' }}>
+                  {sec}s
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Edit starters */}
+          <button onClick={onEdit}
+            style={{ padding: '8px 14px', fontSize: 12, fontWeight: 800, borderRadius: 8, cursor: 'pointer', background: '#1a2040', color: '#ccc', border: '1px solid rgba(255,255,255,0.12)' }}>
+            ✎ Starter bearbeiten
+          </button>
+
+          <span style={{ fontSize: 11, color: sideCount === 0 ? '#ff1d25' : '#555' }}>
+            {activeTeam?.short_name ?? '—'} · {lineupOverlay.side === 'offense' ? 'Offense' : 'Defense'}: {sideCount} Starter
+          </span>
+
+          {/* vMix URL */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+            <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '5px 8px', fontSize: 11, color: '#888', whiteSpace: 'nowrap' }}>
+              {overlayUrl || '…'}
+            </code>
+            <button onClick={onCopy} style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700, borderRadius: 4, background: copied ? '#04a550' : '#1a2040', color: copied ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+              {copied ? '✓' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────
+   Starter Editor — pick the reusable starting
+   lineup (offense + defense) for each team.
+───────────────────────────────── */
+function StarterEditor({ teams, playersByTeam, startersByTeam, onSave, onClose }: {
+  teams: Team[]
+  playersByTeam: Record<string, Player[]>
+  startersByTeam: Record<string, TeamStarters>
+  onSave: (teamId: string, next: TeamStarters) => void
+  onClose: () => void
+}) {
+  const [activeTeamId, setActiveTeamId] = useState(teams[0]?.id ?? '')
+  const activeTeam = teams.find(t => t.id === activeTeamId) ?? null
+  const roster = playersByTeam[activeTeamId] ?? []
+  const current: TeamStarters = startersByTeam[activeTeamId] ?? { offense: [], defense: [] }
+  const color = activeTeam?.primary_color ?? '#444'
+
+  function toggle(side: LineupSide, playerId: string) {
+    const list = current[side]
+    const next = list.includes(playerId) ? list.filter(id => id !== playerId) : [...list, playerId]
+    onSave(activeTeamId, { ...current, [side]: next })
+  }
+
+  // Auto-fill a side from the roster using STARTER_TARGETS (by primary position, ordered by jersey)
+  function autoFill(side: LineupSide) {
+    const targets = STARTER_TARGETS[side]
+    const byPos: Record<string, Player[]> = {}
+    roster.forEach(p => {
+      const pos = p.positions[0] ?? ''
+      if (targets[pos] != null) (byPos[pos] ??= []).push(p)
+    })
+    const ids: string[] = []
+    Object.keys(targets)
+      .sort((a, b) => (POSITION_ORDER[a] ?? 99) - (POSITION_ORDER[b] ?? 99))
+      .forEach(pos => {
+        const sorted = (byPos[pos] ?? []).slice().sort((a, b) => Number(a.jersey_number ?? 999) - Number(b.jersey_number ?? 999))
+        sorted.slice(0, targets[pos]).forEach(p => ids.push(p.id))
+      })
+    onSave(activeTeamId, { ...current, [side]: ids })
+  }
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 60, backdropFilter: 'blur(2px)' }} />
+      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 'min(960px, 94vw)', maxHeight: '86vh', overflowY: 'auto', background: '#0c0f1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, zIndex: 61, boxShadow: '0 24px 80px rgba(0,0,0,0.7)' }}>
+        {/* Header */}
+        <div style={{ position: 'sticky', top: 0, background: '#0c0f1a', padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, zIndex: 1 }}>
+          <span style={{ fontSize: 13, fontWeight: 900, color: '#fff' }}>Starter bearbeiten</span>
+          <span style={{ fontSize: 11, color: '#666' }}>gilt für alle Spiele der Saison · Reihenfolge = Anzeige-Reihenfolge</span>
+          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 6, width: 28, height: 28, color: '#aaa', fontSize: 17, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+        </div>
+
+        {/* Team tabs */}
+        <div style={{ display: 'flex', gap: 8, padding: '12px 18px 0' }}>
+          {teams.map(t => {
+            const isActive = t.id === activeTeamId
+            return (
+              <button key={t.id} onClick={() => setActiveTeamId(t.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 14px', fontSize: 12, fontWeight: 800, borderRadius: 8, cursor: 'pointer',
+                  border: `1px solid ${isActive ? t.primary_color : 'rgba(255,255,255,0.1)'}`,
+                  background: isActive ? `${t.primary_color}22` : '#131826', color: isActive ? '#fff' : '#777' }}>
+                {t.logo_url && <img src={t.logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />}
+                {t.name}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Two sides */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 18 }}>
+          {(['offense', 'defense'] as const).map(side => (
+            <StarterSidePanel key={side} side={side} roster={roster} selected={current[side]} color={color}
+              onToggle={pid => toggle(side, pid)} onAutoFill={() => autoFill(side)} />
+          ))}
+        </div>
+
+        <div style={{ position: 'sticky', bottom: 0, background: '#0c0f1a', padding: '12px 18px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 11, color: '#555' }}>Änderungen werden automatisch gespeichert.</span>
+          <button onClick={onClose} style={{ marginLeft: 'auto', padding: '8px 22px', fontSize: 12, fontWeight: 800, borderRadius: 8, cursor: 'pointer', background: '#1a2040', color: '#fff', border: '1px solid rgba(255,255,255,0.12)' }}>
+            Fertig
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function StarterSidePanel({ side, roster, selected, color, onToggle, onAutoFill }: {
+  side: LineupSide; roster: Player[]; selected: string[]; color: string
+  onToggle: (playerId: string) => void; onAutoFill: () => void
+}) {
+  const groups = groupsForSide(side)
+  const total = Object.values(STARTER_TARGETS[side]).reduce((a, b) => a + b, 0)
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 12, fontWeight: 900, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>
+          {side === 'offense' ? 'Offense' : 'Defense'}
+        </span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: selected.length === total ? '#04a550' : '#777' }}>
+          {selected.length}/{total}
+        </span>
+        <button onClick={onAutoFill}
+          style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: 10, fontWeight: 800, borderRadius: 6, cursor: 'pointer', background: '#1a2040', color: '#aaa', border: '1px solid rgba(255,255,255,0.1)' }}>
+          ⚡ Auto-Fill
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {groups.map(group => {
+          const groupPlayers = roster.filter(p => group.positions.includes(p.positions[0] ?? ''))
+          return (
+            <div key={group.key}>
+              <div style={{ fontSize: 9, fontWeight: 800, color: '#555', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>
+                {group.label}
+              </div>
+              {groupPlayers.length === 0 ? (
+                <div style={{ fontSize: 11, color: '#444', fontStyle: 'italic' }}>Keine Spieler</div>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {groupPlayers.map(p => {
+                    const isSel = selected.includes(p.id)
+                    const order = isSel ? selected.indexOf(p.id) + 1 : null
+                    return (
+                      <button key={p.id} onClick={() => onToggle(p.id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 8, cursor: 'pointer',
+                          border: `1px solid ${isSel ? color : 'rgba(255,255,255,0.08)'}`,
+                          background: isSel ? `${color}22` : '#131826', color: isSel ? '#fff' : '#aaa', fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
+                        {order != null && (
+                          <span style={{ width: 16, height: 16, borderRadius: '50%', background: color, color: textOn(color), fontSize: 9, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{order}</span>
+                        )}
+                        <span style={{ color: isSel ? '#fff' : '#666', fontWeight: 900, fontFamily: '"Arial Black", sans-serif' }}>{p.jersey_number ?? '—'}</span>
+                        <span>{p.first_name.charAt(0)}. {p.last_name}</span>
+                        <span style={{ fontSize: 9, fontWeight: 800, color: isSel ? color : '#555', letterSpacing: 0.5 }}>{p.positions[0]}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
