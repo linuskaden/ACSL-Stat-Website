@@ -3,25 +3,30 @@ import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { buildLineupScreens, type LineupSide } from '@/lib/lineup'
 import LineupBand, { type LineupBandPlayer, type LineupBandTeam } from '@/components/LineupBand'
+import LineupFullPanel from '@/components/LineupFullPanel'
 
 const SEASON = 2026
 
+type LineupStyle = 'band' | 'full'
 type LineupStateRow = {
   id: number
   team_id: string | null
   side: LineupSide
   rotation_seconds: number
   visible: boolean
+  display_style: LineupStyle
 }
 
 /* ════════════════════════════════════════════
-   Starting-lineup overlay — auto-cycles through the
-   position groups of the selected team + unit.
+   Starting-lineup overlay — one vMix input, two styles:
+   a rotating bottom band or a full-screen panel
+   (chosen via display_style). Both read the same data.
 ════════════════════════════════════════════ */
 export default function LineupOverlay() {
   const [team, setTeam] = useState<LineupBandTeam | null>(null)
   const [players, setPlayers] = useState<LineupBandPlayer[]>([])
   const [side, setSide] = useState<LineupSide>('offense')
+  const [style, setStyle] = useState<LineupStyle>('band')
   const [visible, setVisible] = useState(false)
   const [rotationMs, setRotationMs] = useState(8000)
   const [idx, setIdx] = useState(0)
@@ -66,6 +71,7 @@ export default function LineupOverlay() {
       }
       setVisible(state.visible)
       setSide(state.side)
+      setStyle(state.display_style ?? 'band')
       setRotationMs(Math.max(3, state.rotation_seconds ?? 8) * 1000)
       teamIdRef.current = state.team_id
       sideRef.current = state.side
@@ -84,8 +90,6 @@ export default function LineupOverlay() {
         ({ new: row }: any) => { if (row?.visible === true) setVisible(false) })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_overlay_state' },
         ({ new: row }: any) => { if (row?.visible === true) setVisible(false) })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'lineup_full_overlay_state' },
-        ({ new: row }: any) => { if (row?.visible === true) setVisible(false) })
       .subscribe()
 
     return () => { supabase.removeChannel(ch) }
@@ -93,16 +97,21 @@ export default function LineupOverlay() {
 
   const screens = buildLineupScreens(side, players)
 
-  useEffect(() => { setIdx(0); setShown(true) }, [screens.length, side])
+  useEffect(() => { setIdx(0); setShown(true) }, [screens.length, side, style])
 
   useEffect(() => {
-    if (screens.length <= 1) return
+    if (style !== 'band' || screens.length <= 1) return
     const interval = setInterval(() => {
       setShown(false)
       setTimeout(() => { setIdx(i => (i + 1) % screens.length); setShown(true) }, 400)
     }, rotationMs)
     return () => clearInterval(interval)
-  }, [screens.length, rotationMs])
+  }, [style, screens.length, rotationMs])
 
-  return <LineupBand team={team} side={side} screens={screens} idx={idx} shown={shown} visible={visible} />
+  return (
+    <>
+      <LineupBand team={team} side={side} screens={screens} idx={idx} shown={shown} visible={visible && style === 'band'} />
+      <LineupFullPanel team={team} side={side} players={players} visible={visible && style === 'full'} />
+    </>
+  )
 }
