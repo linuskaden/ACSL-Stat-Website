@@ -54,7 +54,7 @@ export function buildLineupScreens<T extends { positions: string[] }>(
   return groupsForSide(side)
     .map(group => ({
       group,
-      players: players.filter(p => group.positions.includes(p.positions[0] ?? '')),
+      players: players.filter(p => p.positions.some(pos => group.positions.includes(pos))),
     }))
     .filter(screen => screen.players.length > 0)
 }

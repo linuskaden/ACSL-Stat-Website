@@ -1856,7 +1856,7 @@ function StarterSidePanel({ side, roster, selected, color, onToggle, onAutoFill 
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {groups.map(group => {
-          const groupPlayers = roster.filter(p => group.positions.includes(p.positions[0] ?? ''))
+          const groupPlayers = roster.filter(p => p.positions.some(pos => group.positions.includes(pos)))
           return (
             <div key={group.key}>
               <div style={{ fontSize: 9, fontWeight: 800, color: '#555', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 }}>
@@ -1879,7 +1879,7 @@ function StarterSidePanel({ side, roster, selected, color, onToggle, onAutoFill 
                         )}
                         <span style={{ color: isSel ? '#fff' : '#666', fontWeight: 900, fontFamily: '"Arial Black", sans-serif' }}>{p.jersey_number ?? '—'}</span>
                         <span>{p.first_name.charAt(0)}. {p.last_name}</span>
-                        <span style={{ fontSize: 9, fontWeight: 800, color: isSel ? color : '#555', letterSpacing: 0.5 }}>{p.positions[0]}</span>
+                        <span style={{ fontSize: 9, fontWeight: 800, color: isSel ? color : '#555', letterSpacing: 0.5 }}>{p.positions.find(pos => group.positions.includes(pos)) ?? p.positions[0]}</span>
                       </button>
                     )
                   })}
