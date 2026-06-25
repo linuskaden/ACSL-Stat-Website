@@ -46,15 +46,26 @@ export const STARTER_TARGETS: Record<LineupSide, Record<string, number>> = {
 export type LineupScreen<T> = { group: LineupGroup; players: T[] }
 
 /* Split an ordered list of starters into the (non-empty) group screens for a side.
-   `players` must already be in selection order; order is preserved within a group. */
+   Each player lands in at most one group per side — the group whose positions match
+   the player's earliest position in their positions array. This prevents a multi-position
+   player (e.g. WR/RB) from appearing twice on the same side of the overlay. */
 export function buildLineupScreens<T extends { positions: string[] }>(
   side: LineupSide,
   players: T[],
 ): LineupScreen<T>[] {
-  return groupsForSide(side)
+  const groups = groupsForSide(side)
+  // Map each player to the key of the first group that matches any of their positions (in player-position order)
+  const primaryGroupKey = new Map<T, string>()
+  for (const p of players) {
+    for (const pos of p.positions) {
+      const g = groups.find(g => g.positions.includes(pos))
+      if (g) { primaryGroupKey.set(p, g.key); break }
+    }
+  }
+  return groups
     .map(group => ({
       group,
-      players: players.filter(p => p.positions.some(pos => group.positions.includes(pos))),
+      players: players.filter(p => primaryGroupKey.get(p) === group.key),
     }))
     .filter(screen => screen.players.length > 0)
 }
