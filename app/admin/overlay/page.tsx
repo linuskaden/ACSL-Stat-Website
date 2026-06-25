@@ -5,6 +5,8 @@ import { buildLineupScreens, groupsForSide, STARTER_TARGETS, POSITION_ORDER, typ
 import LineupBand from '@/components/LineupBand'
 import LineupFullPanel from '@/components/LineupFullPanel'
 import StreamControls from '@/components/StreamControls'
+import StreamImagePanel from '@/components/StreamImagePanel'
+import StreamPersonBand from '@/components/StreamPersonBand'
 
 type AdminMode = 'game' | 'stream'
 
@@ -333,9 +335,7 @@ export default function OverlayControlPage() {
         </div>
       </div>
 
-      {adminMode === 'stream' ? <StreamControls /> : (
-      <>
-      {/* ══ Operator Preview ══ */}
+      {/* ══ Operator Preview — always visible regardless of tab ══ */}
       <OperatorPreview
         player={activePlayer ?? null}
         team={activePlayer
@@ -355,6 +355,8 @@ export default function OverlayControlPage() {
         gameStatsRows={gameStatsRows}
       />
 
+      {adminMode === 'stream' ? <StreamControls /> : (
+      <>
       {/* ══ Team Stats Overlay Control ══ */}
       <TeamStatsControl
         teamOverlay={teamOverlay}
@@ -709,11 +711,47 @@ function OperatorPreview({ player, team, stats, mode, visible,
     return () => clearInterval(t)
   }, [lineupScreens.length, lineupOverlay.rotation_seconds])
 
+  /* ── Stream overlay state (subscribed internally so preview works in both tabs) ── */
+  const [streamState, setStreamState] = useState<{ mode: 'image'|'person'; image_path: string|null; person_id: string|null; visible: boolean }>
+    ({ mode: 'image', image_path: null, person_id: null, visible: false })
+  const [streamPeople, setStreamPeople] = useState<{ id: string; name: string; role: string|null }[]>([])
+  const [streamImageUrl, setStreamImageUrl] = useState<string|null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    function applyStream(s: typeof streamState) {
+      setStreamState(s)
+      if (s.mode === 'image' && s.image_path)
+        setStreamImageUrl(supabase.storage.from('stream-images').getPublicUrl(s.image_path).data.publicUrl)
+      else
+        setStreamImageUrl(null)
+    }
+    async function initStream() {
+      const [{ data: ss }, { data: ppl }] = await Promise.all([
+        supabase.from('stream_overlay_state').select('mode, image_path, person_id, visible').eq('id', 1).single(),
+        supabase.from('stream_people').select('id, name, role').order('sort_order', { ascending: true }),
+      ])
+      if (ss) applyStream(ss as typeof streamState)
+      if (ppl) setStreamPeople(ppl as typeof streamPeople)
+    }
+    initStream()
+    const ch = supabase.channel('operator-preview-stream')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stream_overlay_state' },
+        ({ new: row }) => applyStream(row as typeof streamState))
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [])
+
+  const streamPerson = streamState.visible && streamState.mode === 'person'
+    ? streamPeople.find(p => p.id === streamState.person_id) ?? null
+    : null
+
   /* ── 16:9 broadcast stage (true 1920×1080, scaled to fit) ── */
   const STAGE_W = 760, W = 1920, H = 1080, SCALE = STAGE_W / W
   const STAGE_H = Math.round(H * SCALE)
   const anyOnAir = (visible && player && team) || teamOverlay.visible || (keyPlayerOverlay.visible && tCur)
     || (lineupOverlay.visible && lineupTeam && lineupPlayers.length > 0)
+    || (streamState.visible && (streamImageUrl || streamPerson))
 
   return (
     <div style={{
@@ -931,6 +969,10 @@ function OperatorPreview({ player, team, stats, mode, visible,
             players={lineupPlayers}
             visible={lineupOverlay.visible && lineupOverlay.display_style === 'full'}
           />
+
+          {/* ── STREAM — image panel or person band ── */}
+          <StreamImagePanel url={streamImageUrl} visible={streamState.visible && streamState.mode === 'image'} />
+          <StreamPersonBand person={streamPerson} visible={streamState.visible && streamState.mode === 'person'} />
         </div>
 
         {/* Ticker rotation dots */}

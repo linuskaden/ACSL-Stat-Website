@@ -1,8 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import StreamImagePanel from '@/components/StreamImagePanel'
-import StreamPersonBand from '@/components/StreamPersonBand'
 
 type StreamOverlayState = {
   mode: 'image' | 'person'
@@ -95,38 +93,8 @@ export default function StreamControls() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  /* preview */
-  const activePerson = people.find(p => p.id === stream.person_id) ?? null
-  const activeImageUrl = images.find(i => i.path === stream.image_path)?.signedUrl ?? null
-  const STAGE_W = 760, W = 1920, H = 1080, SCALE = STAGE_W / W
-  const STAGE_H = Math.round(H * SCALE)
-  const anyOnAir = stream.visible && ((stream.mode === 'image' && stream.image_path) || (stream.mode === 'person' && activePerson))
-
   return (
     <div>
-      {/* ── Preview ── */}
-      <div style={{ background: '#080b14', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '14px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: '#444', textTransform: 'uppercase' }}>Stream Vorschau · wie im vMix-Fenster</span>
-          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: anyOnAir ? '#04a550' : '#333', boxShadow: anyOnAir ? '0 0 6px #04a550' : 'none' }} />
-            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: anyOnAir ? '#04a550' : '#444', textTransform: 'uppercase' }}>{anyOnAir ? 'On Air' : 'Hidden'}</span>
-          </div>
-        </div>
-        <div style={{ width: STAGE_W, maxWidth: '100%', height: STAGE_H, borderRadius: 8, overflow: 'hidden', position: 'relative', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 30px rgba(0,0,0,0.5)' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1d3a26 0%, #0c1c12 55%, #07120b 100%)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(105deg, rgba(255,255,255,0.045) 0 2px, transparent 2px 64px)' }} />
-          {!anyOnAir && (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 600, letterSpacing: 1 }}>Kein Overlay aktiv</div>
-          )}
-          <div style={{ width: W, height: H, transform: `scale(${SCALE})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }}>
-            <StreamImagePanel url={activeImageUrl} visible={stream.visible && stream.mode === 'image'} />
-            <StreamPersonBand person={activePerson} visible={stream.visible && stream.mode === 'person'} />
-          </div>
-        </div>
-      </div>
-
       {/* ── Image gallery ── */}
       <div style={{ background: '#080b14', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '14px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
