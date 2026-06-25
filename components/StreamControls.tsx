@@ -6,17 +6,18 @@ import StreamPersonBand from '@/components/StreamPersonBand'
 
 type StreamOverlayState = {
   mode: 'image' | 'person'
-  image_url: string | null
+  image_path: string | null
   person_id: string | null
   visible: boolean
 }
-type StreamImage = { id: string; url: string; label: string | null }
+type StreamImage = { id: string; path: string; label: string | null; signedUrl: string | null }
 type StreamPersonRow = { id: string; name: string; role: string | null }
 
 const BUCKET = 'stream-images'
+const THUMB_TTL = 60 * 60 // 1h signed URLs for admin thumbnails
 
 export default function StreamControls() {
-  const [stream, setStream] = useState<StreamOverlayState>({ mode: 'image', image_url: null, person_id: null, visible: false })
+  const [stream, setStream] = useState<StreamOverlayState>({ mode: 'image', image_path: null, person_id: null, visible: false })
   const [images, setImages] = useState<StreamImage[]>([])
   const [people, setPeople] = useState<StreamPersonRow[]>([])
   const [uploading, setUploading] = useState(false)
@@ -33,8 +34,14 @@ export default function StreamControls() {
 
   async function loadImages() {
     const supabase = createClient()
-    const { data } = await supabase.from('stream_images').select('id, url, label').order('sort_order', { ascending: true })
-    setImages((data as StreamImage[]) ?? [])
+    const { data } = await supabase.from('stream_images').select('id, path, label').order('sort_order', { ascending: true })
+    const rows = (data as { id: string; path: string; label: string | null }[]) ?? []
+    // Private bucket → sign each thumbnail with the authenticated admin session
+    const signed = await Promise.all(rows.map(async r => {
+      const { data: s } = await supabase.storage.from(BUCKET).createSignedUrl(r.path, THUMB_TTL)
+      return { ...r, signedUrl: s?.signedUrl ?? null } as StreamImage
+    }))
+    setImages(signed)
   }
 
   useEffect(() => {
@@ -71,12 +78,12 @@ export default function StreamControls() {
     await supabase.from('stream_overlay_state').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1)
   }
 
-  const imageOnAir = (url: string) => stream.visible && stream.mode === 'image' && stream.image_url === url
+  const imageOnAir = (path: string) => stream.visible && stream.mode === 'image' && stream.image_path === path
   const personOnAir = (id: string) => stream.visible && stream.mode === 'person' && stream.person_id === id
 
-  function showImage(url: string) {
-    if (imageOnAir(url)) pushStream({ visible: false })
-    else pushStream({ mode: 'image', image_url: url, visible: true })
+  function showImage(path: string) {
+    if (imageOnAir(path)) pushStream({ visible: false })
+    else pushStream({ mode: 'image', image_path: path, visible: true })
   }
   function showPerson(id: string) {
     if (personOnAir(id)) pushStream({ visible: false })
@@ -91,8 +98,7 @@ export default function StreamControls() {
       const key = `uploads/${Date.now()}_${file.name.normalize('NFKD').replace(/[^\w.\-]/g, '_')}`
       const { error } = await supabase.storage.from(BUCKET).upload(key, file, { upsert: true, contentType: file.type })
       if (error) { console.error('upload failed', file.name, error.message); continue }
-      const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(key)
-      await supabase.from('stream_images').insert({ url: pub.publicUrl, label: file.name.replace(/\.[^.]+$/, ''), sort_order: Date.now() % 1000000 })
+      await supabase.from('stream_images').insert({ path: key, label: file.name.replace(/\.[^.]+$/, ''), sort_order: Date.now() % 1000000 })
     }
     await loadImages()
     setUploading(false)
@@ -105,9 +111,10 @@ export default function StreamControls() {
 
   /* preview */
   const activePerson = people.find(p => p.id === stream.person_id) ?? null
+  const activeImageUrl = images.find(i => i.path === stream.image_path)?.signedUrl ?? null
   const STAGE_W = 760, W = 1920, H = 1080, SCALE = STAGE_W / W
   const STAGE_H = Math.round(H * SCALE)
-  const anyOnAir = stream.visible && ((stream.mode === 'image' && stream.image_url) || (stream.mode === 'person' && activePerson))
+  const anyOnAir = stream.visible && ((stream.mode === 'image' && stream.image_path) || (stream.mode === 'person' && activePerson))
 
   return (
     <div>
@@ -128,7 +135,7 @@ export default function StreamControls() {
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 600, letterSpacing: 1 }}>Kein Overlay aktiv</div>
           )}
           <div style={{ width: W, height: H, transform: `scale(${SCALE})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0 }}>
-            <StreamImagePanel url={stream.image_url} visible={stream.visible && stream.mode === 'image'} />
+            <StreamImagePanel url={activeImageUrl} visible={stream.visible && stream.mode === 'image'} />
             <StreamPersonBand person={activePerson} visible={stream.visible && stream.mode === 'person'} />
           </div>
         </div>
@@ -158,11 +165,11 @@ export default function StreamControls() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
             {images.map(img => {
-              const on = imageOnAir(img.url)
+              const on = imageOnAir(img.path)
               return (
-                <button key={img.id} onClick={() => showImage(img.url)}
+                <button key={img.id} onClick={() => showImage(img.path)}
                   style={{ padding: 0, border: `2px solid ${on ? '#04a550' : 'rgba(255,255,255,0.08)'}`, borderRadius: 10, overflow: 'hidden', cursor: 'pointer', background: '#131826', position: 'relative', aspectRatio: '16/9', boxShadow: on ? '0 0 12px rgba(4,165,80,0.35)' : 'none' }}>
-                  <img src={img.url} alt={img.label ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  {img.signedUrl && <img src={img.signedUrl} alt={img.label ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   {on && <div style={{ position: 'absolute', top: 6, left: 6, background: '#04a550', color: '#fff', fontSize: 9, fontWeight: 900, letterSpacing: 1, padding: '2px 6px', borderRadius: 4 }}>ON AIR</div>}
                 </button>
               )
