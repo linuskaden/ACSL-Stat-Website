@@ -70,25 +70,14 @@ export default function OverlayControlPage() {
   const [previewStats, setPreviewStats] = useState<any>(null)
   const [gameStatsRows, setGameStatsRows] = useState<any[]>([])
   const [overlayUrl, setOverlayUrl] = useState('')
-  const [teamOverlayUrl, setTeamOverlayUrl] = useState('')
-  const [keyPlayerUrl, setKeyPlayerUrl] = useState('')
-  const [lineupUrl, setLineupUrl] = useState('')
   const [copied, setCopied] = useState(false)
-  const [copiedTeam, setCopiedTeam] = useState(false)
-  const [copiedKey, setCopiedKey] = useState(false)
-  const [copiedLineup, setCopiedLineup] = useState(false)
   const [saving, setSaving] = useState(false)
   const [savingTeam, setSavingTeam] = useState(false)
   const [savingKey, setSavingKey] = useState(false)
   const [savingLineup, setSavingLineup] = useState(false)
 
   useEffect(() => {
-    // All overlays now live on one combined vMix input
-    const all = `${window.location.origin}/overlay/all`
-    setOverlayUrl(all)
-    setTeamOverlayUrl(all)
-    setKeyPlayerUrl(all)
-    setLineupUrl(all)
+    setOverlayUrl(`${window.location.origin}/overlay/all`)
   }, [])
 
   // Realtime sync: keep local state in sync if another admin operates the overlay
@@ -270,15 +259,6 @@ export default function OverlayControlPage() {
   function copyUrl() {
     navigator.clipboard.writeText(overlayUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
   }
-  function copyTeamUrl() {
-    navigator.clipboard.writeText(teamOverlayUrl).then(() => { setCopiedTeam(true); setTimeout(() => setCopiedTeam(false), 2000) })
-  }
-  function copyKeyUrl() {
-    navigator.clipboard.writeText(keyPlayerUrl).then(() => { setCopiedKey(true); setTimeout(() => setCopiedKey(false), 2000) })
-  }
-  function copyLineupUrl() {
-    navigator.clipboard.writeText(lineupUrl).then(() => { setCopiedLineup(true); setTimeout(() => setCopiedLineup(false), 2000) })
-  }
 
   function filterPlayers(players: Player[], search: string, filter: string) {
     const q = search.toLowerCase()
@@ -332,6 +312,17 @@ export default function OverlayControlPage() {
             {games.map(g => <option key={g.id} value={g.id}>{gameLabel(g)}</option>)}
           </select>
         )}
+
+        {/* Single vMix link — same for all overlays */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: '#444', textTransform: 'uppercase' }}>vMix Input</span>
+          <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '5px 8px', fontSize: 11, color: '#888', whiteSpace: 'nowrap' }}>
+            {overlayUrl || '…'}
+          </code>
+          <button onClick={copyUrl} style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700, borderRadius: 4, background: copied ? '#04a550' : '#1a2040', color: copied ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+            {copied ? '✓' : 'Copy'}
+          </button>
+        </div>
       </div>
 
       {adminMode === 'stream' ? <StreamControls /> : (
@@ -362,9 +353,6 @@ export default function OverlayControlPage() {
         selectedGame={selectedGame}
         onPush={pushTeamOverlay}
         saving={savingTeam}
-        overlayUrl={teamOverlayUrl}
-        copied={copiedTeam}
-        onCopy={copyTeamUrl}
       />
 
       {/* ══ Key Player Ticker Control ══ */}
@@ -375,9 +363,6 @@ export default function OverlayControlPage() {
         awayPlayers={awayPlayers}
         onPush={pushKeyPlayerOverlay}
         saving={savingKey}
-        overlayUrl={keyPlayerUrl}
-        copied={copiedKey}
-        onCopy={copyKeyUrl}
       />
 
       {/* ══ Starting Lineup Control (band + full screen, one input) ══ */}
@@ -388,9 +373,6 @@ export default function OverlayControlPage() {
         onPush={pushLineupOverlay}
         onEdit={() => setStarterEditorOpen(true)}
         saving={savingLineup}
-        overlayUrl={lineupUrl}
-        copied={copiedLineup}
-        onCopy={copyLineupUrl}
       />
 
       {/* ══ Player overlay (Lower Third) — controls ══ */}
@@ -436,17 +418,6 @@ export default function OverlayControlPage() {
           <span style={{ fontSize: 11, color: '#555' }}>
             {selectedGame ? 'Klick auf eine Karte für Einblende-Optionen' : ''}
           </span>
-
-          {/* vMix URL */}
-          <div className="flex items-center gap-2" style={{ marginLeft: 'auto' }}>
-            <code className="bg-[#131826] border border-white/7 rounded px-2 py-1.5 text-[11px] text-[#888] whitespace-nowrap">
-              {overlayUrl || '…'}
-            </code>
-            <button onClick={copyUrl} className="px-3 py-1.5 text-[11px] font-bold rounded transition-all"
-              style={{ background: copied ? '#04a550' : '#1a2040', color: copied ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)' }}>
-              {copied ? '✓' : 'Copy'}
-            </button>
-          </div>
         </div>
       </div>
 
@@ -1309,14 +1280,11 @@ function BioCell({ label, value, span }: { label: string; value: string; span?: 
 /* ─────────────────────────────────
    Team Stats Overlay Control Panel
 ───────────────────────────────── */
-function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUrl, copied, onCopy }: {
+function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving }: {
   teamOverlay: TeamOverlayState
   selectedGame: Game | null
   onPush: (patch: Partial<TeamOverlayState>) => void
   saving: boolean
-  overlayUrl: string
-  copied: boolean
-  onCopy: () => void
 }) {
   return (
     <div style={{
@@ -1366,16 +1334,6 @@ function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUr
           {teamOverlay.visible ? '▼ HIDE' : '▲ SHOW'}
         </button>
 
-        {/* vMix URL */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-          <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '5px 8px', fontSize: 11, color: '#888', whiteSpace: 'nowrap' }}>
-            {overlayUrl || '…'}
-          </code>
-          <button onClick={onCopy} style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700, borderRadius: 4, background: copied ? '#04a550' : '#1a2040', color: copied ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
-            {copied ? '✓' : 'Copy'}
-          </button>
-        </div>
-
       </div>
 
       {/* No game warning */}
@@ -1391,16 +1349,13 @@ function TeamStatsControl({ teamOverlay, selectedGame, onPush, saving, overlayUr
 /* ─────────────────────────────────
    Key Player Ticker Control Panel
 ───────────────────────────────── */
-function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPlayers, onPush, saving, overlayUrl, copied, onCopy }: {
+function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPlayers, onPush, saving }: {
   keyPlayerOverlay: KeyPlayerOverlayState
   selectedGame: Game | null
   homePlayers: Player[]
   awayPlayers: Player[]
   onPush: (patch: Partial<KeyPlayerOverlayState>) => void
   saving: boolean
-  overlayUrl: string
-  copied: boolean
-  onCopy: () => void
 }) {
   const selected = keyPlayerOverlay.player_ids ?? []
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -1479,16 +1434,6 @@ function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPla
         </div>
 
         <span style={{ fontSize: 11, color: '#555' }}>{selected.length} ausgewählt</span>
-
-        {/* vMix URL */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-          <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '5px 8px', fontSize: 11, color: '#888', whiteSpace: 'nowrap' }}>
-            {overlayUrl || '…'}
-          </code>
-          <button onClick={onCopy} style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700, borderRadius: 4, background: copied ? '#04a550' : '#1a2040', color: copied ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
-            {copied ? '✓' : 'Copy'}
-          </button>
-        </div>
       </div>
 
       {/* Player selection — compact: button opens popup, selection shown as chips */}
@@ -1630,16 +1575,13 @@ function CareerStats({ cs, positions }: { cs: any; positions: string[] }) {
 /* ─────────────────────────────────
    Starting Lineup Control Panel
 ───────────────────────────────── */
-function LineupControl({ lineupOverlay, selectedGame, startersByTeam, onPush, onEdit, saving, overlayUrl, copied, onCopy }: {
+function LineupControl({ lineupOverlay, selectedGame, startersByTeam, onPush, onEdit, saving }: {
   lineupOverlay: LineupOverlayState
   selectedGame: Game | null
   startersByTeam: Record<string, TeamStarters>
   onPush: (patch: Partial<LineupOverlayState>) => void
   onEdit: () => void
   saving: boolean
-  overlayUrl: string
-  copied: boolean
-  onCopy: () => void
 }) {
   const home = selectedGame?.home_team ?? null
   const away = selectedGame?.away_team ?? null
@@ -1748,16 +1690,6 @@ function LineupControl({ lineupOverlay, selectedGame, startersByTeam, onPush, on
           <span style={{ fontSize: 11, color: sideCount === 0 ? '#ff1d25' : '#555' }}>
             {activeTeam?.short_name ?? '—'} · {lineupOverlay.side === 'offense' ? 'Offense' : 'Defense'}: {sideCount} Starter
           </span>
-
-          {/* vMix URL */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-            <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '5px 8px', fontSize: 11, color: '#888', whiteSpace: 'nowrap' }}>
-              {overlayUrl || '…'}
-            </code>
-            <button onClick={onCopy} style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700, borderRadius: 4, background: copied ? '#04a550' : '#1a2040', color: copied ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
-              {copied ? '✓' : 'Copy'}
-            </button>
-          </div>
         </div>
       )}
     </div>
