@@ -932,21 +932,21 @@ function OperatorPreview({ player, team, stats, mode, visible,
             <div style={{ position: 'absolute', bottom: 22, right: 36, textAlign: 'right', transition: 'opacity 0.34s ease', opacity: tShown ? 1 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 9, lineHeight: 1, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
                 {tCur.player.jersey_number != null && (
-                  <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 17, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif' }}>#{tCur.player.jersey_number}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 20, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif' }}>#{tCur.player.jersey_number}</span>
                 )}
-                <span style={{ color: '#fff', fontSize: 26, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.3, whiteSpace: 'nowrap' }}>
+                <span style={{ color: '#fff', fontSize: 30, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.3, whiteSpace: 'nowrap' }}>
                   {tCur.player.first_name.charAt(0).toUpperCase()}. {tCur.player.last_name.toUpperCase()}
                 </span>
               </div>
-              <div style={{ marginTop: 5, lineHeight: 1, color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
+              <div style={{ marginTop: 5, lineHeight: 1, color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}>
                 {tCur.team?.short_name ?? ''} · {tCur.player.positions[0] ?? ''}
               </div>
               {tCur.stats.length > 0 && (
-                <div style={{ marginTop: 9, display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 18, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
+                <div style={{ marginTop: 9, display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 20, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
                   {tCur.stats.map(item => (
                     <div key={item.label} style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                      <span style={{ color: '#fff', fontSize: 22, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, letterSpacing: -0.5 }}>{item.value}</span>
-                      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>{item.label}</span>
+                      <span style={{ color: '#fff', fontSize: 26, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, letterSpacing: -0.5 }}>{item.value}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>{item.label}</span>
                     </div>
                   ))}
                 </div>
