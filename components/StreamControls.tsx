@@ -28,8 +28,9 @@ export default function StreamControls() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setImageUrl(`${window.location.origin}/overlay/stream-image`)
-    setPersonUrl(`${window.location.origin}/overlay/stream-person`)
+    const all = `${window.location.origin}/overlay/all`
+    setImageUrl(all)
+    setPersonUrl(all)
   }, [])
 
   async function loadImages() {

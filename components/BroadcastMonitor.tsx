@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import LowerThirdOverlay from '@/app/overlay/lower-third/page'
-import TeamStatsOverlay from '@/app/overlay/team-stats/page'
-import KeyPlayersOverlay from '@/app/overlay/key-players/page'
+import LowerThirdOverlay from '@/components/overlays/LowerThirdOverlay'
+import TeamStatsOverlay from '@/components/overlays/TeamStatsOverlay'
+import KeyPlayersOverlay from '@/components/overlays/KeyPlayersOverlay'
 
 /* Turn a pasted URL into something embeddable where we can (YouTube / Twitch),
    otherwise pass it through and let the browser decide. */

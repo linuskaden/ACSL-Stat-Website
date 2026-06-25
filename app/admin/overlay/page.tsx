@@ -83,10 +83,12 @@ export default function OverlayControlPage() {
   const [savingLineup, setSavingLineup] = useState(false)
 
   useEffect(() => {
-    setOverlayUrl(`${window.location.origin}/overlay/lower-third`)
-    setTeamOverlayUrl(`${window.location.origin}/overlay/team-stats`)
-    setKeyPlayerUrl(`${window.location.origin}/overlay/key-players`)
-    setLineupUrl(`${window.location.origin}/overlay/lineup`)
+    // All overlays now live on one combined vMix input
+    const all = `${window.location.origin}/overlay/all`
+    setOverlayUrl(all)
+    setTeamOverlayUrl(all)
+    setKeyPlayerUrl(all)
+    setLineupUrl(all)
   }, [])
 
   // Realtime sync: keep local state in sync if another admin operates the overlay
