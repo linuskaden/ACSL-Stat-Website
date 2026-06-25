@@ -61,6 +61,7 @@ export default function StreamControls() {
         supabase.from('overlay_state').update({ visible: false, updated_at: now }).eq('id', 1),
         supabase.from('team_overlay_state').update({ visible: false, updated_at: now }).eq('id', 1),
         supabase.from('lineup_overlay_state').update({ visible: false, updated_at: now }).eq('id', 1),
+        supabase.from('key_player_overlay_state').update({ visible: false, updated_at: now }).eq('id', 1),
       ])
     }
     setStream(prev => ({ ...prev, ...patch }))

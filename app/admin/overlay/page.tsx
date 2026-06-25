@@ -185,6 +185,7 @@ export default function OverlayControlPage() {
     }
     const next = { ...overlay, ...patch }
     setOverlay(next)
+
     setSaving(true)
     await supabase.from('overlay_state').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1)
     setSaving(false)
@@ -196,7 +197,8 @@ export default function OverlayControlPage() {
     if (patch.visible === true) {
       setOverlay(prev => ({ ...prev, visible: false }))
       setLineupOverlay(prev => ({ ...prev, visible: false }))
-      await hideOtherOverlays(supabase, ['overlay_state', 'lineup_overlay_state', 'stream_overlay_state'])
+      setKeyPlayerOverlay(prev => ({ ...prev, visible: false }))
+      await hideOtherOverlays(supabase, ['overlay_state', 'lineup_overlay_state', 'stream_overlay_state', 'key_player_overlay_state'])
     }
     setTeamOverlay(prev => ({ ...prev, ...patch }))
     setSavingTeam(true)
@@ -206,6 +208,11 @@ export default function OverlayControlPage() {
 
   const pushKeyPlayerOverlay = useCallback(async (patch: Partial<KeyPlayerOverlayState>) => {
     const supabase = createClient()
+    if (patch.visible === true) {
+      setTeamOverlay(prev => ({ ...prev, visible: false }))
+      setLineupOverlay(prev => ({ ...prev, visible: false }))
+      await hideOtherOverlays(supabase, ['team_overlay_state', 'lineup_overlay_state', 'stream_overlay_state'])
+    }
     setKeyPlayerOverlay(prev => ({ ...prev, ...patch }))
     setSavingKey(true)
     await supabase.from('key_player_overlay_state').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', 1)
@@ -218,7 +225,8 @@ export default function OverlayControlPage() {
     if (patch.visible === true) {
       setOverlay(prev => ({ ...prev, visible: false }))
       setTeamOverlay(prev => ({ ...prev, visible: false }))
-      await hideOtherOverlays(supabase, ['overlay_state', 'team_overlay_state', 'stream_overlay_state'])
+      setKeyPlayerOverlay(prev => ({ ...prev, visible: false }))
+      await hideOtherOverlays(supabase, ['overlay_state', 'team_overlay_state', 'stream_overlay_state', 'key_player_overlay_state'])
     }
     setLineupOverlay(prev => ({ ...prev, ...patch }))
     setSavingLineup(true)
