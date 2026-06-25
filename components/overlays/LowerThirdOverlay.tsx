@@ -148,7 +148,7 @@ export default function LowerThirdOverlay() {
   return (
     <div style={{
       position: 'absolute',
-      bottom: 136,
+      bottom: 140,
       left: 500,
       transition: 'transform 0.55s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease',
       transform: playerVisible ? 'translateY(0)' : 'translateY(160%)',
@@ -156,7 +156,7 @@ export default function LowerThirdOverlay() {
       pointerEvents: 'none',
     }}>
       {player && (
-        <div style={{ display: 'inline-flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.85), 0 4px 20px rgba(0,0,0,0.6)' }}>
+        <div style={{ display: 'inline-flex', flexDirection: 'column' }}>
 
           {/* Nameplate */}
           <div style={{ display: 'flex', alignItems: 'stretch', background: primaryColor, height: 80 }}>
