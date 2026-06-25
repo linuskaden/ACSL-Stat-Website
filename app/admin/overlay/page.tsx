@@ -27,7 +27,7 @@ const MAX_KEY_PER_TEAM = 4
 const SEASON = 2026
 type LineupStyle = 'band' | 'full'
 type LineupOverlayState = { team_id: string | null; side: LineupSide; rotation_seconds: number; visible: boolean; display_style: LineupStyle }
-type TeamStarters = { offense: string[]; defense: string[] }
+type TeamStarters = { offense: Record<string, string[]>; defense: Record<string, string[]> }
 type SortMode = 'number' | 'starter'
 
 /* Reliably hide a set of singleton overlay-state rows (id=1).
@@ -134,7 +134,7 @@ export default function OverlayControlPage() {
     }
     setGameStatsRows(gs ?? [])
     const map: Record<string, TeamStarters> = {}
-    ;(ts ?? []).forEach((r: any) => { map[r.team_id] = { offense: r.offense ?? [], defense: r.defense ?? [] } })
+    ;(ts ?? []).forEach((r: any) => { map[r.team_id] = { offense: r.offense ?? {}, defense: r.defense ?? {} } })
     setStartersByTeam(map)
   }
 
@@ -695,11 +695,8 @@ function OperatorPreview({ player, team, stats, mode, visible,
                    : lineupOverlay.team_id === awayTeam?.id ? awayTeam ?? null : null
   const lineupRoster = lineupOverlay.team_id === homeTeam?.id ? homePlayers
                      : lineupOverlay.team_id === awayTeam?.id ? awayPlayers : []
-  const lineupStarterIds = (lineupOverlay.team_id ? startersByTeam[lineupOverlay.team_id] : undefined)?.[lineupOverlay.side] ?? []
-  const lineupPlayers = lineupStarterIds
-    .map(id => lineupRoster.find(p => p.id === id))
-    .filter(Boolean) as Player[]
-  const lineupScreens = buildLineupScreens(lineupOverlay.side, lineupPlayers)
+  const lineupGroupedIds = (lineupOverlay.team_id ? startersByTeam[lineupOverlay.team_id] : undefined)?.[lineupOverlay.side] ?? {}
+  const lineupScreens = buildLineupScreens(lineupOverlay.side, lineupGroupedIds, lineupRoster)
 
   const [lIdx, setLIdx] = useState(0)
   const [lShown, setLShown] = useState(true)
@@ -750,7 +747,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
   const STAGE_W = 760, W = 1920, H = 1080, SCALE = STAGE_W / W
   const STAGE_H = Math.round(H * SCALE)
   const anyOnAir = (visible && player && team) || teamOverlay.visible || (keyPlayerOverlay.visible && tCur)
-    || (lineupOverlay.visible && lineupTeam && lineupPlayers.length > 0)
+    || (lineupOverlay.visible && lineupTeam && lineupScreens.length > 0)
     || (streamState.visible && (streamImageUrl || streamPerson))
 
   return (
@@ -966,7 +963,8 @@ function OperatorPreview({ player, team, stats, mode, visible,
           <LineupFullPanel
             team={lineupTeam}
             side={lineupOverlay.side}
-            players={lineupPlayers}
+            groupedIds={lineupGroupedIds}
+            roster={lineupRoster}
             visible={lineupOverlay.visible && lineupOverlay.display_style === 'full'}
           />
 
@@ -1760,31 +1758,27 @@ function StarterEditor({ teams, playersByTeam, startersByTeam, onSave, onClose }
   const [activeTeamId, setActiveTeamId] = useState(teams[0]?.id ?? '')
   const activeTeam = teams.find(t => t.id === activeTeamId) ?? null
   const roster = playersByTeam[activeTeamId] ?? []
-  const current: TeamStarters = startersByTeam[activeTeamId] ?? { offense: [], defense: [] }
+  const current: TeamStarters = startersByTeam[activeTeamId] ?? { offense: {}, defense: {} }
   const color = activeTeam?.primary_color ?? '#444'
 
-  function toggle(side: LineupSide, playerId: string) {
-    const list = current[side]
-    const next = list.includes(playerId) ? list.filter(id => id !== playerId) : [...list, playerId]
-    onSave(activeTeamId, { ...current, [side]: next })
+  function toggle(side: LineupSide, groupKey: string, playerId: string) {
+    const prev = current[side][groupKey] ?? []
+    const next = prev.includes(playerId) ? prev.filter(id => id !== playerId) : [...prev, playerId]
+    onSave(activeTeamId, { ...current, [side]: { ...current[side], [groupKey]: next } })
   }
 
-  // Auto-fill a side from the roster using STARTER_TARGETS (by primary position, ordered by jersey)
+  // Auto-fill each group from the roster using STARTER_TARGETS, ordered by jersey number
   function autoFill(side: LineupSide) {
     const targets = STARTER_TARGETS[side]
-    const byPos: Record<string, Player[]> = {}
-    roster.forEach(p => {
-      const pos = p.positions[0] ?? ''
-      if (targets[pos] != null) (byPos[pos] ??= []).push(p)
-    })
-    const ids: string[] = []
-    Object.keys(targets)
-      .sort((a, b) => (POSITION_ORDER[a] ?? 99) - (POSITION_ORDER[b] ?? 99))
-      .forEach(pos => {
-        const sorted = (byPos[pos] ?? []).slice().sort((a, b) => Number(a.jersey_number ?? 999) - Number(b.jersey_number ?? 999))
-        sorted.slice(0, targets[pos]).forEach(p => ids.push(p.id))
-      })
-    onSave(activeTeamId, { ...current, [side]: ids })
+    const result: Record<string, string[]> = {}
+    for (const group of groupsForSide(side)) {
+      const eligible = roster
+        .filter(p => p.positions.some(pos => group.positions.includes(pos)))
+        .sort((a, b) => Number(a.jersey_number ?? 999) - Number(b.jersey_number ?? 999))
+      const target = group.positions.reduce((sum, pos) => sum + (targets[pos] ?? 0), 0)
+      result[group.key] = eligible.slice(0, target).map(p => p.id)
+    }
+    onSave(activeTeamId, { ...current, [side]: result })
   }
 
   return (
@@ -1818,7 +1812,7 @@ function StarterEditor({ teams, playersByTeam, startersByTeam, onSave, onClose }
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 18 }}>
           {(['offense', 'defense'] as const).map(side => (
             <StarterSidePanel key={side} side={side} roster={roster} selected={current[side]} color={color}
-              onToggle={pid => toggle(side, pid)} onAutoFill={() => autoFill(side)} />
+              onToggle={(groupKey, pid) => toggle(side, groupKey, pid)} onAutoFill={() => autoFill(side)} />
           ))}
         </div>
 
@@ -1834,19 +1828,20 @@ function StarterEditor({ teams, playersByTeam, startersByTeam, onSave, onClose }
 }
 
 function StarterSidePanel({ side, roster, selected, color, onToggle, onAutoFill }: {
-  side: LineupSide; roster: Player[]; selected: string[]; color: string
-  onToggle: (playerId: string) => void; onAutoFill: () => void
+  side: LineupSide; roster: Player[]; selected: Record<string, string[]>; color: string
+  onToggle: (groupKey: string, playerId: string) => void; onAutoFill: () => void
 }) {
   const groups = groupsForSide(side)
   const total = Object.values(STARTER_TARGETS[side]).reduce((a, b) => a + b, 0)
+  const selectedTotal = Object.values(selected).flat().length
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 12, fontWeight: 900, color: '#fff', letterSpacing: 1, textTransform: 'uppercase' }}>
           {side === 'offense' ? 'Offense' : 'Defense'}
         </span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: selected.length === total ? '#04a550' : '#777' }}>
-          {selected.length}/{total}
+        <span style={{ fontSize: 11, fontWeight: 700, color: selectedTotal === total ? '#04a550' : '#777' }}>
+          {selectedTotal}/{total}
         </span>
         <button onClick={onAutoFill}
           style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: 10, fontWeight: 800, borderRadius: 6, cursor: 'pointer', background: '#1a2040', color: '#aaa', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -1867,10 +1862,11 @@ function StarterSidePanel({ side, roster, selected, color, onToggle, onAutoFill 
               ) : (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {groupPlayers.map(p => {
-                    const isSel = selected.includes(p.id)
-                    const order = isSel ? selected.indexOf(p.id) + 1 : null
+                    const groupSel = selected[group.key] ?? []
+                    const isSel = groupSel.includes(p.id)
+                    const order = isSel ? groupSel.indexOf(p.id) + 1 : null
                     return (
-                      <button key={p.id} onClick={() => onToggle(p.id)}
+                      <button key={p.id} onClick={() => onToggle(group.key, p.id)}
                         style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 8, cursor: 'pointer',
                           border: `1px solid ${isSel ? color : 'rgba(255,255,255,0.08)'}`,
                           background: isSel ? `${color}22` : '#131826', color: isSel ? '#fff' : '#aaa', fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>

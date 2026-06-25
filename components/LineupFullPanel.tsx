@@ -36,13 +36,14 @@ const INK = '#ffffff'
 const DIM = 'rgba(255,255,255,0.66)'
 const FAINT = 'rgba(255,255,255,0.12)'
 
-export default function LineupFullPanel({ team, side, players, visible }: {
+export default function LineupFullPanel({ team, side, groupedIds, roster, visible }: {
   team: LineupFullTeam | null
   side: LineupSide
-  players: LineupFullPlayer[]
+  groupedIds: Record<string, string[]>
+  roster: LineupFullPlayer[]
   visible: boolean
 }) {
-  const screens = buildLineupScreens(side, players)
+  const screens = buildLineupScreens(side, groupedIds, roster)
   const active = visible && team && screens.length > 0
   const primary = team?.primary_color ?? '#ff1d25'
   const stripeInk = textOn(primary)
@@ -117,7 +118,7 @@ export default function LineupFullPanel({ team, side, players, visible }: {
                         fontSize: 16, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif',
                         letterSpacing: 0.5, padding: '3px 11px', borderRadius: 3, marginBottom: 10, whiteSpace: 'nowrap',
                       }}>
-                        {(p.positions[0] ?? '').toUpperCase()}{p.jersey_number != null ? ` ${p.jersey_number}` : ''}
+                        {(p.positions.find(pos => screen.group.positions.includes(pos)) ?? p.positions[0] ?? '').toUpperCase()}{p.jersey_number != null ? ` ${p.jersey_number}` : ''}
                       </span>
                       <div style={{ color: DIM, fontSize: 21, fontWeight: 800, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: 0.4, textTransform: 'uppercase', lineHeight: 1.05, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {p.first_name}
