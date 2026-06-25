@@ -24,8 +24,7 @@ type LineupStateRow = {
 ════════════════════════════════════════════ */
 export default function LineupOverlay() {
   const [team, setTeam] = useState<LineupBandTeam | null>(null)
-  const [roster, setRoster] = useState<LineupBandPlayer[]>([])
-  const [groupedIds, setGroupedIds] = useState<Record<string, string[]>>({})
+  const [players, setPlayers] = useState<LineupBandPlayer[]>([])
   const [side, setSide] = useState<LineupSide>('offense')
   const [style, setStyle] = useState<LineupStyle>('band')
   const [visible, setVisible] = useState(false)
@@ -41,7 +40,7 @@ export default function LineupOverlay() {
 
     async function loadLineup() {
       const teamId = teamIdRef.current
-      if (!teamId) { setTeam(null); setRoster([]); setGroupedIds({}); return }
+      if (!teamId) { setTeam(null); setPlayers([]); return }
 
       const [{ data: t }, { data: starters }] = await Promise.all([
         supabase.from('teams').select('short_name, name, primary_color, logo_url').eq('id', teamId).single(),
@@ -49,16 +48,18 @@ export default function LineupOverlay() {
       ])
       setTeam((t as LineupBandTeam) ?? null)
 
-      const gIds: Record<string, string[]> = (sideRef.current === 'offense' ? starters?.offense : starters?.defense) ?? {}
-      setGroupedIds(gIds)
-      const ids = Object.values(gIds).flat()
-      if (ids.length === 0) { setRoster([]); return }
+      const ids: string[] = (sideRef.current === 'offense' ? starters?.offense : starters?.defense) ?? []
+      if (ids.length === 0) { setPlayers([]); return }
 
       const { data: ps } = await supabase
         .from('players')
         .select('id, first_name, last_name, jersey_number, positions')
         .in('id', ids)
-      setRoster((ps ?? []) as LineupBandPlayer[])
+
+      const ordered = ids
+        .map(id => (ps ?? []).find((p: any) => p.id === id))
+        .filter(Boolean) as LineupBandPlayer[]
+      setPlayers(ordered)
     }
 
     async function loadState(newState?: LineupStateRow) {
@@ -94,7 +95,7 @@ export default function LineupOverlay() {
     return () => { supabase.removeChannel(ch) }
   }, [])
 
-  const screens = buildLineupScreens(side, groupedIds, roster)
+  const screens = buildLineupScreens(side, players)
 
   useEffect(() => { setIdx(0); setShown(true) }, [screens.length, side, style])
 
@@ -110,7 +111,7 @@ export default function LineupOverlay() {
   return (
     <>
       <LineupBand team={team} side={side} screens={screens} idx={idx} shown={shown} visible={visible && style === 'band'} />
-      <LineupFullPanel team={team} side={side} groupedIds={groupedIds} roster={roster} visible={visible && style === 'full'} />
+      <LineupFullPanel team={team} side={side} players={players} visible={visible && style === 'full'} />
     </>
   )
 }
