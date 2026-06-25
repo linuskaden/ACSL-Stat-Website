@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/client'
 import { buildLineupScreens, groupsForSide, STARTER_TARGETS, POSITION_ORDER, type LineupSide } from '@/lib/lineup'
 import LineupBand from '@/components/LineupBand'
 import LineupFullPanel from '@/components/LineupFullPanel'
+import StreamControls from '@/components/StreamControls'
+
+type AdminMode = 'game' | 'stream'
 
 /* ─── Types ─── */
 type Team = { id: string; name: string; short_name: string; slug: string; primary_color: string; secondary_color: string; logo_url: string | null }
@@ -44,6 +47,17 @@ export default function OverlayControlPage() {
   const [lineupOverlay, setLineupOverlay] = useState<LineupOverlayState>({ team_id: null, side: 'offense', rotation_seconds: 8, visible: false, display_style: 'band' })
   const [startersByTeam, setStartersByTeam] = useState<Record<string, TeamStarters>>({})
   const [starterEditorOpen, setStarterEditorOpen] = useState(false)
+  const [adminMode, setAdminMode] = useState<AdminMode>('game')
+
+  // Remember the selected top-level mode across reloads
+  useEffect(() => {
+    const stored = typeof window !== 'undefined' ? localStorage.getItem('acsl-overlay-admin-mode') : null
+    if (stored === 'stream' || stored === 'game') setAdminMode(stored)
+  }, [])
+  function switchMode(m: AdminMode) {
+    setAdminMode(m)
+    try { localStorage.setItem('acsl-overlay-admin-mode', m) } catch {}
+  }
   const [sortHome, setSortHome] = useState<SortMode>('number')
   const [sortAway, setSortAway] = useState<SortMode>('number')
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
@@ -176,7 +190,7 @@ export default function OverlayControlPage() {
     if (patch.visible === true) {
       setTeamOverlay(prev => ({ ...prev, visible: false }))
       setLineupOverlay(prev => ({ ...prev, visible: false }))
-      await hideOtherOverlays(supabase, ['team_overlay_state', 'lineup_overlay_state'])
+      await hideOtherOverlays(supabase, ['team_overlay_state', 'lineup_overlay_state', 'stream_overlay_state'])
     }
     const next = { ...overlay, ...patch }
     setOverlay(next)
@@ -191,7 +205,7 @@ export default function OverlayControlPage() {
     if (patch.visible === true) {
       setOverlay(prev => ({ ...prev, visible: false }))
       setLineupOverlay(prev => ({ ...prev, visible: false }))
-      await hideOtherOverlays(supabase, ['overlay_state', 'lineup_overlay_state'])
+      await hideOtherOverlays(supabase, ['overlay_state', 'lineup_overlay_state', 'stream_overlay_state'])
     }
     setTeamOverlay(prev => ({ ...prev, ...patch }))
     setSavingTeam(true)
@@ -213,7 +227,7 @@ export default function OverlayControlPage() {
     if (patch.visible === true) {
       setOverlay(prev => ({ ...prev, visible: false }))
       setTeamOverlay(prev => ({ ...prev, visible: false }))
-      await hideOtherOverlays(supabase, ['overlay_state', 'team_overlay_state'])
+      await hideOtherOverlays(supabase, ['overlay_state', 'team_overlay_state', 'stream_overlay_state'])
     }
     setLineupOverlay(prev => ({ ...prev, ...patch }))
     setSavingLineup(true)
@@ -290,21 +304,36 @@ export default function OverlayControlPage() {
   return (
     <div className="min-h-screen bg-[#0c0f1a] text-white" style={{ fontFamily: 'system-ui, sans-serif' }}>
 
-      {/* ══ Top bar — match selector only ══ */}
+      {/* ══ Top bar — mode switch + match selector ══ */}
       <div className="sticky top-0 z-20 bg-[#080b14] border-b border-white/5 px-5 py-3 flex flex-wrap items-center gap-4">
         <div>
           <div className="text-base font-black tracking-tight">vMix Overlay Control</div>
           <div className="text-[11px] text-[#555] mt-0.5">ACSL Media</div>
         </div>
 
-        {/* Game */}
-        <select value={selectedGame?.id ?? ''} onChange={e => handleGameChange(e.target.value)}
-          className="bg-[#131826] border border-white/8 rounded-lg px-3 py-2 text-white text-sm outline-none flex-1 min-w-[240px] max-w-lg">
-          <option value="">Spiel auswählen…</option>
-          {games.map(g => <option key={g.id} value={g.id}>{gameLabel(g)}</option>)}
-        </select>
+        {/* Mode switch: live game broadcast vs stream graphics */}
+        <div className="flex rounded-lg overflow-hidden border border-white/10">
+          {([['game', 'Live Game Broadcast'], ['stream', 'Stream Einblendungen']] as const).map(([val, txt]) => (
+            <button key={val} onClick={() => switchMode(val)}
+              className="px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+              style={{ background: adminMode === val ? '#ff1d25' : '#131826', color: adminMode === val ? 'white' : '#777' }}>
+              {txt}
+            </button>
+          ))}
+        </div>
+
+        {/* Game selector (only in game mode) */}
+        {adminMode === 'game' && (
+          <select value={selectedGame?.id ?? ''} onChange={e => handleGameChange(e.target.value)}
+            className="bg-[#131826] border border-white/8 rounded-lg px-3 py-2 text-white text-sm outline-none flex-1 min-w-[240px] max-w-lg">
+            <option value="">Spiel auswählen…</option>
+            {games.map(g => <option key={g.id} value={g.id}>{gameLabel(g)}</option>)}
+          </select>
+        )}
       </div>
 
+      {adminMode === 'stream' ? <StreamControls /> : (
+      <>
       {/* ══ Operator Preview ══ */}
       <OperatorPreview
         player={activePlayer ?? null}
@@ -498,6 +527,8 @@ export default function OverlayControlPage() {
           onSave={saveStarters}
           onClose={() => setStarterEditorOpen(false)}
         />
+      )}
+      </>
       )}
     </div>
   )
