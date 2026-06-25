@@ -20,17 +20,7 @@ export default function StreamControls() {
   const [images, setImages] = useState<StreamImage[]>([])
   const [people, setPeople] = useState<StreamPersonRow[]>([])
   const [uploading, setUploading] = useState(false)
-  const [imageUrl, setImageUrl] = useState('')
-  const [personUrl, setPersonUrl] = useState('')
-  const [copiedImg, setCopiedImg] = useState(false)
-  const [copiedPerson, setCopiedPerson] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    const all = `${window.location.origin}/overlay/all`
-    setImageUrl(all)
-    setPersonUrl(all)
-  }, [])
 
   async function loadImages() {
     const supabase = createClient()
@@ -104,10 +94,6 @@ export default function StreamControls() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  function copy(url: string, set: (v: boolean) => void) {
-    navigator.clipboard.writeText(url).then(() => { set(true); setTimeout(() => set(false), 2000) })
-  }
-
   /* preview */
   const activePerson = people.find(p => p.id === stream.person_id) ?? null
   const activeImageUrl = images.find(i => i.path === stream.image_path)?.signedUrl ?? null
@@ -154,10 +140,6 @@ export default function StreamControls() {
             style={{ padding: '7px 14px', fontSize: 12, fontWeight: 800, borderRadius: 8, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#888', border: '1px solid rgba(255,255,255,0.1)' }}>
             ▼ HIDE
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '5px 8px', fontSize: 11, color: '#888', whiteSpace: 'nowrap' }}>{imageUrl || '…'}</code>
-            <button onClick={() => copy(imageUrl, setCopiedImg)} style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700, borderRadius: 4, background: copiedImg ? '#04a550' : '#1a2040', color: copiedImg ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>{copiedImg ? '✓' : 'Copy'}</button>
-          </div>
         </div>
         {images.length === 0 ? (
           <div style={{ fontSize: 11, color: '#555', fontStyle: 'italic' }}>Noch keine Bilder — lade welche hoch.</div>
@@ -186,10 +168,6 @@ export default function StreamControls() {
             style={{ padding: '7px 14px', fontSize: 12, fontWeight: 800, borderRadius: 8, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#888', border: '1px solid rgba(255,255,255,0.1)' }}>
             ▼ HIDE
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <code style={{ background: '#131826', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '5px 8px', fontSize: 11, color: '#888', whiteSpace: 'nowrap' }}>{personUrl || '…'}</code>
-            <button onClick={() => copy(personUrl, setCopiedPerson)} style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700, borderRadius: 4, background: copiedPerson ? '#04a550' : '#1a2040', color: copiedPerson ? 'white' : '#888', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>{copiedPerson ? '✓' : 'Copy'}</button>
-          </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
           {people.map(p => {
