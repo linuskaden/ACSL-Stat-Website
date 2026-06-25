@@ -886,7 +886,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
 
           {/* ── LOWER THIRD — bottom-left (real overlay sizes) ── */}
           {visible && player && team && (
-            <div style={{ position: 'absolute', bottom: 68, left: 500, display: 'inline-flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.85)' }}>
+            <div style={{ position: 'absolute', bottom: 120, left: 500, display: 'inline-flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.85)' }}>
               {/* Nameplate */}
               <div style={{ display: 'flex', alignItems: 'stretch', background: primaryColor, height: 80 }}>
                 <div style={{ width: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 10 }}>

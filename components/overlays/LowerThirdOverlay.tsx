@@ -148,7 +148,7 @@ export default function LowerThirdOverlay() {
   return (
     <div style={{
       position: 'absolute',
-      bottom: 68,
+      bottom: 120,
       left: 500,
       transition: 'transform 0.55s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease',
       transform: playerVisible ? 'translateY(0)' : 'translateY(160%)',
