@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import StreamImagePanel from '@/components/StreamImagePanel'
 
+const BUCKET = 'stream-images'
+
 type StreamStateRow = {
   id: number
   mode: 'image' | 'person'
@@ -10,12 +12,6 @@ type StreamStateRow = {
   visible: boolean
 }
 
-/* ════════════════════════════════════════════
-   Stream image overlay — floating 16:9 picture.
-   The bucket is private, so the actual image URL is a
-   short-lived signed link fetched from /api/stream-image-url
-   (re-fetched whenever the active image changes).
-════════════════════════════════════════════ */
 export default function StreamImageOverlay() {
   const [url, setUrl] = useState<string | null>(null)
   const [visible, setVisible] = useState(false)
@@ -23,23 +19,19 @@ export default function StreamImageOverlay() {
   useEffect(() => {
     const supabase = createClient()
 
-    async function refreshSignedUrl() {
-      try {
-        const res = await fetch('/api/stream-image-url', { cache: 'no-store' })
-        const data = await res.json()
-        setUrl(data.url ?? null)
-      } catch { setUrl(null) }
+    function getPublicUrl(path: string | null) {
+      if (!path) return null
+      return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
     }
 
-    async function apply(state: StreamStateRow) {
+    function apply(state: StreamStateRow) {
       setVisible(state.visible && state.mode === 'image')
-      if (state.mode === 'image' && state.image_path) await refreshSignedUrl()
-      else setUrl(null)
+      setUrl(state.mode === 'image' ? getPublicUrl(state.image_path) : null)
     }
 
     async function load() {
       const { data } = await supabase.from('stream_overlay_state').select('id, mode, image_path, visible').eq('id', 1).single()
-      if (data) await apply(data as StreamStateRow)
+      if (data) apply(data as StreamStateRow)
     }
     load()
 

@@ -14,7 +14,6 @@ type StreamImage = { id: string; path: string; label: string | null; signedUrl: 
 type StreamPersonRow = { id: string; name: string; role: string | null }
 
 const BUCKET = 'stream-images'
-const THUMB_TTL = 60 * 60 // 1h signed URLs for admin thumbnails
 
 export default function StreamControls() {
   const [stream, setStream] = useState<StreamOverlayState>({ mode: 'image', image_path: null, person_id: null, visible: false })
@@ -37,11 +36,10 @@ export default function StreamControls() {
     const supabase = createClient()
     const { data } = await supabase.from('stream_images').select('id, path, label').order('sort_order', { ascending: true })
     const rows = (data as { id: string; path: string; label: string | null }[]) ?? []
-    // Private bucket → sign each thumbnail with the authenticated admin session
-    const signed = await Promise.all(rows.map(async r => {
-      const { data: s } = await supabase.storage.from(BUCKET).createSignedUrl(r.path, THUMB_TTL)
-      return { ...r, signedUrl: s?.signedUrl ?? null } as StreamImage
-    }))
+    const signed = rows.map(r => ({
+      ...r,
+      signedUrl: supabase.storage.from(BUCKET).getPublicUrl(r.path).data.publicUrl,
+    })) as StreamImage[]
     setImages(signed)
   }
 
