@@ -153,7 +153,7 @@ export default function KeyPlayersOverlay() {
   return (
     <div style={{
       position: 'absolute',
-      bottom: 90,
+      bottom: 22,
       right: 36,
       textAlign: 'right',
       transition: 'opacity 0.45s ease, transform 0.45s cubic-bezier(0.22,1,0.36,1)',

@@ -929,7 +929,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
 
           {/* ── KEY PLAYER TICKER — bottom-right (real overlay sizes) ── */}
           {keyPlayerOverlay.visible && tCur && (
-            <div style={{ position: 'absolute', bottom: 90, right: 36, textAlign: 'right', transition: 'opacity 0.34s ease', opacity: tShown ? 1 : 0 }}>
+            <div style={{ position: 'absolute', bottom: 22, right: 36, textAlign: 'right', transition: 'opacity 0.34s ease', opacity: tShown ? 1 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 9, lineHeight: 1, textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.8)' }}>
                 {tCur.player.jersey_number != null && (
                   <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 17, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif' }}>#{tCur.player.jersey_number}</span>
