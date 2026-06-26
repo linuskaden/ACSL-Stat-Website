@@ -52,7 +52,7 @@ export default function LineupFullPanel({ team, side, players, visible }: {
     <div style={{
       position: 'absolute', inset: 0,
       display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-      paddingTop: 100,
+      paddingTop: 110,
       transition: 'opacity 0.4s ease, transform 0.55s cubic-bezier(0.22,1,0.36,1)',
       opacity: active ? 1 : 0,
       transform: active ? 'scale(1)' : 'scale(1.04)',

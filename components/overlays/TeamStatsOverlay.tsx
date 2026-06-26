@@ -170,7 +170,7 @@ export default function TeamStatsOverlay() {
   return (
     <div style={{
       position: 'absolute',
-      top:  100,
+      top:  110,
       left: (1920 - TW) / 2,
       width: TW, height: TH,
       display: 'flex', flexDirection: 'column',

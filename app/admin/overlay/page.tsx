@@ -803,7 +803,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
             const hC = homeTeam?.primary_color ?? '#1a1a2e'
             const aC = awayTeam?.primary_color ?? '#2e1a1a'
             const hT = textOn(hC), aT = textOn(aC)
-            const HEADER_H = 150, LOGO_W = 360, N = 8
+            const HEADER_H = 130, LOGO_W = 310, N = 8
             const STAT_ROWS = [
               { label: 'PASS YDS',   h: hS.passYds,  a: aS.passYds  },
               { label: 'RUSH YDS',   h: hS.rushYds,  a: aS.rushYds  },
@@ -815,7 +815,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
               { label: 'FUMBLES',    h: hS.fumbles,   a: aS.fumbles,  accent: '#f59e0b' },
             ]
             return (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 110, left: 80, width: 1760, height: 980, display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: 'scale(0.7)', transformOrigin: 'top center', boxShadow: '0 40px 120px rgba(0,0,0,0.95), 0 8px 40px rgba(0,0,0,0.8)' }}>
                 {/* Header */}
                 <div style={{ height: HEADER_H, flexShrink: 0, background: '#06080f', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 22, paddingRight: 60 }}>
