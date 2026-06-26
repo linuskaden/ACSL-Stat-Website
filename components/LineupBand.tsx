@@ -60,7 +60,6 @@ export default function LineupBand({ team, side, screens, idx, shown, visible }:
           display: 'flex', alignItems: 'stretch',
           background: 'linear-gradient(to top, rgba(6,8,15,0.97) 0%, rgba(10,13,26,0.9) 100%)',
           borderTop: `4px solid ${primary}`,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.85)',
           overflow: 'hidden',
         }}>
           {/* Team logo block */}
