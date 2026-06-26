@@ -140,7 +140,7 @@ export default function TeamStatsOverlay() {
 
   // ── Layout constants (1920×1080 canvas) ──────────────────────────────────
   const TW        = 1760
-  const TH        = 900
+  const TH        = 980
   const HEADER_H  = 130
   const LOGO_W    = 310
   const N_ROWS    = 8
@@ -170,14 +170,15 @@ export default function TeamStatsOverlay() {
   return (
     <div style={{
       position: 'absolute',
-      top:  (1080 - TH) / 2,
+      top:  100,
       left: (1920 - TW) / 2,
       width: TW, height: TH,
       display: 'flex', flexDirection: 'column',
       overflow: 'hidden',
       boxShadow: '0 40px 120px rgba(0,0,0,0.95), 0 8px 40px rgba(0,0,0,0.8)',
       opacity: visible ? 1 : 0,
-      transform: visible ? 'scale(1)' : 'scale(0.96)',
+      transform: visible ? 'scale(0.7)' : 'scale(0.67)',
+      transformOrigin: 'top center',
       transition: 'opacity 0.45s cubic-bezier(0.22,1,0.36,1), transform 0.45s cubic-bezier(0.22,1,0.36,1)',
       pointerEvents: 'none',
     }}>

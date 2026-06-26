@@ -51,7 +51,8 @@ export default function LineupFullPanel({ team, side, players, visible }: {
   return (
     <div style={{
       position: 'absolute', inset: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+      paddingTop: 100,
       transition: 'opacity 0.4s ease, transform 0.55s cubic-bezier(0.22,1,0.36,1)',
       opacity: active ? 1 : 0,
       transform: active ? 'scale(1)' : 'scale(1.04)',
@@ -60,6 +61,7 @@ export default function LineupFullPanel({ team, side, players, visible }: {
       {team && screens.length > 0 && (
         <div style={{
           width: 1760, height: 980,
+          transform: 'scale(0.7)', transformOrigin: 'top center',
           background: 'rgba(18,20,26,0.92)', borderRadius: 18, overflow: 'hidden', position: 'relative',
           boxShadow: '0 30px 90px rgba(0,0,0,0.7)',
           display: 'flex', flexDirection: 'column',
