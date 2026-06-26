@@ -45,8 +45,8 @@ export default function LineupBand({ team, side, screens, idx, shown, visible }:
   return (
     <div style={{
       position: 'absolute',
-      left: 0, right: 0, bottom: 0,
-      display: 'flex', justifyContent: 'center',
+      left: 500,
+      bottom: 140,
       transition: 'transform 0.55s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease',
       transform: active ? 'translateY(0)' : 'translateY(140%)',
       opacity: active ? 1 : 0,
@@ -54,7 +54,9 @@ export default function LineupBand({ team, side, screens, idx, shown, visible }:
     }}>
       {team && current && (
         <div style={{
-          width: 1720, marginBottom: 56,
+          width: 1720,
+          transform: 'scale(0.5827)',
+          transformOrigin: 'bottom left',
           display: 'flex', alignItems: 'stretch',
           background: 'linear-gradient(to top, rgba(6,8,15,0.97) 0%, rgba(10,13,26,0.9) 100%)',
           borderTop: `4px solid ${primary}`,
