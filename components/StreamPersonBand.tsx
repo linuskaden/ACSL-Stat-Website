@@ -4,12 +4,14 @@
    the overlay route and the admin preview. Parent owns
    visibility.
 ─────────────────────────────────────────────── */
-export type StreamPerson = { name: string; role: string | null }
+export type StreamPerson = { name: string; role: string | null; logo_url?: string | null }
 
 const ACSL_RED = '#ff1d25'
 
 export default function StreamPersonBand({ person, visible }: { person: StreamPerson | null; visible: boolean }) {
   const active = visible && !!person
+  const logoSrc = person?.logo_url ?? '/logos/ACSL-Logo.png'
+  const isCustomLogo = !!person?.logo_url
   return (
     <div style={{
       position: 'absolute', bottom: 56, left: 72,
@@ -21,9 +23,9 @@ export default function StreamPersonBand({ person, visible }: { person: StreamPe
       {person && (
         <div style={{ display: 'inline-flex', boxShadow: '0 20px 60px rgba(0,0,0,0.85), 0 4px 20px rgba(0,0,0,0.6)' }}>
           <div style={{ display: 'flex', alignItems: 'stretch', background: ACSL_RED, height: 80 }}>
-            {/* ACSL logo block (black, white wordmark) */}
+            {/* Logo block — ACSL default or custom team logo */}
             <div style={{ width: 92, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: '0 12px' }}>
-              <img src="/logos/ACSL-Logo.png" alt="ACSL" style={{ width: 68, objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+              <img src={logoSrc} alt="" style={{ width: 68, objectFit: 'contain', filter: isCustomLogo ? 'none' : 'brightness(0) invert(1)' }} />
             </div>
             {/* Name + role */}
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px', gap: 5 }}>

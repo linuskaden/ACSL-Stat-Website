@@ -27,7 +27,7 @@ export default function StreamPersonOverlay() {
       setVisible(show)
       if (state.person_id && state.person_id !== personIdRef.current) {
         personIdRef.current = state.person_id
-        const { data } = await supabase.from('stream_people').select('name, role').eq('id', state.person_id).single()
+        const { data } = await supabase.from('stream_people').select('name, role, logo_url').eq('id', state.person_id).single()
         setPerson((data as StreamPerson) ?? null)
       } else if (!state.person_id) {
         personIdRef.current = null

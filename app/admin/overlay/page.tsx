@@ -729,7 +729,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
     async function initStream() {
       const [{ data: ss }, { data: ppl }] = await Promise.all([
         supabase.from('stream_overlay_state').select('mode, image_path, person_id, visible').eq('id', 1).single(),
-        supabase.from('stream_people').select('id, name, role').order('sort_order', { ascending: true }),
+        supabase.from('stream_people').select('id, name, role, logo_url').order('sort_order', { ascending: true }),
       ])
       if (ss) applyStream(ss as typeof streamState)
       if (ppl) setStreamPeople(ppl as typeof streamPeople)

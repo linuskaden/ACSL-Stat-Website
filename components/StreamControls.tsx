@@ -9,7 +9,7 @@ type StreamOverlayState = {
   visible: boolean
 }
 type StreamImage = { id: string; path: string; label: string | null; signedUrl: string | null }
-type StreamPersonRow = { id: string; name: string; role: string | null }
+type StreamPersonRow = { id: string; name: string; role: string | null; logo_url?: string | null }
 
 const BUCKET = 'stream-images'
 
@@ -36,7 +36,7 @@ export default function StreamControls() {
     async function init() {
       const [{ data: st }, { data: ppl }] = await Promise.all([
         supabase.from('stream_overlay_state').select('*').eq('id', 1).single(),
-        supabase.from('stream_people').select('id, name, role').order('sort_order', { ascending: true }),
+        supabase.from('stream_people').select('id, name, role, logo_url').order('sort_order', { ascending: true }),
       ])
       if (st) setStream(st as StreamOverlayState)
       if (ppl) setPeople(ppl as StreamPersonRow[])
