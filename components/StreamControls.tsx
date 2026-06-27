@@ -18,6 +18,7 @@ export default function StreamControls() {
   const [images, setImages] = useState<StreamImage[]>([])
   const [people, setPeople] = useState<StreamPersonRow[]>([])
   const [uploading, setUploading] = useState(false)
+  const [personSearch, setPersonSearch] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function loadImages() {
@@ -138,8 +139,17 @@ export default function StreamControls() {
             ▼ HIDE
           </button>
         </div>
+        <input
+          value={personSearch}
+          onChange={e => setPersonSearch(e.target.value)}
+          placeholder="Suche nach Name oder Rolle…"
+          style={{ width: '100%', background: '#131826', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#fff', outline: 'none', marginBottom: 10, boxSizing: 'border-box' }}
+        />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
-          {people.map(p => {
+          {people.filter(p => {
+            const q = personSearch.toLowerCase()
+            return !q || p.name.toLowerCase().includes(q) || (p.role ?? '').toLowerCase().includes(q)
+          }).map(p => {
             const on = personOnAir(p.id)
             return (
               <button key={p.id} onClick={() => showPerson(p.id)}
