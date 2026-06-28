@@ -69,7 +69,8 @@ export default function OverlayControlPage() {
   const [searchAway, setSearchAway] = useState('')
   const [filterHome, setFilterHome] = useState('Alle')
   const [filterAway, setFilterAway] = useState('Alle')
-  const [previewStats, setPreviewStats] = useState<any>(null)
+  const [previewLive, setPreviewLive] = useState<any>(null)
+  const [previewCareer, setPreviewCareer] = useState<any>(null)
   const [gameStatsRows, setGameStatsRows] = useState<any[]>([])
   const [overlayUrl, setOverlayUrl] = useState('')
   const [copied, setCopied] = useState(false)
@@ -147,35 +148,41 @@ export default function OverlayControlPage() {
       .then(({ data }) => { setCareerStats(data); setLoadingStats(false) })
   }, [selectedPlayer?.id])
 
-  // Load preview stats for the ACTIVE overlay player (realtime)
+  // Load preview stats for the ACTIVE overlay player (realtime).
+  // The website preview shows BOTH the live game stats and the season totals,
+  // so we always load both regardless of the on-air mode.
   useEffect(() => {
-    if (!overlay.active_player_id) { setPreviewStats(null); return }
+    if (!overlay.active_player_id) { setPreviewLive(null); setPreviewCareer(null); return }
     const supabase = createClient()
 
     async function loadPreview() {
-      if (overlay.mode === 'live' && overlay.game_id) {
+      // Live (current game) — summed across quarters
+      let live: any = {}
+      if (overlay.game_id) {
         const { data } = await supabase.from('game_stats').select('*')
           .eq('game_id', overlay.game_id).eq('player_id', overlay.active_player_id)
         if (data && data.length > 0) {
           const totals: Record<string, number> = {}
           data.forEach((row: any) => Object.entries(row).forEach(([k, v]) => { if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v }))
-          setPreviewStats(totals)
-        } else setPreviewStats({})
-      } else {
-        const { data } = await supabase.from('career_stats').select('*')
-          .eq('player_id', overlay.active_player_id).order('season', { ascending: false }).limit(1).maybeSingle()
-        setPreviewStats(data ?? {})
+          live = totals
+        }
       }
+      setPreviewLive(live)
+
+      // Season (career) — latest season row
+      const { data: cs } = await supabase.from('career_stats').select('*')
+        .eq('player_id', overlay.active_player_id).order('season', { ascending: false }).limit(1).maybeSingle()
+      setPreviewCareer(cs ?? {})
     }
 
     loadPreview()
 
-    // Subscribe so preview updates in real-time as stats come in
+    // Subscribe so the live row updates in real-time as stats come in
     const ch = supabase.channel('preview-stats')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'game_stats' }, loadPreview)
       .subscribe()
     return () => { supabase.removeChannel(ch) }
-  }, [overlay.active_player_id, overlay.game_id, overlay.mode])
+  }, [overlay.active_player_id, overlay.game_id])
 
   const pushOverlay = useCallback(async (patch: Partial<OverlayState>) => {
     const supabase = createClient()
@@ -341,7 +348,8 @@ export default function OverlayControlPage() {
         team={activePlayer
           ? (homePlayers.find(p => p.id === activePlayer.id) ? selectedGame?.home_team ?? null : selectedGame?.away_team ?? null)
           : null}
-        stats={previewStats}
+        liveStats={previewLive}
+        careerStats={previewCareer}
         mode={overlay.mode}
         visible={overlay.visible}
         teamOverlay={teamOverlay}
@@ -643,11 +651,12 @@ function calcTeamTotals(players: Player[], gsRows: any[]) {
   return { passYds, rushYds, recYds, totalYds, tds, ints, fumbles, targets, receptions, catchPct, completions, attempts, fgm, fga, epm, epa }
 }
 
-function OperatorPreview({ player, team, stats, mode, visible,
+function OperatorPreview({ player, team, liveStats, careerStats, mode, visible,
   teamOverlay, keyPlayerOverlay, lineupOverlay, startersByTeam, homeTeam, awayTeam, homePlayers, awayPlayers, gameStatsRows }: {
   player: Player | null
   team: Team | null | undefined
-  stats: any
+  liveStats: any
+  careerStats: any
   mode: 'live' | 'career' | 'intro'
   visible: boolean
   teamOverlay: TeamOverlayState
@@ -664,8 +673,9 @@ function OperatorPreview({ player, team, stats, mode, visible,
   const onPrimary      = team ? textOn(primaryColor) : '#ffffff'
   const dimOnPrimary   = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)'
   const hairline       = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'
-  const statItems      = player && mode !== 'intro' ? buildStatItems(player.positions, stats) : []
-  const hasStats       = statItems.length > 0
+  const liveItems      = player && mode !== 'intro' ? buildStatItems(player.positions, liveStats) : []
+  const careerItems    = player && mode !== 'intro' ? buildStatItems(player.positions, careerStats) : []
+  const hasStats       = liveItems.length > 0
 
   /* ── Key player ticker items (selection order, live-aggregated) ── */
   const tickerItems = (keyPlayerOverlay.player_ids ?? []).map(id => {
@@ -913,13 +923,21 @@ function OperatorPreview({ player, team, stats, mode, visible,
                   </div>
                 </div>
               </div>
-              {/* Stats bar */}
+              {/* Stats bar — website preview shows SPIEL (live) + SAISON (career) */}
               {hasStats && (
-                <div style={{ background: '#0b0e1a', display: 'flex', alignItems: 'center', padding: '10px 22px 10px 102px', borderTop: `2px solid ${primaryColor}` }}>
-                  {statItems.map((item, i) => (
-                    <div key={item.label} style={{ textAlign: 'center', paddingRight: 20, paddingLeft: i === 0 ? 0 : 20, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
-                      <div style={{ color: '#fff', fontSize: 22, fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, letterSpacing: -0.5 }}>{item.value}</div>
-                      <div style={{ color: '#7a7a9a', fontSize: 8, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 3 }}>{item.label}</div>
+                <div style={{ background: '#0b0e1a', display: 'flex', alignItems: 'flex-end', padding: '9px 22px 9px 16px', borderTop: `2px solid ${primaryColor}` }}>
+                  {/* Legend */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', paddingRight: 14, marginRight: 4, borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ height: 8, marginBottom: 5 }} />
+                    <div style={{ fontSize: 9, lineHeight: '22px', fontWeight: 800, letterSpacing: 1, color: '#fff', textTransform: 'uppercase' }}>Spiel</div>
+                    <div style={{ fontSize: 9, lineHeight: '18px', marginTop: 3, fontWeight: 800, letterSpacing: 1, color: '#6f7390', textTransform: 'uppercase' }}>Saison</div>
+                  </div>
+                  {/* Stat columns */}
+                  {liveItems.map((item, i) => (
+                    <div key={item.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingRight: 16, paddingLeft: 16, borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
+                      <div style={{ color: '#7a7a9a', fontSize: 8, lineHeight: '8px', marginBottom: 5, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase' }}>{item.label}</div>
+                      <div style={{ color: '#fff', fontSize: 22, lineHeight: '22px', fontWeight: 900, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -0.5 }}>{item.value}</div>
+                      <div style={{ color: '#8b90b5', fontSize: 14, lineHeight: '18px', marginTop: 3, fontWeight: 800, fontFamily: '"Arial Black", Impact, sans-serif', letterSpacing: -0.3 }}>{careerItems[i]?.value ?? '—'}</div>
                     </div>
                   ))}
                 </div>
