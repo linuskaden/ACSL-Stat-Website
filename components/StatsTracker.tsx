@@ -146,6 +146,11 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
   const [awayScore, setAwayScore] = useState(game.away_score ?? 0)
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const scoreTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Always-fresh ref so debounced saves read current state, not stale closure
+  const allStatsRef = useRef<AllStats>(allStats)
+  allStatsRef.current = allStats
+  // Flip a scheduled game to "live" the moment the first stat is entered (once)
+  const wentLiveRef = useRef(false)
 
   // Realtime sync: merge incoming stat changes from other tracker instances
   useEffect(() => {
@@ -204,28 +209,37 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
       return next
     })
 
-    const key = `${quarter}-${playerId}`
+    const q = quarter  // capture so the timeout closure uses the right quarter
+    const key = `${q}-${playerId}`
     if (saveTimers.current[key]) clearTimeout(saveTimers.current[key])
     setSaving(s => ({ ...s, [key]: true }))
     saveTimers.current[key] = setTimeout(() => {
-      persistStat(playerId, field, value)
+      persistStat(playerId, q)
     }, 800)
   }, [quarter])
 
-  async function persistStat(playerId: string, _field: string, _value: number) {
+  async function persistStat(playerId: string, q: string) {
     const player = [...homePlayers, ...awayPlayers].find(p => p.id === playerId)
     if (!player) return
     const teamId = player.team_id!
-    const stats = allStats[quarter]?.[playerId] ?? {}
-    const key = `${quarter}-${playerId}`
+    // Read from ref — not from closed-over allStats — to get the latest state
+    const stats = allStatsRef.current[q]?.[playerId] ?? {}
+    const key = `${q}-${playerId}`
 
-    const { error } = await supabase.from('game_stats').upsert({
+    await supabase.from('game_stats').upsert({
       game_id: game.id,
       player_id: playerId,
       team_id: teamId,
-      quarter,
+      quarter: q,
       ...stats,
     }, { onConflict: 'game_id,player_id,quarter' })
+
+    // Auto-set the game live on first stat entry (scheduled → live only;
+    // never resurrect a finalized game)
+    if (game.status === 'scheduled' && !wentLiveRef.current) {
+      wentLiveRef.current = true
+      await supabase.from('games').update({ status: 'live' }).eq('id', game.id)
+    }
 
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
   }
