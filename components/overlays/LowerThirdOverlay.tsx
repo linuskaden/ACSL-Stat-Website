@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { calcYPC, calcYPR } from '@/lib/utils'
 
 /* ─── Types ─── */
 type OverlayStateRow = {
@@ -22,53 +21,60 @@ function lum(hex: string): number {
 }
 function textOn(hex: string): string { return lum(hex) > 0.48 ? '#000000' : '#ffffff' }
 
+/* Stat categories a position contributes (primary position listed first wins
+   ordering). A player gets the union across all their positions, so a K/WR/RB
+   shows kicking AND receiving AND rushing. Overlapping columns are merged so the
+   value shows regardless of which column it was entered in. */
+function positionCategories(pos: string): string[] {
+  if (pos === 'QB') return ['pass', 'rush']
+  if (pos === 'RB') return ['rush', 'rec']
+  if (pos === 'WR' || pos === 'TE') return ['rec']
+  if (['DB', 'DL', 'LB'].includes(pos)) return ['def']
+  if (pos === 'K' || pos === 'P') return ['kick']
+  return []
+}
+
 function buildStats(positions: string[], s: any): StatItem[] {
   if (!s) return []
-  const items: StatItem[] = []
-  const primaryPos = positions[0] ?? ''
-  const hasKP  = positions.some((p: string) => ['K', 'P'].includes(p))
-  const hasDef = positions.some((p: string) => ['DB', 'LB', 'DL', 'OL'].includes(p))
 
-  if (primaryPos === 'QB') {
-    items.push(
+  // Merge duplicate columns for the same real stat
+  const rushYds = (s.rush_yards ?? 0) + (s.qb_rush_yards ?? 0)
+  const rushTds = (s.rush_tds ?? 0) + (s.qb_rush_tds ?? 0)
+  const recYds  = (s.rec_yards ?? 0) + (s.rb_rec_yards ?? 0)
+  const recs    = (s.receptions ?? 0) + (s.rb_receptions ?? 0)
+
+  const cats: string[] = []
+  positions.forEach(p => positionCategories(p).forEach(c => { if (!cats.includes(c)) cats.push(c) }))
+
+  const items: StatItem[] = []
+  cats.forEach(c => {
+    if (c === 'pass') items.push(
       { label: 'PASS YDS', value: s.pass_yards ?? 0 },
-      { label: 'TDs',      value: (s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0) },
+      { label: 'PASS TD',  value: s.pass_tds ?? 0 },
       { label: 'INT',      value: s.interceptions_thrown ?? 0 },
       { label: 'COMP/ATT', value: `${s.pass_completions ?? 0}/${s.pass_attempts ?? 0}` },
-      { label: 'RUSH YDS', value: s.qb_rush_yards ?? 0 },
     )
-  } else if (primaryPos === 'RB') {
-    items.push(
-      { label: 'RUSH YDS', value: s.rush_yards ?? 0 },
-      { label: 'TDs',      value: s.rush_tds ?? 0 },
+    else if (c === 'rush') items.push(
+      { label: 'RUSH YDS', value: rushYds },
+      { label: 'RUSH TD',  value: rushTds },
       { label: 'CAR',      value: s.rush_carries ?? 0 },
-      { label: 'YPC',      value: calcYPC(s.rush_yards ?? 0, s.rush_carries ?? 0) },
-      { label: 'REC YDS',  value: s.rb_rec_yards ?? 0 },
     )
-  } else if (['WR', 'TE'].includes(primaryPos)) {
-    items.push(
-      { label: 'REC YDS', value: s.rec_yards ?? 0 },
-      { label: 'TDs',     value: s.rec_tds ?? 0 },
-      { label: 'REC',     value: s.receptions ?? 0 },
-      { label: 'TARGETS', value: s.rec_targets ?? 0 },
-      { label: 'YPR',     value: calcYPR(s.rec_yards ?? 0, s.receptions ?? 0) },
+    else if (c === 'rec') items.push(
+      { label: 'REC YDS', value: recYds },
+      { label: 'REC TD',  value: s.rec_tds ?? 0 },
+      { label: 'REC',     value: recs },
     )
-  } else {
-    if (hasDef || !hasKP) {
-      items.push(
-        { label: 'SACKS', value: s.sacks ?? 0 },
-        { label: 'INT',   value: s.def_interceptions ?? 0 },
-      )
-    }
-  }
-
-  if (hasKP) {
-    items.push(
+    else if (c === 'def') items.push(
+      { label: 'SACKS',   value: s.sacks ?? 0 },
+      { label: 'DEF INT', value: s.def_interceptions ?? 0 },
+      { label: 'TCKL',    value: s.def_tackles ?? 0 },
+    )
+    else if (c === 'kick') items.push(
       { label: 'FG',  value: `${s.fg_made ?? 0}/${s.fg_attempts ?? 0}` },
       { label: 'EP',  value: `${s.ep_made ?? 0}/${s.ep_attempts ?? 0}` },
       { label: 'PTS', value: (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0) },
     )
-  }
+  })
 
   return items
 }

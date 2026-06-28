@@ -54,18 +54,52 @@ function getPositionFields(pos: string[]): { fields: readonly string[]; headers:
   return { fields: DEF_FIELDS, headers: DEF_HEADERS }
 }
 
+/**
+ * Multi-position players appear in every one of their position groups. Stats
+ * that are the same real thing but historically live in different columns
+ * (QB-rush vs RB-rush, WR-rec vs RB-rec) are mapped to ONE canonical column so
+ * entering them in any group updates the same value — e.g. a QB/RB's rushing
+ * shows identically in both the QB and RB rows. The owner is the first listed
+ * position that brings that stat (primary position wins).
+ */
+function statOwners(positions: string[]): { rush: 'qb' | 'rb' | null; rec: 'rec' | 'rb' | null } {
+  let rush: 'qb' | 'rb' | null = null
+  let rec: 'rec' | 'rb' | null = null
+  for (const pos of positions) {
+    if (rush === null && pos === 'QB') rush = 'qb'
+    if (rush === null && pos === 'RB') rush = 'rb'
+    if (rec === null && (pos === 'WR' || pos === 'TE')) rec = 'rec'
+    if (rec === null && pos === 'RB') rec = 'rb'
+  }
+  return { rush, rec }
+}
+
+function canonicalField(positions: string[], field: string): string {
+  const { rush, rec } = statOwners(positions)
+  switch (field) {
+    case 'qb_rush_yards': return rush === 'rb' ? 'rush_yards' : 'qb_rush_yards'
+    case 'qb_rush_tds':   return rush === 'rb' ? 'rush_tds'   : 'qb_rush_tds'
+    case 'rush_yards':    return rush === 'qb' ? 'qb_rush_yards' : 'rush_yards'
+    case 'rush_tds':      return rush === 'qb' ? 'qb_rush_tds'   : 'rush_tds'
+    case 'rb_rec_yards':  return rec === 'rec' ? 'rec_yards'   : 'rb_rec_yards'
+    case 'rb_receptions': return rec === 'rec' ? 'receptions'  : 'rb_receptions'
+    case 'rb_targets':    return rec === 'rec' ? 'rec_targets' : 'rb_targets'
+    case 'rec_yards':     return rec === 'rb' ? 'rb_rec_yards'  : 'rec_yards'
+    case 'receptions':    return rec === 'rb' ? 'rb_receptions' : 'receptions'
+    case 'rec_targets':   return rec === 'rb' ? 'rb_targets'    : 'rec_targets'
+    default: return field
+  }
+}
+
 function calcTeamScore(stats: AllStats, players: Player[]): number {
   let score = 0
   players.forEach(p => {
     QUARTERS.forEach(q => {
       const s = stats[q]?.[p.id] ?? {}
-      const pos = p.positions as string[]
-      const primaryPos = pos[0] ?? ''
-      if (primaryPos === 'QB') score += ((s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0)) * 6
-      else if (primaryPos === 'RB') score += (s.rush_tds ?? 0) * 6
-      // WR/TE rec_tds = selbe TDs wie QB pass_tds → nicht nochmal zählen
-      // K/P als separates if (nicht else if) — Dual-Position-Spieler wie RB/K zählen hier auch
-      if (pos.some((pp: string) => ['K','P'].includes(pp))) score += (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0)
+      // Position-agnostic so multi-position players count all their TD sources.
+      // rec_tds == the QB's pass_tds (same play) → not counted again.
+      score += ((s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0) + (s.rush_tds ?? 0)) * 6
+      score += (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0)
     })
   })
   return score
@@ -91,34 +125,21 @@ function teamTotals(allStats: AllStats, players: Player[], quarter: string) {
     const qs = (quarter === 'Total'
       ? QUARTERS.reduce((acc, q) => ({ ...acc, ...Object.fromEntries(Object.entries(allStats[q]?.[p.id] ?? {}).map(([k, v]) => [k, (acc[k] ?? 0) + (v ?? 0)])) }), {} as StatRow)
       : allStats[quarter]?.[p.id]) ?? {}
-    const pos = p.positions
-    const primaryPos = pos[0] ?? ''
 
-    if (primaryPos === 'QB') {
-      totalPassYds += qs.pass_yards     ?? 0
-      totalRushYds += qs.qb_rush_yards  ?? 0
-      totalTDs     += (qs.pass_tds ?? 0) + (qs.qb_rush_tds ?? 0)
-      totalINTs    += qs.interceptions_thrown ?? 0
-    } else if (primaryPos === 'RB') {
-      totalRushYds    += qs.rush_yards    ?? 0
-      totalRecYds     += qs.rb_rec_yards  ?? 0
-      totalTDs        += qs.rush_tds      ?? 0
-      totalFumbles    += qs.rb_fumbles    ?? 0
-      totalTargets    += qs.rb_targets    ?? 0
-      totalReceptions += qs.rb_receptions ?? 0
-    } else if (['WR', 'TE'].includes(primaryPos)) {
-      totalRecYds     += qs.rec_yards     ?? 0
-      totalFumbles    += qs.rec_fumbles   ?? 0
-      totalTargets    += qs.rec_targets   ?? 0
-      totalReceptions += qs.receptions    ?? 0
-    }
-    // K/P als separates if — zählt auch bei Dual-Position-Spielern (RB/K, DB/K usw.)
-    if (pos.some(pp => ['K','P'].includes(pp))) {
-      totalFGM += qs.fg_made      ?? 0
-      totalFGA += qs.fg_attempts  ?? 0
-      totalEPM += qs.ep_made      ?? 0
-      totalEPA += qs.ep_attempts  ?? 0
-    }
+    // Position-agnostic: sum the merged columns for every player so multi-position
+    // players contribute all their stats (rec_tds excluded to avoid double-count).
+    totalPassYds    += qs.pass_yards ?? 0
+    totalRushYds    += (qs.rush_yards ?? 0) + (qs.qb_rush_yards ?? 0)
+    totalRecYds     += (qs.rec_yards ?? 0) + (qs.rb_rec_yards ?? 0)
+    totalTDs        += (qs.pass_tds ?? 0) + (qs.qb_rush_tds ?? 0) + (qs.rush_tds ?? 0)
+    totalINTs       += qs.interceptions_thrown ?? 0
+    totalFumbles    += (qs.rb_fumbles ?? 0) + (qs.rec_fumbles ?? 0) + (qs.qb_fumbles ?? 0)
+    totalTargets    += (qs.rec_targets ?? 0) + (qs.rb_targets ?? 0)
+    totalReceptions += (qs.receptions ?? 0) + (qs.rb_receptions ?? 0)
+    totalFGM += qs.fg_made     ?? 0
+    totalFGA += qs.fg_attempts ?? 0
+    totalEPM += qs.ep_made     ?? 0
+    totalEPA += qs.ep_attempts ?? 0
   })
   totalPoints += totalTDs * 6 + totalFGM * 3 + totalEPM
   const totalYds = totalPassYds + totalRushYds
@@ -499,14 +520,16 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
     <div className="p-8 text-center text-slate-500 dark:text-[#7a7a7a] text-sm">No players found for this team.</div>
   )
 
-  // Standard-Positionsgruppen (nur Spieler ohne K/P als Primärposition)
+  // Positionsgruppen: ein Spieler erscheint in JEDER seiner Positionen (nicht nur
+  // der Primärposition), damit z. B. ein RB/QB sowohl Rush- als auch Pass-Stats
+  // bekommt. K/P läuft im eigenen Abschnitt unten; OL hat keine Stats.
   const posGroups: Record<string, Player[]> = {}
   players.forEach(p => {
-    const primaryPos = p.positions[0] ?? 'DEF'
-    // Reine Kicker/Punter kommen nur in den Kicker-Abschnitt unten; OL hat keine Stats
-    if (['K', 'P', 'OL'].includes(primaryPos)) return
-    if (!posGroups[primaryPos]) posGroups[primaryPos] = []
-    posGroups[primaryPos].push(p)
+    p.positions.forEach((pos: string) => {
+      if (['K', 'P', 'OL'].includes(pos)) return
+      if (!posGroups[pos]) posGroups[pos] = []
+      if (!posGroups[pos].some(x => x.id === p.id)) posGroups[pos].push(p)
+    })
   })
 
   // Kicker-Abschnitt: alle Spieler mit K oder P irgendwo in ihren Positionen
@@ -516,16 +539,19 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
   )
 
   function renderPlayerRow(player: Player, fields: readonly string[], pos: string) {
+    // Map overlapping stats to their canonical column so the same value shows in
+    // every position group the player appears in.
+    const col = (field: string) => canonicalField(player.positions, field)
     const st = readOnly ? calcTotals(allStats, player.id) : {}
-    const getV = (field: string) => readOnly ? (st[field] ?? 0) : getStat(player.id, field)
+    const getV = (field: string) => readOnly ? (st[col(field)] ?? 0) : getStat(player.id, col(field))
     return (
       <tr key={`${player.id}-${pos}`} className="border-b border-black/[0.05] dark:border-white/5 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
         <td className="px-3 py-1.5 font-medium whitespace-nowrap">
           {player.first_name[0]}. {player.last_name}
-          {/* Badge für Dual-Position-Kicker */}
-          {pos === 'K/P' && !['K','P'].includes(player.positions[0] ?? '') && (
+          {/* Badge: zeigt die übrigen Positionen, wenn der Spieler mehrere hat */}
+          {player.positions.length > 1 && (
             <span className="ml-1.5 text-[9px] text-slate-500 dark:text-[#7a7a7a] bg-black/[0.06] dark:bg-white/5 px-1 py-0.5 rounded">
-              {player.positions[0]}
+              {player.positions.join('/')}
             </span>
           )}
         </td>
@@ -537,9 +563,9 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
             ) : (
               <input
                 type="number" step={field === 'sacks' ? '0.5' : '1'}
-                value={getStat(player.id, field as string) || ''}
+                value={getStat(player.id, col(field as string)) || ''}
                 placeholder="0"
-                onChange={e => setStat(player.id, field as string, Number(e.target.value) || 0)}
+                onChange={e => setStat(player.id, col(field as string), Number(e.target.value) || 0)}
                 className="w-14 text-center bg-transparent border-0 text-slate-900 dark:text-white text-xs focus:outline-none py-1 px-1 rounded hover:bg-black/[0.04] dark:hover:bg-white/5"
               />
             )}
@@ -570,8 +596,8 @@ function StatsTable({ players, allStats, quarter, getStat, setStat, calcTotals, 
   function renderGroup(pos: string) {
     const posPlayers = posGroups[pos]
     if (!posPlayers?.length) return null
-    const nonKickerPos = (posPlayers[0]?.positions ?? []).filter((pp: string) => !['K', 'P'].includes(pp))
-    const { fields, headers } = getPositionFields(nonKickerPos)
+    // Fields are determined by the SECTION's position, not the first player's
+    const { fields, headers } = getPositionFields([pos])
     return (
       <React.Fragment key={pos}>
         <tr className="bg-[#f1f5f9] dark:bg-[#1a1a1a]">

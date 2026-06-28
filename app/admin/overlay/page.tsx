@@ -534,53 +534,58 @@ export default function OverlayControlPage() {
 /* ─────────────────────────────────
    Stat builder (shared)
 ───────────────────────────────── */
+function statCategories(positions: string[]): string[] {
+  const catsOf = (pos: string): string[] => {
+    if (pos === 'QB') return ['pass', 'rush']
+    if (pos === 'RB') return ['rush', 'rec']
+    if (pos === 'WR' || pos === 'TE') return ['rec']
+    if (['DB', 'DL', 'LB'].includes(pos)) return ['def']
+    if (pos === 'K' || pos === 'P') return ['kick']
+    return []
+  }
+  const cats: string[] = []
+  positions.forEach(p => catsOf(p).forEach(c => { if (!cats.includes(c)) cats.push(c) }))
+  return cats
+}
+
+// Union of stat items across ALL of a player's positions (primary first), with
+// duplicate columns merged so each value shows regardless of where it was entered.
 function buildStatItems(positions: string[], s: any): { label: string; value: string | number }[] {
   if (!s) return []
-  const items: { label: string; value: string | number }[] = []
-  const primaryPos = positions[0] ?? ''
-  const hasKP  = positions.some((p: string) => ['K', 'P'].includes(p))
-  const hasDef = positions.some((p: string) => ['DB', 'LB', 'DL', 'OL'].includes(p))
+  const rushYds = (s.rush_yards ?? 0) + (s.qb_rush_yards ?? 0)
+  const rushTds = (s.rush_tds ?? 0) + (s.qb_rush_tds ?? 0)
+  const recYds  = (s.rec_yards ?? 0) + (s.rb_rec_yards ?? 0)
+  const recs    = (s.receptions ?? 0) + (s.rb_receptions ?? 0)
 
-  if (primaryPos === 'QB') {
-    items.push(
+  const items: { label: string; value: string | number }[] = []
+  statCategories(positions).forEach(c => {
+    if (c === 'pass') items.push(
       { label: 'PASS YDS', value: s.pass_yards ?? 0 },
-      { label: 'TDs', value: (s.pass_tds ?? 0) + (s.qb_rush_tds ?? 0) },
+      { label: 'PASS TD', value: s.pass_tds ?? 0 },
       { label: 'INT', value: s.interceptions_thrown ?? 0 },
       { label: 'C/ATT', value: `${s.pass_completions ?? 0}/${s.pass_attempts ?? 0}` },
-      { label: 'RUSH', value: s.qb_rush_yards ?? 0 },
     )
-  } else if (primaryPos === 'RB') {
-    items.push(
-      { label: 'RUSH YDS', value: s.rush_yards ?? 0 },
-      { label: 'TDs', value: s.rush_tds ?? 0 },
+    else if (c === 'rush') items.push(
+      { label: 'RUSH YDS', value: rushYds },
+      { label: 'RUSH TD', value: rushTds },
       { label: 'CAR', value: s.rush_carries ?? 0 },
-      { label: 'REC YDS', value: s.rb_rec_yards ?? 0 },
-      { label: 'REC', value: s.rb_receptions ?? 0 },
     )
-  } else if (['WR', 'TE'].includes(primaryPos)) {
-    items.push(
-      { label: 'REC YDS', value: s.rec_yards ?? 0 },
-      { label: 'TDs', value: s.rec_tds ?? 0 },
-      { label: 'REC', value: s.receptions ?? 0 },
-      { label: 'TAR', value: s.rec_targets ?? 0 },
+    else if (c === 'rec') items.push(
+      { label: 'REC YDS', value: recYds },
+      { label: 'REC TD', value: s.rec_tds ?? 0 },
+      { label: 'REC', value: recs },
     )
-  } else {
-    if (hasDef || !hasKP) {
-      items.push(
-        { label: 'SACKS', value: s.sacks ?? 0 },
-        { label: 'INT', value: s.def_interceptions ?? 0 },
-      )
-    }
-  }
-
-  if (hasKP) {
-    items.push(
+    else if (c === 'def') items.push(
+      { label: 'SACKS', value: s.sacks ?? 0 },
+      { label: 'DEF INT', value: s.def_interceptions ?? 0 },
+      { label: 'TCKL', value: s.def_tackles ?? 0 },
+    )
+    else if (c === 'kick') items.push(
       { label: 'FG', value: `${s.fg_made ?? 0}/${s.fg_attempts ?? 0}` },
       { label: 'EP', value: `${s.ep_made ?? 0}/${s.ep_attempts ?? 0}` },
       { label: 'PTS', value: (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0) },
     )
-  }
-
+  })
   return items
 }
 
@@ -1643,21 +1648,8 @@ function KeyPlayerColumn({ label, team, players, selected, count, onToggle }: {
 }
 
 function CareerStats({ cs, positions }: { cs: any; positions: string[] }) {
-  const items: { label: string; value: string | number }[] = []
-  const primaryPos = positions[0] ?? ''
-  const hasKP = positions.some(p => ['K', 'P'].includes(p))
-  if (primaryPos === 'QB') {
-    items.push({ label: 'Pass YDS', value: cs.pass_yards ?? 0 }, { label: 'TDs', value: (cs.pass_tds ?? 0) + (cs.qb_rush_tds ?? 0) }, { label: 'INT', value: cs.interceptions_thrown ?? 0 }, { label: 'Comp/Att', value: `${cs.pass_completions ?? 0}/${cs.pass_attempts ?? 0}` }, { label: 'Rush YDS', value: cs.qb_rush_yards ?? 0 })
-  } else if (primaryPos === 'RB') {
-    items.push({ label: 'Rush YDS', value: cs.rush_yards ?? 0 }, { label: 'TDs', value: cs.rush_tds ?? 0 }, { label: 'Carries', value: cs.rush_carries ?? 0 }, { label: 'Rec YDS', value: cs.rb_rec_yards ?? 0 })
-  } else if (['WR', 'TE'].includes(primaryPos)) {
-    items.push({ label: 'Rec YDS', value: cs.rec_yards ?? 0 }, { label: 'TDs', value: cs.rec_tds ?? 0 }, { label: 'Rec', value: cs.receptions ?? 0 }, { label: 'Targets', value: cs.rec_targets ?? 0 })
-  } else if (!hasKP) {
-    items.push({ label: 'Sacks', value: cs.sacks ?? 0 }, { label: 'INT', value: cs.def_interceptions ?? 0 })
-  }
-  if (hasKP) {
-    items.push({ label: 'FG', value: `${cs.fg_made ?? 0}/${cs.fg_attempts ?? 0}` }, { label: 'EP', value: `${cs.ep_made ?? 0}/${cs.ep_attempts ?? 0}` }, { label: 'Pts', value: (cs.fg_made ?? 0) * 3 + (cs.ep_made ?? 0) })
-  }
+  // Same union/merge logic as the overlay so all positions' stats show
+  const items = buildStatItems(positions, cs)
   return (
     <div>
       {cs.season && <div style={{ fontSize: 10, color: '#555', marginBottom: 8 }}>Saison {cs.season} · {cs.games_played ?? 0} Spiele</div>}
