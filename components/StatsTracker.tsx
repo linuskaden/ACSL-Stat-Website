@@ -151,6 +151,13 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
   allStatsRef.current = allStats
   // Flip a scheduled game to "live" the moment the first stat is entered (once)
   const wentLiveRef = useRef(false)
+  // Pending unsaved edits (key → which player/quarter) so we can flush on exit
+  const pendingSaves = useRef<Record<string, { playerId: string; q: string }>>({})
+  const [saveError, setSaveError] = useState(false)
+  // Visible game status (scheduled | live | final), mirrored to a ref for callbacks
+  const [status, setStatus] = useState<string>(game.status)
+  const statusRef = useRef(status)
+  statusRef.current = status
 
   // Realtime sync: merge incoming stat changes from other tracker instances
   useEffect(() => {
@@ -211,6 +218,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
 
     const q = quarter  // capture so the timeout closure uses the right quarter
     const key = `${q}-${playerId}`
+    pendingSaves.current[key] = { playerId, q }
     if (saveTimers.current[key]) clearTimeout(saveTimers.current[key])
     setSaving(s => ({ ...s, [key]: true }))
     saveTimers.current[key] = setTimeout(() => {
@@ -226,7 +234,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
     const stats = allStatsRef.current[q]?.[playerId] ?? {}
     const key = `${q}-${playerId}`
 
-    await supabase.from('game_stats').upsert({
+    const { error } = await supabase.from('game_stats').upsert({
       game_id: game.id,
       player_id: playerId,
       team_id: teamId,
@@ -234,47 +242,102 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
       ...stats,
     }, { onConflict: 'game_id,player_id,quarter' })
 
-    // Auto-set the game live on first stat entry (scheduled → live only;
-    // never resurrect a finalized game)
-    if (game.status === 'scheduled' && !wentLiveRef.current) {
-      wentLiveRef.current = true
-      await supabase.from('games').update({ status: 'live' }).eq('id', game.id)
+    if (error) {
+      // Never silently drop data — keep it marked unsaved and retry shortly
+      console.error('game_stats save failed', error.message)
+      setSaveError(true)
+      if (saveTimers.current[key]) clearTimeout(saveTimers.current[key])
+      saveTimers.current[key] = setTimeout(() => persistStat(playerId, q), 2500)
+      return
     }
 
+    // Saved — clear the pending markers so realtime merges resume for this cell
+    delete pendingSaves.current[key]
+    delete saveTimers.current[key]
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
+    setSaveError(false)
+
+    // Auto-set the game live on first stat entry (scheduled → live only;
+    // never resurrect a finalized game)
+    if (statusRef.current === 'scheduled' && !wentLiveRef.current) {
+      wentLiveRef.current = true
+      setStatus('live')
+      await supabase.from('games').update({ status: 'live' }).eq('id', game.id)
+    }
   }
+
+  // Flush any pending debounced saves immediately — on tab hide, page unload,
+  // and unmount — so the last edits aren't lost if the tab/system goes away.
+  useEffect(() => {
+    const flush = () => {
+      Object.entries(pendingSaves.current).forEach(([key, { playerId, q }]) => {
+        if (saveTimers.current[key]) { clearTimeout(saveTimers.current[key]); delete saveTimers.current[key] }
+        void persistStat(playerId, q)
+      })
+    }
+    const onVisibility = () => { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('beforeunload', flush)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('beforeunload', flush)
+      document.removeEventListener('visibilitychange', onVisibility)
+      flush()
+    }
+  }, []) // eslint-disable-line
 
   async function updateScore() {
     await supabase.from('games').update({ home_score: homeScore, away_score: awayScore }).eq('id', game.id)
   }
 
-  async function finalizeGame() {
-    if (!confirm('Finalize game and transfer stats to career database?')) return
-    // Update game status
-    await supabase.from('games').update({ status: 'final', home_score: homeScore, away_score: awayScore }).eq('id', game.id)
+  // Manually set the game status (scheduled / live). Re-arms auto-live only
+  // when going back to scheduled.
+  async function setGameStatus(s: string) {
+    setStatus(s)
+    wentLiveRef.current = (s !== 'scheduled')
+    await supabase.from('games').update({ status: s }).eq('id', game.id)
+  }
 
-    // Transfer stats to career_stats for each player
+  async function finalizeGame() {
+    if (!confirm('Spiel abschließen und Saisonwerte aktualisieren?')) return
+
+    // Make sure every pending edit is written before we recompute from the DB
+    await Promise.all(Object.entries(pendingSaves.current).map(([key, { playerId, q }]) => {
+      if (saveTimers.current[key]) { clearTimeout(saveTimers.current[key]); delete saveTimers.current[key] }
+      return persistStat(playerId, q)
+    }))
+
+    // Mark the game final
+    await supabase.from('games').update({ status: 'final', home_score: homeScore, away_score: awayScore }).eq('id', game.id)
+    setStatus('final')
+
+    // Recompute career_stats from ALL final games of the season — idempotent,
+    // so finalizing twice (or after a correction) can never double-count.
+    const { data: finalGames } = await supabase.from('games').select('id').eq('season', game.season).eq('status', 'final')
+    const finalIds = (finalGames ?? []).map((g: any) => g.id)
+    if (finalIds.length === 0) { alert('Spiel abgeschlossen.'); return }
+
     const allPlayers = [...homePlayers, ...awayPlayers]
     for (const player of allPlayers) {
-      const totals: StatRow = {}
-      QUARTERS.forEach(q => {
-        Object.entries(allStats[q]?.[player.id] ?? {}).forEach(([k, v]) => {
-          if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v
-        })
-      })
-      if (Object.keys(totals).length === 0) continue
+      const { data: rows } = await supabase.from('game_stats').select('*').eq('player_id', player.id).in('game_id', finalIds)
+      const gameRows = rows ?? []
 
-      const existing = await supabase.from('career_stats').select('*').eq('player_id', player.id).eq('season', game.season).single()
+      const totals: StatRow = {}
+      const playedGames = new Set<string>()
+      gameRows.forEach((r: any) => {
+        playedGames.add(r.game_id)
+        Object.entries(r).forEach(([k, v]) => { if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v })
+      })
+      const games_played = playedGames.size
+      if (games_played === 0) continue // leave players without final-game stats untouched
+
+      const existing = await supabase.from('career_stats').select('id').eq('player_id', player.id).eq('season', game.season).maybeSingle()
       if (existing.data) {
-        const merged: StatRow = {}
-        const keys = Object.keys(totals)
-        keys.forEach(k => { merged[k] = (existing.data[k] ?? 0) + (totals[k] ?? 0) })
-        await supabase.from('career_stats').update({ ...merged, games_played: (existing.data.games_played ?? 0) + 1 }).eq('id', existing.data.id)
+        await supabase.from('career_stats').update({ ...totals, games_played }).eq('id', existing.data.id)
       } else {
-        await supabase.from('career_stats').insert({ player_id: player.id, season: game.season, games_played: 1, ...totals })
+        await supabase.from('career_stats').insert({ player_id: player.id, season: game.season, games_played, ...totals })
       }
     }
-    alert('Game finalized! Stats transferred to career database.')
+    alert('Spiel abgeschlossen – Saisonwerte aktualisiert.')
   }
 
   const homeTotals = teamTotals(allStats, homePlayers, quarter === 'Total' ? 'Total' : quarter)
@@ -316,8 +379,32 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
           ))}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
-          {Object.keys(saving).length > 0 && <span className="text-xs text-slate-500 dark:text-[#7a7a7a] animate-pulse">Saving...</span>}
+        <div className="ml-auto flex items-center gap-3">
+          {/* Save status — never leave the operator guessing whether data is saved */}
+          {saveError ? (
+            <span className="text-xs text-[#ff1d25] font-semibold">⚠ Nicht gespeichert – neuer Versuch…</span>
+          ) : Object.keys(saving).length > 0 ? (
+            <span className="text-xs text-slate-500 dark:text-[#7a7a7a] animate-pulse">Speichert…</span>
+          ) : (
+            <span className="text-xs text-[#04a550]/80">✓ Gespeichert</span>
+          )}
+
+          {/* Game status badge — makes the (previously invisible) live flag visible */}
+          <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${
+            status === 'live' ? 'bg-[#ff1d25]/15 text-[#ff1d25] animate-pulse'
+            : status === 'final' ? 'bg-[#04a550]/15 text-[#04a550]'
+            : 'bg-black/10 dark:bg-white/10 text-slate-500 dark:text-[#7a7a7a]'}`}>
+            {status === 'live' ? '● Live' : status === 'final' ? 'Abgeschlossen' : 'Geplant'}
+          </span>
+          {status !== 'final' && (
+            <button onClick={() => setGameStatus(status === 'live' ? 'scheduled' : 'live')}
+              className={`text-xs px-3 py-1.5 rounded transition-colors font-medium border ${
+                status === 'live'
+                  ? 'border-black/15 dark:border-white/15 text-slate-500 dark:text-[#7a7a7a] hover:bg-black/5 dark:hover:bg-white/5'
+                  : 'border-[#ff1d25]/40 text-[#ff1d25] hover:bg-[#ff1d25]/10'}`}>
+              {status === 'live' ? 'Live beenden' : '● LIVE schalten'}
+            </button>
+          )}
           <button onClick={finalizeGame}
             className="text-xs border border-[#04a550]/40 text-[#04a550] hover:bg-[#04a550]/10 px-3 py-1.5 rounded transition-colors font-medium">
             Finalize & Transfer Stats
