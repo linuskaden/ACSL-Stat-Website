@@ -263,6 +263,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
       wentLiveRef.current = true
       setStatus('live')
       await supabase.from('games').update({ status: 'live' }).eq('id', game.id)
+      await pointOverlaysAtGame()
     }
   }
 
@@ -289,12 +290,25 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
     await supabase.from('games').update({ home_score: homeScore, away_score: awayScore }).eq('id', game.id)
   }
 
+  // P4 failsafe: when this game goes live, point the overlays at it so the
+  // broadcast never reads stats from a stale/other game. Clears any key-player
+  // selection carried over from another game.
+  async function pointOverlaysAtGame() {
+    const now = new Date().toISOString()
+    await Promise.all([
+      supabase.from('overlay_state').update({ game_id: game.id, updated_at: now }).eq('id', 1),
+      supabase.from('team_overlay_state').update({ game_id: game.id, updated_at: now }).eq('id', 1),
+      supabase.from('key_player_overlay_state').update({ game_id: game.id, player_ids: [], updated_at: now }).eq('id', 1),
+    ])
+  }
+
   // Manually set the game status (scheduled / live). Re-arms auto-live only
   // when going back to scheduled.
   async function setGameStatus(s: string) {
     setStatus(s)
     wentLiveRef.current = (s !== 'scheduled')
     await supabase.from('games').update({ status: s }).eq('id', game.id)
+    if (s === 'live') await pointOverlaysAtGame()
   }
 
   async function finalizeGame() {

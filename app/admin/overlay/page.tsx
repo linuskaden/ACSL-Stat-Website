@@ -335,6 +335,19 @@ export default function OverlayControlPage() {
         </div>
       </div>
 
+      {/* ══ Mismatch warning: overlay is pointed at a different game than selected ══ */}
+      {adminMode === 'game' && selectedGame && overlay.game_id && overlay.game_id !== selectedGame.id && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', background: 'rgba(245,158,11,0.12)', borderBottom: '1px solid rgba(245,158,11,0.3)' }}>
+          <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 700 }}>
+            ⚠ Overlay zeigt Stats von einem anderen Spiel{(() => { const g = games.find(x => x.id === overlay.game_id); return g ? ` (${gameLabel(g)})` : '' })()} als ausgewählt.
+          </span>
+          <button onClick={() => handleGameChange(selectedGame.id)}
+            style={{ marginLeft: 'auto', padding: '5px 12px', fontSize: 11, fontWeight: 800, borderRadius: 6, background: '#f59e0b', color: '#1a1200', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            An ausgewähltes Spiel angleichen
+          </button>
+        </div>
+      )}
+
       {/* ══ Operator Preview — always visible regardless of tab ══ */}
       <OperatorPreview
         player={activePlayer ?? null}
