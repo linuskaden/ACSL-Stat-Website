@@ -73,37 +73,80 @@ body {
 *:focus-visible { outline-color: var(--acsl-red); }
 
 /* ===== Playoff bracket tree ===== */
-:root { --pf-line: rgba(0, 0, 0, 0.18); --pf-bronze: rgba(245, 166, 35, 0.55); }
-.dark { --pf-line: rgba(255, 255, 255, 0.20); --pf-bronze: rgba(245, 166, 35, 0.6); }
+:root { --pf-line: rgba(0, 0, 0, 0.20); --pf-bronze: rgba(245, 166, 35, 0.65); }
+.dark { --pf-line: rgba(255, 255, 255, 0.24); --pf-bronze: rgba(245, 166, 35, 0.7); }
 
-.pf-scroll { overflow-x: auto; padding-bottom: 6px; }
-.pf-inner { min-width: 860px; }
+.pf-scroll { overflow-x: auto; padding-bottom: 30px; }
+.pf-inner { min-width: 1120px; }
 
-.pf-heads { display: flex; margin-bottom: 12px; }
+.pf-heads { display: flex; margin-bottom: 16px; }
 .pf-head {
-  flex: 0 0 200px;
+  flex: 0 0 252px;
   text-align: center;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--fg-faint);
 }
-.pf-head--gap   { flex: 0 0 34px; }
-.pf-head--champ { flex: 0 0 150px; }
+.pf-head--gap   { flex: 0 0 46px; }
+.pf-head--champ { flex: 0 0 196px; }
 
-.pf-bracket { display: flex; align-items: stretch; height: 340px; }
+.pf-bracket { display: flex; align-items: stretch; height: 480px; }
 .pf-col {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  flex: 0 0 200px;
+  flex: 0 0 252px;
 }
-.pf-col--champ { flex: 0 0 150px; }
-.pf-champ-spacer { height: 124px; }
+.pf-col--champ { flex: 0 0 196px; }
+.pf-champ-spacer { height: 156px; }
 
-.pf-conn { position: relative; flex: 0 0 34px; }
-.pf-line { position: absolute; height: 2px; background: var(--pf-line); }
+/* Match = two coloured team bars stacked, with a small meta line floating below */
+.pf-match { position: relative; }
+.pf-card {
+  border-radius: 11px;
+  overflow: hidden;
+  box-shadow: 0 2px 9px rgba(0, 0, 0, 0.14);
+}
+.pf-match--final .pf-card { box-shadow: 0 5px 20px rgba(0, 0, 0, 0.24); }
+.pf-card--placeholder {
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--pf-line);
+  box-shadow: none;
+  font-size: 12px;
+  color: var(--fg-faint);
+}
+
+.pf-team { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 13px; }
+.pf-team + .pf-team { border-top: 2px solid rgba(255, 255, 255, 0.28); }
+.pf-seed { width: 14px; text-align: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.pf-logo { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
+.pf-name { flex: 1; font-size: 15px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-pts { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+.pf-meta {
+  position: absolute; top: 100%; left: 3px; margin-top: 5px;
+  display: flex; gap: 9px; align-items: center;
+  font-size: 10px; font-weight: 600; color: var(--fg-faint); white-space: nowrap;
+}
+.pf-meta-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-muted); }
+.pf-meta-live { color: #ff1d25; font-weight: 800; }
+
+.pf-champ {
+  height: 156px; border-radius: 16px; border: 2px solid;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 0 12px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+.pf-champ-label { font-size: 10px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
+.pf-champ-logo { width: 44px; height: 44px; object-fit: contain; margin-bottom: 6px; }
+.pf-champ-name { font-size: 19px; font-weight: 900; }
+
+.pf-conn { position: relative; flex: 0 0 46px; }
+.pf-line { position: absolute; height: 2.5px; border-radius: 2px; background: var(--pf-line); }
 .pf-line--bronze { background: var(--pf-bronze); }
 
 /* 1:1 feed (wildcard → semifinal): straight lines at the two match centers */
@@ -113,7 +156,7 @@ body {
 /* merge (semifinals → final winners / 3rd-place losers) */
 .pf-conn--merge .h-up  { top: 25%; left: 0;   width: 50%; }
 .pf-conn--merge .h-dn  { top: 75%; left: 0;   width: 50%; }
-.pf-conn--merge .v     { top: 25%; left: 50%; width: 2px; height: 50%; }
+.pf-conn--merge .v     { top: 25%; left: 50%; width: 2.5px; height: 50%; }
 .pf-conn--merge .h-win { top: 25%; left: 50%; width: 50%; }
 .pf-conn--merge .h-los { top: 75%; left: 50%; width: 50%; }
 
