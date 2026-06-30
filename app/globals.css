@@ -76,77 +76,79 @@ body {
 :root { --pf-line: rgba(0, 0, 0, 0.20); --pf-bronze: rgba(245, 166, 35, 0.65); }
 .dark { --pf-line: rgba(255, 255, 255, 0.24); --pf-bronze: rgba(245, 166, 35, 0.7); }
 
-.pf-scroll { overflow-x: auto; padding-bottom: 30px; }
-.pf-inner { min-width: 1120px; }
+.pf-scroll { overflow-x: auto; padding-bottom: 26px; }
+/* Sized to fit the page without horizontal scrolling */
+.pf-inner { min-width: 900px; max-width: 100%; }
 
-.pf-heads { display: flex; margin-bottom: 16px; }
+.pf-heads { display: flex; margin-bottom: 14px; }
 .pf-head {
-  flex: 0 0 252px;
+  flex: 1 1 0;
   text-align: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--fg-faint);
 }
-.pf-head--gap   { flex: 0 0 46px; }
-.pf-head--champ { flex: 0 0 196px; }
+.pf-head--gap   { flex: 0 0 32px; }
+.pf-head--champ { flex: 0 0 164px; }
 
-.pf-bracket { display: flex; align-items: stretch; height: 480px; }
+.pf-bracket { display: flex; align-items: stretch; height: 392px; }
 .pf-col {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  flex: 0 0 252px;
+  flex: 1 1 0;
+  min-width: 0;
 }
-.pf-col--champ { flex: 0 0 196px; }
-.pf-champ-spacer { height: 156px; }
+.pf-col--champ { flex: 0 0 164px; }
+.pf-champ-spacer { height: 128px; }
 
 /* Match = two coloured team bars stacked, with a small meta line floating below */
 .pf-match { position: relative; }
 .pf-card {
-  border-radius: 11px;
+  border-radius: 9px;
   overflow: hidden;
-  box-shadow: 0 2px 9px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
 }
-.pf-match--final .pf-card { box-shadow: 0 5px 20px rgba(0, 0, 0, 0.24); }
+.pf-match--final .pf-card { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); }
 .pf-card--placeholder {
-  height: 88px;
+  height: 76px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1.5px dashed var(--pf-line);
   box-shadow: none;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--fg-faint);
 }
 
-.pf-team { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 13px; }
+.pf-team { display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 10px; }
 .pf-team + .pf-team { border-top: 2px solid rgba(255, 255, 255, 0.28); }
-.pf-seed { width: 14px; text-align: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
-.pf-logo { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
-.pf-name { flex: 1; font-size: 15px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pf-pts { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.pf-seed { width: 11px; text-align: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.pf-logo { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+.pf-name { flex: 1; min-width: 0; font-size: 13px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-pts { font-size: 15px; font-weight: 900; font-variant-numeric: tabular-nums; }
 
 .pf-meta {
-  position: absolute; top: 100%; left: 3px; margin-top: 5px;
-  display: flex; gap: 9px; align-items: center;
-  font-size: 10px; font-weight: 600; color: var(--fg-faint); white-space: nowrap;
+  position: absolute; top: 100%; left: 2px; margin-top: 4px;
+  display: flex; gap: 7px; align-items: center;
+  font-size: 9px; font-weight: 600; color: var(--fg-faint); white-space: nowrap;
 }
-.pf-meta-title { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-muted); }
+.pf-meta-title { font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--fg-muted); }
 .pf-meta-live { color: #ff1d25; font-weight: 800; }
 
 .pf-champ {
-  height: 156px; border-radius: 16px; border: 2px solid;
+  height: 128px; border-radius: 13px; border: 2px solid;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 0 12px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  text-align: center; padding: 0 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
-.pf-champ-label { font-size: 10px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
-.pf-champ-logo { width: 44px; height: 44px; object-fit: contain; margin-bottom: 6px; }
-.pf-champ-name { font-size: 19px; font-weight: 900; }
+.pf-champ-label { font-size: 9px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 5px; }
+.pf-champ-logo { width: 36px; height: 36px; object-fit: contain; margin-bottom: 5px; }
+.pf-champ-name { font-size: 16px; font-weight: 900; }
 
-.pf-conn { position: relative; flex: 0 0 46px; }
-.pf-line { position: absolute; height: 2.5px; border-radius: 2px; background: var(--pf-line); }
+.pf-conn { position: relative; flex: 0 0 32px; }
+.pf-line { position: absolute; height: 2px; border-radius: 2px; background: var(--pf-line); }
 .pf-line--bronze { background: var(--pf-bronze); }
 
 /* 1:1 feed (wildcard → semifinal): straight lines at the two match centers */
