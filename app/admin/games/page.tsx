@@ -113,11 +113,19 @@ export default async function AdminGamesPage() {
     if (!game || game.status !== 'final') { redirect('/admin/games'); return }
 
     const currentRound = game.game_type as string
-    if (!['wildcard', 'semifinal'].includes(currentRound)) { redirect('/admin/games'); return }
+    if (!['wildcard', 'semifinal', 'final', 'third_place'].includes(currentRound)) { redirect('/admin/games'); return }
 
     const winnerId = (game.home_score ?? 0) >= (game.away_score ?? 0)
       ? game.home_team_id : game.away_team_id
     if (!winnerId) { redirect('/admin/games'); return }
+
+    // Final / 3rd place have no next round — just record the winner (final → champion)
+    if (['final', 'third_place'].includes(currentRound)) {
+      const { data: be } = await supabase.from('playoff_bracket').select('id').eq('game_id', gameId).maybeSingle()
+      if (be) await supabase.from('playoff_bracket').update({ winner_id: winnerId }).eq('id', be.id)
+      redirect('/admin/games')
+      return
+    }
 
     const loserId = winnerId === game.home_team_id ? game.away_team_id : game.home_team_id
 
@@ -239,7 +247,7 @@ export default async function AdminGamesPage() {
             {playoffGames.map((game: any) => {
               const bEntry = bracketByGameId[game.id]
               const alreadyAdvanced = !!bEntry?.winner_id
-              const canAdvance = game.status === 'final' && !alreadyAdvanced && !['final', 'third_place'].includes(game.game_type)
+              const canAdvance = game.status === 'final' && !alreadyAdvanced
               const isFinal = game.status === 'final'
               const isLive = game.status === 'live'
               const winnerTeamId = bEntry?.winner_id
@@ -315,13 +323,15 @@ export default async function AdminGamesPage() {
                           <button type="submit"
                             className="text-xs font-bold px-3 py-1.5 rounded transition-colors flex items-center gap-1.5"
                             style={{ background: 'rgba(4,165,80,0.15)', color: '#04a550', border: '1px solid rgba(4,165,80,0.3)' }}>
-                            Advance Winner →
+                            {game.game_type === 'final' ? 'Champion festlegen 🏆' : game.game_type === 'third_place' ? 'Sieger festlegen' : 'Advance Winner →'}
                           </button>
                         </form>
                       )}
 
-                      {alreadyAdvanced && game.game_type !== 'final' && (
-                        <span className="text-[10px] text-[#04a550] font-bold tracking-wider">✓ ADVANCED</span>
+                      {alreadyAdvanced && (
+                        <span className="text-[10px] text-[#04a550] font-bold tracking-wider">
+                          {game.game_type === 'final' ? '✓ CHAMPION' : '✓ ADVANCED'}
+                        </span>
                       )}
 
                       {/* Track stats link */}
