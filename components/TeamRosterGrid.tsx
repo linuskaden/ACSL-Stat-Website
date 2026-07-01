@@ -20,10 +20,17 @@ type Player = {
   football_experience: string | null
 }
 
+export type LeaderTop = { id: string; name: string; jersey: number | null; value: string }
+export type LeaderCat = { group: string; abbr: string; top: LeaderTop[] }
+
 interface Props {
   team: Team
   players: Player[]
   allTeams: Team[]
+  /** Team stat leaders per category (public team page) */
+  leaders?: LeaderCat[]
+  /** Selected season (for the leaders heading) */
+  season?: number
   /** When set, shows the "Live Stats einblenden" button and overlay controls */
   overlayMode?: boolean
   /** Callback for pushing player to overlay (overlayMode only) */
@@ -38,6 +45,8 @@ export default function TeamRosterGrid({
   team,
   players,
   allTeams,
+  leaders,
+  season,
   overlayMode = false,
   onOverlayPush,
   overlayActiveId,
@@ -48,6 +57,8 @@ export default function TeamRosterGrid({
   const [loadingStats, setLoadingStats] = useState(false)
   const [filter, setFilter] = useState('All')
   const [search, setSearch] = useState('')
+  const [view, setView] = useState<'roster' | 'leaders'>('roster')
+  const showTabs = !overlayMode && !!leaders && leaders.length > 0
 
   // Load career stats when player is selected
   useEffect(() => {
@@ -219,45 +230,69 @@ export default function TeamRosterGrid({
             </div>
           </div>
 
-          {/* Search */}
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Suche nach Name oder Nummer..."
-            style={{
-              flex: 1, minWidth: 180, maxWidth: 400,
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              padding: '7px 12px',
-              color: 'var(--fg)', fontSize: 13,
-              outline: 'none',
-            }}
-          />
+          {/* Roster / Leaders tabs */}
+          {showTabs && (
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(['roster', 'leaders'] as const).map(v => (
+                <button key={v} onClick={() => setView(v)}
+                  style={{
+                    padding: '6px 14px', fontSize: 12, fontWeight: 800,
+                    border: 'none', borderRadius: 8, cursor: 'pointer',
+                    background: view === v ? team.primary_color : 'var(--subtle)',
+                    color: view === v ? '#fff' : 'var(--fg-muted)',
+                    textTransform: 'uppercase', letterSpacing: 0.5, transition: 'all 0.15s',
+                  }}>
+                  {v === 'roster' ? 'Roster' : 'Leaders'}
+                </button>
+              ))}
+            </div>
+          )}
 
-          {/* Position filter */}
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {POSITIONS.map(pos => (
-              <button
-                key={pos}
-                onClick={() => setFilter(pos)}
+          {/* Search + position filter (roster view only) */}
+          {(!showTabs || view === 'roster') && (
+            <>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Suche nach Name oder Nummer..."
                 style={{
-                  padding: '5px 10px',
-                  fontSize: 11, fontWeight: 700,
-                  border: 'none', borderRadius: 6, cursor: 'pointer',
-                  background: filter === pos ? team.primary_color : 'var(--subtle)',
-                  color: filter === pos ? 'white' : 'var(--fg-muted)',
-                  transition: 'all 0.15s',
+                  flex: 1, minWidth: 180, maxWidth: 400,
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  padding: '7px 12px',
+                  color: 'var(--fg)', fontSize: 13,
+                  outline: 'none',
                 }}
-              >
-                {pos}
-              </button>
-            ))}
-          </div>
+              />
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {POSITIONS.map(pos => (
+                  <button
+                    key={pos}
+                    onClick={() => setFilter(pos)}
+                    style={{
+                      padding: '5px 10px',
+                      fontSize: 11, fontWeight: 700,
+                      border: 'none', borderRadius: 6, cursor: 'pointer',
+                      background: filter === pos ? team.primary_color : 'var(--subtle)',
+                      color: filter === pos ? 'white' : 'var(--fg-muted)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {pos}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Scrollable grid + panel */}
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {view === 'leaders' && leaders ? (
+            <LeadersBoard leaders={leaders} team={team} season={season} />
+          ) : (
+          <>
           {/* Grid */}
           <div style={{
             flex: 1,
@@ -302,7 +337,57 @@ export default function TeamRosterGrid({
               onOverlayPush={onOverlayPush ? (mode) => onOverlayPush(selected, mode) : undefined}
             />
           )}
+          </>
+          )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Team Leaders board (grouped Top-3 per category)
+───────────────────────────────────────────── */
+function LeadersBoard({ leaders, team, season }: { leaders: LeaderCat[]; team: Team; season?: number }) {
+  const groups = ['Passing', 'Rushing', 'Receiving', 'Defense', 'Kicking']
+  const byGroup = groups
+    .map(g => ({ group: g, cats: leaders.filter(l => l.group === g) }))
+    .filter(g => g.cats.length > 0)
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+      <div style={{ fontSize: 11, color: 'var(--fg-faint)', marginBottom: 14 }}>
+        Top 3 je Kategorie · Saison {season ?? ''}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+        {byGroup.map(({ group, cats }) => (
+          <div key={group}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, color: team.primary_color, textTransform: 'uppercase', marginBottom: 10 }}>
+              {group}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+              {cats.map(cat => (
+                <div key={cat.abbr} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--fg-faint)', textTransform: 'uppercase', marginBottom: 8 }}>
+                    {cat.abbr}
+                  </div>
+                  {cat.top.map((p, i) => (
+                    <Link key={p.id} href={`/players/${p.id}`} style={{ textDecoration: 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
+                        <span style={{ width: 16, fontSize: 12, fontWeight: 900, color: i === 0 ? team.primary_color : 'var(--fg-faint)', textAlign: 'center' }}>{i + 1}</span>
+                        <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: i === 0 ? 700 : 500, color: 'var(--fg)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {p.jersey != null && <span style={{ color: 'var(--fg-faint)', fontWeight: 600 }}>#{p.jersey} </span>}
+                          {p.name}
+                        </span>
+                        <span style={{ fontSize: 15, fontWeight: 900, fontFamily: '"Arial Black", sans-serif', color: 'var(--fg)' }}>{p.value}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -496,6 +581,18 @@ function PlayerDetailPanel({
             <Chip>{player.semester}</Chip>
           )}
         </div>
+
+        {!overlayMode && (
+          <Link href={`/players/${player.id}`} style={{ textDecoration: 'none' }}>
+            <div style={{
+              marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '9px 12px', borderRadius: 8, background: primaryColor, color: '#fff',
+              fontSize: 12, fontWeight: 800, letterSpacing: 0.5,
+            }}>
+              Zum vollen Profil →
+            </div>
+          </Link>
+        )}
       </div>
 
       {/* ── vMix Overlay Controls ── */}
