@@ -8,15 +8,6 @@ import HeroSlideshow from '@/components/HeroSlideshow'
 
 export const revalidate = 30
 
-/** Contrast text colour for a team-coloured tile. */
-function textOn(hex?: string | null): string {
-  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return '#ffffff'
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#0b0e1a' : '#ffffff'
-}
-
 /** All images in public/slideshow (added simply by dropping files in). */
 function slideshowImages(): string[] {
   try {
@@ -90,38 +81,28 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* ── Teams row (bigger, in team colours) ── */}
-      <section className="max-w-7xl mx-auto px-4 py-14">
-        <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.35em] text-slate-400 dark:text-[#7a7a7a] mb-8">
+      {/* ── Teams: elongated white cards, big logo left + name ── */}
+      <section className="max-w-6xl mx-auto px-4 py-12">
+        <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.35em] text-slate-400 dark:text-[#7a7a7a] mb-7">
           Teams
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">
-          {(teams ?? []).map((team: Team) => {
-            const color = team.primary_color ?? '#111111'
-            const fg = textOn(color)
-            return (
-              <Link
-                key={team.id}
-                href={`/teams/${team.slug}`}
-                className="group rounded-2xl p-5 flex flex-col items-center justify-center gap-3 shadow-md hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-200"
-                style={{ background: color }}
-              >
-                <div className="rounded-full bg-white flex items-center justify-center shadow-sm shrink-0" style={{ width: 76, height: 76 }}>
-                  {team.logo_url ? (
-                    <img src={team.logo_url} alt="" className="w-12 h-12 object-contain" />
-                  ) : (
-                    <span className="text-lg font-black text-slate-700">{team.short_name?.slice(0, 2)}</span>
-                  )}
-                </div>
-                <div className="text-center leading-tight">
-                  <div className="font-black text-base md:text-lg" style={{ color: fg }}>{team.short_name}</div>
-                  <div className="text-[10px] md:text-[11px] font-medium mt-0.5" style={{ color: fg, opacity: 0.72 }}>
-                    {team.university ?? ''}
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          {(teams ?? []).map((team: Team) => (
+            <Link
+              key={team.id}
+              href={`/teams/${team.slug}`}
+              className="flex items-center gap-4 bg-white dark:bg-[#111] border border-black/[0.08] dark:border-white/10 rounded-2xl px-5 py-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-black/20 dark:hover:border-white/25 transition-all"
+            >
+              {team.logo_url ? (
+                <img src={team.logo_url} alt="" className="w-16 h-16 md:w-[76px] md:h-[76px] object-contain shrink-0" />
+              ) : (
+                <span className="w-16 h-16 md:w-[76px] md:h-[76px] shrink-0" />
+              )}
+              <span className="font-black text-lg md:text-xl text-slate-900 dark:text-white truncate">
+                {team.name}
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
     </div>
