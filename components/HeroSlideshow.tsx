@@ -21,7 +21,7 @@ export default function HeroSlideshow({
   }, [images.length, intervalMs])
 
   return (
-    <section className="relative w-full overflow-hidden" style={{ height: 'min(60vh, 600px)' }}>
+    <section className="relative w-full h-full overflow-hidden">
       {/* Images */}
       {images.length > 0 ? (
         images.map((src, i) => (

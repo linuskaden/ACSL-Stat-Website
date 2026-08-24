@@ -37,68 +37,58 @@ export default async function HomePage() {
   ])
 
   return (
-    <div>
-      {/* ── Hero: big ACSL FOOTBALL over a full-bleed slideshow ── */}
-      <HeroSlideshow images={images}>
-        <Image
-          src="/logos/ACSL-Logo.png"
-          alt="ACSL"
-          width={1810}
-          height={525}
-          priority
-          className="w-auto invert drop-shadow-2xl"
-          style={{ height: 'clamp(44px, 11vw, 140px)' }}
-        />
-        <div
-          className="text-white font-black italic tracking-tight"
-          style={{ fontSize: 'clamp(38px, 10.5vw, 130px)', lineHeight: 0.92, textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
-        >
-          FOOTBALL
-        </div>
-        <p className="mt-5 text-white/85 text-sm md:text-lg font-semibold uppercase tracking-[0.25em]">
-          Austrian College Sports League
-        </p>
-      </HeroSlideshow>
+    // Fills exactly one screen (viewport minus the 4rem navbar) — no scrolling.
+    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100dvh - 4rem)' }}>
+      {/* ── Hero: fills the remaining space ── */}
+      <div className="relative flex-1 min-h-0">
+        <HeroSlideshow images={images}>
+          <Image
+            src="/logos/ACSL-Logo.png"
+            alt="ACSL"
+            width={1810}
+            height={525}
+            priority
+            className="w-auto invert drop-shadow-2xl"
+            style={{ height: 'clamp(40px, 10vw, 130px)' }}
+          />
+          <div
+            className="text-white font-black italic tracking-tight"
+            style={{ fontSize: 'clamp(34px, 9.5vw, 118px)', lineHeight: 0.92, textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+          >
+            FOOTBALL
+          </div>
+          <p className="mt-4 text-white/85 text-[11px] md:text-base font-semibold uppercase tracking-[0.25em]">
+            Austrian College Sports League
+          </p>
+        </HeroSlideshow>
+      </div>
 
-      {/* ── Live banner ── */}
+      {/* ── Live banner (thin) ── */}
       {liveGame && (
-        <div className="max-w-7xl mx-auto px-4 pt-8">
+        <div className="shrink-0 px-3 md:px-4 pt-2">
           <Link
             href="/live"
-            className="flex items-center justify-between gap-4 bg-[#ff1d25] rounded-xl p-4 hover:bg-[#e0181f] transition-colors shadow-lg shadow-[#ff1d25]/25"
+            className="max-w-7xl mx-auto flex items-center justify-center gap-3 bg-[#ff1d25] rounded-lg px-4 py-2 text-white font-bold text-sm hover:bg-[#e0181f] transition-colors"
           >
-            <div className="flex items-center gap-3">
-              <span className="animate-pulse w-2 h-2 rounded-full bg-white inline-block" />
-              <span className="font-bold text-white text-sm">LIVE NOW</span>
-            </div>
-            <div className="flex items-center gap-4 text-white font-bold">
-              <span>{(liveGame as any).home_team?.short_name ?? '—'}</span>
-              <span className="text-2xl">{liveGame.home_score ?? 0} – {liveGame.away_score ?? 0}</span>
-              <span>{(liveGame as any).away_team?.short_name ?? '—'}</span>
-            </div>
-            <span className="text-white/70 text-xs hidden sm:block">View Live Stats →</span>
+            <span className="animate-pulse w-2 h-2 rounded-full bg-white inline-block" />
+            LIVE: {(liveGame as any).home_team?.short_name ?? '—'} {liveGame.home_score ?? 0}–{liveGame.away_score ?? 0} {(liveGame as any).away_team?.short_name ?? '—'} →
           </Link>
         </div>
       )}
 
-      {/* ── Teams: elongated white cards, big logo left + name ── */}
-      <section className="max-w-6xl mx-auto px-4 py-12">
-        <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.35em] text-slate-400 dark:text-[#7a7a7a] mb-7">
-          Teams
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      {/* ── Teams: one compact row of white cards ── */}
+      <section className="shrink-0 max-w-7xl w-full mx-auto px-3 md:px-4 py-3 md:py-4">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 md:gap-3">
           {(teams ?? []).map((team: Team) => (
             <Link
               key={team.id}
               href={`/teams/${team.slug}`}
-              className="flex items-center gap-4 bg-white dark:bg-[#111] border border-black/[0.08] dark:border-white/10 rounded-2xl px-5 py-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-black/20 dark:hover:border-white/25 transition-all"
+              className="flex items-center gap-2 md:gap-2.5 bg-white dark:bg-[#111] border border-black/[0.08] dark:border-white/10 rounded-xl px-2.5 md:px-3 py-2 md:py-2.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-black/20 dark:hover:border-white/25 transition-all"
             >
-              {team.logo_url ? (
-                <img src={team.logo_url} alt="" className="w-16 h-16 md:w-[76px] md:h-[76px] object-contain shrink-0" />
-              ) : (
-                <span className="w-16 h-16 md:w-[76px] md:h-[76px] shrink-0" />
+              {team.logo_url && (
+                <img src={team.logo_url} alt="" className="w-9 h-9 md:w-11 md:h-11 object-contain shrink-0" />
               )}
-              <span className="font-black text-lg md:text-xl text-slate-900 dark:text-white truncate">
+              <span className="font-black text-[11px] md:text-sm leading-tight text-slate-900 dark:text-white">
                 {team.name}
               </span>
             </Link>
