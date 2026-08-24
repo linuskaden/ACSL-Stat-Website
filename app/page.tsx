@@ -38,10 +38,10 @@ export default async function HomePage() {
 
   return (
     // Fills exactly one screen (viewport minus the 4rem navbar) — no scrolling.
-    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100dvh - 4rem)' }}>
-      {/* ── Hero: fills the remaining space ── */}
-      <div className="relative flex-1 min-h-0">
-        <HeroSlideshow images={images}>
+    <div className="relative overflow-hidden" style={{ height: 'calc(100dvh - 4rem)' }}>
+      {/* ── Hero slideshow fills the whole area ── */}
+      <HeroSlideshow images={images}>
+        <div className="flex flex-col items-center" style={{ paddingBottom: '6rem' }}>
           <Image
             src="/logos/ACSL-Logo.png"
             alt="ACSL"
@@ -60,41 +60,41 @@ export default async function HomePage() {
           <p className="mt-4 text-white/85 text-[11px] md:text-base font-semibold uppercase tracking-[0.25em]">
             Austrian College Sports League
           </p>
-        </HeroSlideshow>
-      </div>
-
-      {/* ── Live banner (thin) ── */}
-      {liveGame && (
-        <div className="shrink-0 px-3 md:px-4 pt-2">
-          <Link
-            href="/live"
-            className="max-w-7xl mx-auto flex items-center justify-center gap-3 bg-[#ff1d25] rounded-lg px-4 py-2 text-white font-bold text-sm hover:bg-[#e0181f] transition-colors"
-          >
-            <span className="animate-pulse w-2 h-2 rounded-full bg-white inline-block" />
-            LIVE: {(liveGame as any).home_team?.short_name ?? '—'} {liveGame.home_score ?? 0}–{liveGame.away_score ?? 0} {(liveGame as any).away_team?.short_name ?? '—'} →
-          </Link>
         </div>
-      )}
+      </HeroSlideshow>
 
-      {/* ── Teams: one compact row of white cards ── */}
-      <section className="shrink-0 max-w-7xl w-full mx-auto px-3 md:px-4 py-3 md:py-4">
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 md:gap-3">
-          {(teams ?? []).map((team: Team) => (
+      {/* ── Frosted-glass team bar merging into the bottom of the hero ── */}
+      <div className="absolute inset-x-0 bottom-0 z-10 border-t border-white/40 dark:border-white/10 bg-white/60 dark:bg-black/45 backdrop-blur-md">
+        <div className="max-w-7xl w-full mx-auto px-3 md:px-4 py-3 space-y-2">
+          {liveGame && (
             <Link
-              key={team.id}
-              href={`/teams/${team.slug}`}
-              className="flex items-center gap-2 md:gap-2.5 bg-white dark:bg-[#111] border border-black/[0.08] dark:border-white/10 rounded-xl px-2.5 md:px-3 py-2 md:py-2.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-black/20 dark:hover:border-white/25 transition-all"
+              href="/live"
+              className="flex items-center justify-center gap-2 bg-[#ff1d25] rounded-lg px-4 py-1.5 text-white font-bold text-xs hover:bg-[#e0181f] transition-colors"
             >
-              {team.logo_url && (
-                <img src={team.logo_url} alt="" className="w-9 h-9 md:w-11 md:h-11 object-contain shrink-0" />
-              )}
-              <span className="font-black text-[11px] md:text-sm leading-tight text-slate-900 dark:text-white">
-                {team.name}
-              </span>
+              <span className="animate-pulse w-1.5 h-1.5 rounded-full bg-white inline-block" />
+              LIVE: {(liveGame as any).home_team?.short_name ?? '—'} {liveGame.home_score ?? 0}–{liveGame.away_score ?? 0} {(liveGame as any).away_team?.short_name ?? '—'} →
             </Link>
-          ))}
+          )}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 md:gap-3">
+            {(teams ?? []).map((team: Team) => (
+              <Link
+                key={team.id}
+                href={`/teams/${team.slug}`}
+                className="relative flex items-center gap-2 overflow-hidden rounded-lg bg-white/85 dark:bg-white/10 border border-black/[0.06] dark:border-white/10 px-2.5 md:px-3 py-2 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+              >
+                {/* team-colour accent bar */}
+                <span className="absolute top-0 inset-x-0 h-1" style={{ background: team.primary_color ?? '#ff1d25' }} />
+                {team.logo_url && (
+                  <img src={team.logo_url} alt="" className="w-8 h-8 md:w-10 md:h-10 object-contain shrink-0" />
+                )}
+                <span className="font-black text-[11px] md:text-[13px] leading-tight text-slate-900 dark:text-white">
+                  {team.name}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   )
 }
