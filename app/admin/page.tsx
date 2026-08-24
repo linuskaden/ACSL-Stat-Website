@@ -30,7 +30,7 @@ export default async function AdminDashboard() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">Admin Dashboard</h1>
-          <p className="text-slate-500 dark:text-[#7a7a7a] text-sm mt-1">ACSL Stats Operator Panel</p>
+          <p className="text-slate-500 dark:text-[#7a7a7a] text-sm mt-1">ACSL Football Operator Panel</p>
         </div>
         <form action={handleLogout}>
           <button type="submit" className="text-xs text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white border border-black/10 dark:border-white/10 rounded px-3 py-1.5 transition-colors">

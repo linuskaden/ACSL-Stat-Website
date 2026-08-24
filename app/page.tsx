@@ -1,51 +1,81 @@
+import fs from 'fs'
+import path from 'path'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import TeamBadge from '@/components/TeamBadge'
-import type { Team, StandingsWithTeam } from '@/lib/supabase/types'
-import { getSelectedSeason } from '@/lib/season'
-import StandingsTable from '@/components/StandingsTable'
+import Image from 'next/image'
+import type { Team } from '@/lib/supabase/types'
+import HeroSlideshow from '@/components/HeroSlideshow'
 
 export const revalidate = 30
 
+/** Contrast text colour for a team-coloured tile. */
+function textOn(hex?: string | null): string {
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return '#ffffff'
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#0b0e1a' : '#ffffff'
+}
+
+/** All images in public/slideshow (added simply by dropping files in). */
+function slideshowImages(): string[] {
+  try {
+    const dir = path.join(process.cwd(), 'public', 'slideshow')
+    return fs
+      .readdirSync(dir)
+      .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f))
+      .sort()
+      .map(f => `/slideshow/${encodeURIComponent(f)}`)
+  } catch {
+    return []
+  }
+}
+
 export default async function HomePage() {
   const supabase = await createClient()
-  const season = await getSelectedSeason()
+  const images = slideshowImages()
 
-  const [{ data: teams }, { data: standings }, { data: liveGame }] = await Promise.all([
+  const [{ data: teams }, { data: liveGame }] = await Promise.all([
     supabase.from('teams').select('*').order('name'),
-    supabase.from('standings').select('*, team:teams(*)').eq('season', season).order('wins', { ascending: false }),
-    supabase.from('games')
+    supabase
+      .from('games')
       .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
-      .eq('status', 'live').limit(1).maybeSingle(),
+      .eq('status', 'live')
+      .limit(1)
+      .maybeSingle(),
   ])
 
   return (
     <div>
-      {/* ── Hero ── */}
-      <section className="relative overflow-hidden border-b border-black/[0.06] dark:border-white/10 bg-gradient-to-b from-white to-[#f7f8fa] dark:from-[#0a0a0a] dark:to-[#0a0a0a]">
-        <div className="max-w-7xl mx-auto px-4 py-16 md:py-24 relative">
-          <div className="max-w-3xl">
-            <h1 className="text-5xl md:text-7xl font-black italic tracking-tight leading-[0.95] text-slate-900 dark:text-white">
-              ACSL <span className="text-[#ff1d25]">Stats</span>
-            </h1>
-            <p className="mt-5 text-lg text-slate-600 dark:text-[#9a9a9a] max-w-xl">
-              Austrian College Sports League — live scores, team standings and player statistics.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/teams" className="px-5 py-2.5 rounded-lg bg-[#ff1d25] text-white font-semibold text-sm hover:bg-[#e0181f] transition-colors">
-                Explore Teams
-              </Link>
-              <Link href="/schedule" className="px-5 py-2.5 rounded-lg border border-black/10 dark:border-white/15 text-slate-700 dark:text-white font-semibold text-sm hover:bg-black/[0.04] dark:hover:bg-white/5 transition-colors">
-                Full Schedule
-              </Link>
-            </div>
-          </div>
+      {/* ── Hero: big ACSL FOOTBALL over a full-bleed slideshow ── */}
+      <HeroSlideshow images={images}>
+        <Image
+          src="/logos/ACSL-Logo.png"
+          alt="ACSL"
+          width={1810}
+          height={525}
+          priority
+          className="w-auto invert drop-shadow-2xl"
+          style={{ height: 'clamp(44px, 11vw, 140px)' }}
+        />
+        <div
+          className="text-white font-black italic tracking-tight"
+          style={{ fontSize: 'clamp(38px, 10.5vw, 130px)', lineHeight: 0.92, textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+        >
+          FOOTBALL
         </div>
-      </section>
+        <p className="mt-5 text-white/85 text-sm md:text-lg font-semibold uppercase tracking-[0.25em]">
+          Austrian College Sports League
+        </p>
+      </HeroSlideshow>
 
-      <div className="max-w-7xl mx-auto px-4 py-10 space-y-10">
-        {liveGame && (
-          <Link href="/live" className="flex items-center justify-between gap-4 bg-[#ff1d25] rounded-xl p-4 hover:bg-[#e0181f] transition-colors shadow-lg shadow-[#ff1d25]/20">
+      {/* ── Live banner ── */}
+      {liveGame && (
+        <div className="max-w-7xl mx-auto px-4 pt-8">
+          <Link
+            href="/live"
+            className="flex items-center justify-between gap-4 bg-[#ff1d25] rounded-xl p-4 hover:bg-[#e0181f] transition-colors shadow-lg shadow-[#ff1d25]/25"
+          >
             <div className="flex items-center gap-3">
               <span className="animate-pulse w-2 h-2 rounded-full bg-white inline-block" />
               <span className="font-bold text-white text-sm">LIVE NOW</span>
@@ -57,34 +87,43 @@ export default async function HomePage() {
             </div>
             <span className="text-white/70 text-xs hidden sm:block">View Live Stats →</span>
           </Link>
-        )}
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <section>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a] mb-4">Teams</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {(teams ?? []).map((team: Team) => (
-                <Link key={team.id} href={`/teams/${team.slug}`}
-                  className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-4 flex items-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-black/15 dark:hover:border-white/20 transition-all">
-                  <TeamBadge team={team} size="md" />
-                  <div className="min-w-0">
-                    <div className="font-semibold text-sm text-slate-900 dark:text-white truncate">{team.name}</div>
-                    <div className="text-xs text-slate-500 dark:text-[#7a7a7a] truncate">{team.university}</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a]">Standings {season}</h2>
-              <Link href="/schedule" className="text-xs text-slate-500 dark:text-[#7a7a7a] hover:text-[#ff1d25]">Full Schedule →</Link>
-            </div>
-            <StandingsTable standings={(standings ?? []) as StandingsWithTeam[]} />
-          </section>
         </div>
-      </div>
+      )}
+
+      {/* ── Teams row (bigger, in team colours) ── */}
+      <section className="max-w-7xl mx-auto px-4 py-14">
+        <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.35em] text-slate-400 dark:text-[#7a7a7a] mb-8">
+          Teams
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">
+          {(teams ?? []).map((team: Team) => {
+            const color = team.primary_color ?? '#111111'
+            const fg = textOn(color)
+            return (
+              <Link
+                key={team.id}
+                href={`/teams/${team.slug}`}
+                className="group rounded-2xl p-5 flex flex-col items-center justify-center gap-3 shadow-md hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-200"
+                style={{ background: color }}
+              >
+                <div className="rounded-full bg-white flex items-center justify-center shadow-sm shrink-0" style={{ width: 76, height: 76 }}>
+                  {team.logo_url ? (
+                    <img src={team.logo_url} alt="" className="w-12 h-12 object-contain" />
+                  ) : (
+                    <span className="text-lg font-black text-slate-700">{team.short_name?.slice(0, 2)}</span>
+                  )}
+                </div>
+                <div className="text-center leading-tight">
+                  <div className="font-black text-base md:text-lg" style={{ color: fg }}>{team.short_name}</div>
+                  <div className="text-[10px] md:text-[11px] font-medium mt-0.5" style={{ color: fg, opacity: 0.72 }}>
+                    {team.university ?? ''}
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      </section>
     </div>
   )
 }

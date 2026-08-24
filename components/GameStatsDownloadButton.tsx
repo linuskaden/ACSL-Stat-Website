@@ -153,7 +153,7 @@ export default function GameStatsDownloadButton({ gameId, label }: Props) {
 
       const ExcelJS = (await import('exceljs')).default
       const wb = new ExcelJS.Workbook()
-      wb.creator = 'ACSL Stats'
+      wb.creator = 'ACSL Football'
       wb.created = new Date()
 
       for (const side of sides) {

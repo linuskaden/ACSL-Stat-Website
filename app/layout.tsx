@@ -11,8 +11,8 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "ACSL Stats",
-  description: "Austrian College Sports League – Live Stats & Standings",
+  title: "ACSL Football",
+  description: "Austrian College Sports League – Football: live scores, standings & player stats",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

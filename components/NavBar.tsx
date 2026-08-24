@@ -9,6 +9,7 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/teams', label: 'Teams' },
   { href: '/schedule', label: 'Schedule' },
+  { href: '/standings', label: 'Standings' },
   { href: '/playoffs', label: 'Playoffs' },
   { href: '/players', label: 'Players' },
   { href: '/leaders', label: 'Leaders' },
@@ -57,7 +58,7 @@ export default function NavBar() {
             className="h-6 w-auto dark:invert"
           />
           <span className="ml-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-[#7a7a7a] hidden sm:block">
-            Stats
+            Football
           </span>
         </Link>
 
