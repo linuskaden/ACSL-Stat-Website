@@ -349,33 +349,23 @@ export default async function AdminGamesPage() {
     )
   }
 
-  const regularGames = allGames.filter((g: any) => g.game_type === 'regular_season')
-  const playoffGames = allGames.filter((g: any) => PLAYOFF_TYPES.includes(g.game_type))
+  // One chronological list: the next matchday on top, then in order,
+  // with fully-completed matchdays sinking to the bottom.
+  const groups = groupByStage(allGames)
+  const upcoming = groups.filter(g => g.games.some((x: any) => x.status !== 'final'))
+  const done = groups.filter(g => g.games.every((x: any) => x.status === 'final'))
+  const ordered = [...upcoming, ...done]
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-2">
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Game Management <span className="text-slate-400 dark:text-[#7a7a7a] font-bold">{season}</span></h1>
       </div>
+      <p className="text-xs text-slate-500 dark:text-[#7a7a7a] mb-6">
+        Nächster Spieltag oben · abgeschlossene Spieltage unten · Playoff-Sieger mit &quot;Advance →&quot; weitersetzen
+      </p>
 
-      {/* ── Playoffs ── */}
-      {playoffGames.length > 0 && (
-        <div className="mb-10">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#7a7a7a] mb-3 flex items-center gap-2">
-            🏆 Playoffs
-            <span className="text-slate-400 dark:text-[#555] font-normal normal-case tracking-normal">
-              — Gewinner mit &quot;Advance →&quot; in nächste Runde setzen
-            </span>
-          </h2>
-          <GroupList groups={groupByStage(playoffGames)} />
-        </div>
-      )}
-
-      {/* ── Regular Season ── */}
-      <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-[#7a7a7a] mb-3">Regular Season</h2>
-        <GroupList groups={groupByStage(regularGames)} />
-      </div>
+      <GroupList groups={ordered} />
     </div>
   )
 }
