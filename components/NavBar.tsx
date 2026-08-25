@@ -10,7 +10,6 @@ const links = [
   { href: '/teams', label: 'Teams' },
   { href: '/schedule', label: 'Schedule' },
   { href: '/standings', label: 'Standings' },
-  { href: '/playoffs', label: 'Playoffs' },
   { href: '/players', label: 'Players' },
   { href: '/leaders', label: 'Leaders' },
   { href: '/live', label: 'Live' },

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const DEFAULT_SEASON = 2026
+const DEFAULT_SEASON = 2027
 const COOKIE = 'acsl-season'
 
 function readSeasonCookie(): number {

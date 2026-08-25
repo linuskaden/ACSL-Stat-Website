@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 
 export const SEASON_COOKIE = 'acsl-season'
-export const DEFAULT_SEASON = 2026
+export const DEFAULT_SEASON = 2027
 
 /**
  * Reads the currently selected season from the `acsl-season` cookie.

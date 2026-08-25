@@ -61,6 +61,8 @@ export type Database = {
           status: string
           location: string | null
           notes: string | null
+          stage: string | null
+          city: string | null
           created_at: string
           updated_at: string
         }
