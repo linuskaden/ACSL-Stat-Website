@@ -3,7 +3,6 @@ import path from 'path'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
-import type { Team } from '@/lib/supabase/types'
 import HeroSlideshow from '@/components/HeroSlideshow'
 
 export const revalidate = 30
@@ -26,19 +25,12 @@ export default async function HomePage() {
   const supabase = await createClient()
   const images = slideshowImages()
 
-  const [{ data: teams }, { data: liveGame }] = await Promise.all([
-    supabase.from('teams').select('*').order('name'),
-    supabase
-      .from('games')
-      .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
-      .eq('status', 'live')
-      .limit(1)
-      .maybeSingle(),
-  ])
-
-  const teamList = (teams ?? []) as Team[]
-  const leftTeams = teamList.slice(0, 3)
-  const rightTeams = teamList.slice(3, 6)
+  const { data: liveGame } = await supabase
+    .from('games')
+    .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
+    .eq('status', 'live')
+    .limit(1)
+    .maybeSingle()
 
   return (
     // Full-screen slideshow (viewport minus the 4rem navbar) — no scrolling.
@@ -64,27 +56,6 @@ export default async function HomePage() {
           Austrian College Sports League
         </p>
       </HeroSlideshow>
-
-      {/* ── 3 team logos on each side, over the slideshow ── */}
-      {[{ side: 'left', teams: leftTeams }, { side: 'right', teams: rightTeams }].map(col => (
-        <div
-          key={col.side}
-          className={`absolute top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-6 md:gap-12 ${col.side === 'left' ? 'left-[2vw] md:left-[3.5%]' : 'right-[2vw] md:right-[3.5%]'}`}
-        >
-          {col.teams.map(team => (
-            <Link key={team.id} href={`/teams/${team.slug}`} title={team.name} aria-label={team.name} className="block hover:scale-110 transition-transform duration-200">
-              {team.logo_url && (
-                <img
-                  src={team.logo_url}
-                  alt={team.name}
-                  className="object-contain drop-shadow-[0_3px_14px_rgba(0,0,0,0.65)]"
-                  style={{ width: 'clamp(52px, 7vw, 96px)', height: 'clamp(52px, 7vw, 96px)' }}
-                />
-              )}
-            </Link>
-          ))}
-        </div>
-      ))}
 
       {/* ── Live banner (thin, bottom centre) ── */}
       {liveGame && (
