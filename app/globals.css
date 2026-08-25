@@ -78,7 +78,7 @@ body {
 
 .pf-scroll { overflow-x: auto; padding-bottom: 26px; }
 /* Sized to fit the page without horizontal scrolling */
-.pf-inner { min-width: 900px; max-width: 100%; }
+.pf-inner { min-width: 1000px; max-width: 100%; }
 
 .pf-heads { display: flex; margin-bottom: 14px; }
 .pf-head {
@@ -90,10 +90,10 @@ body {
   text-transform: uppercase;
   color: var(--fg-faint);
 }
-.pf-head--gap   { flex: 0 0 32px; }
-.pf-head--champ { flex: 0 0 164px; }
+.pf-head--gap   { flex: 0 0 40px; }
+.pf-head--champ { flex: 0 0 180px; }
 
-.pf-bracket { display: flex; align-items: stretch; height: 392px; }
+.pf-bracket { display: flex; align-items: stretch; height: 464px; }
 .pf-col {
   display: flex;
   flex-direction: column;
@@ -101,8 +101,8 @@ body {
   flex: 1 1 0;
   min-width: 0;
 }
-.pf-col--champ { flex: 0 0 164px; }
-.pf-champ-spacer { height: 128px; }
+.pf-col--champ { flex: 0 0 180px; }
+.pf-champ-spacer { height: 150px; }
 
 /* Match = two coloured team bars stacked, with a small meta line floating below */
 .pf-match { position: relative; }
@@ -123,12 +123,12 @@ body {
   color: var(--fg-faint);
 }
 
-.pf-team { display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 10px; }
+.pf-team { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; }
 .pf-team + .pf-team { border-top: 2px solid rgba(255, 255, 255, 0.28); }
 .pf-seed { width: 11px; text-align: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-.pf-logo { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
-.pf-name { flex: 1; min-width: 0; font-size: 13px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pf-pts { font-size: 15px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.pf-logo { width: 27px; height: 27px; object-fit: contain; flex-shrink: 0; }
+.pf-name { flex: 1; min-width: 0; font-size: 15px; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-pts { font-size: 17px; font-weight: 900; font-variant-numeric: tabular-nums; }
 
 .pf-meta {
   position: absolute; top: 100%; left: 2px; margin-top: 4px;
@@ -139,16 +139,16 @@ body {
 .pf-meta-live { color: #ff1d25; font-weight: 800; }
 
 .pf-champ {
-  height: 128px; border-radius: 13px; border: 2px solid;
+  height: 150px; border-radius: 15px; border: 2px solid;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center; padding: 0 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
-.pf-champ-label { font-size: 9px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 5px; }
-.pf-champ-logo { width: 36px; height: 36px; object-fit: contain; margin-bottom: 5px; }
-.pf-champ-name { font-size: 16px; font-weight: 900; }
+.pf-champ-label { font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px; }
+.pf-champ-logo { width: 46px; height: 46px; object-fit: contain; margin-bottom: 6px; }
+.pf-champ-name { font-size: 19px; font-weight: 900; }
 
-.pf-conn { position: relative; flex: 0 0 32px; }
-.pf-line { position: absolute; height: 2px; border-radius: 2px; background: var(--pf-line); }
+.pf-conn { position: relative; flex: 0 0 40px; }
+.pf-line { position: absolute; height: 2.5px; border-radius: 2px; background: var(--pf-line); }
 .pf-line--bronze { background: var(--pf-bronze); }
 
 /* 1:1 feed (wildcard → semifinal): straight lines at the two match centers */

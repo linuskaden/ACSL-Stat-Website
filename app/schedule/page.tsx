@@ -42,17 +42,19 @@ function groupByStage(games: any[]): StageGroup[] {
   return groups
 }
 
-function GameList({ games, gamesWithStats }: { games: any[]; gamesWithStats: Set<string> }) {
+function GameList({ games, gamesWithStats, recordByTeam }: {
+  games: any[]; gamesWithStats: Set<string>; recordByTeam: Record<string, string>
+}) {
   const groups = groupByStage(games)
   if (groups.length === 0) {
     return (
-      <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-8 text-center text-slate-500 dark:text-[#7a7a7a] shadow-sm">
+      <div className="max-w-3xl mx-auto bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-8 text-center text-slate-500 dark:text-[#7a7a7a] shadow-sm">
         Noch keine Spiele angesetzt.
       </div>
     )
   }
   return (
-    <div className="space-y-8">
+    <div className="max-w-3xl mx-auto space-y-8">
       {groups.map((grp, gi) => (
         <div key={gi}>
           {/* Matchday header */}
@@ -89,6 +91,7 @@ function GameList({ games, gamesWithStats }: { games: any[]; gamesWithStats: Set
                       <div className="flex items-center gap-2 flex-1 justify-end">
                         <TeamBadge team={game.home_team} size="sm" />
                         <span className="font-semibold text-sm text-slate-900 dark:text-white">{game.home_team?.short_name ?? '—'}</span>
+                        <span className="text-[11px] text-slate-400 dark:text-[#7a7a7a] tabular-nums">{recordByTeam[game.home_team_id] ?? '0-0'}</span>
                       </div>
                       <div className="text-center min-w-[76px]">
                         {isFinal || isLive ? (
@@ -103,6 +106,7 @@ function GameList({ games, gamesWithStats }: { games: any[]; gamesWithStats: Set
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-1">
+                        <span className="text-[11px] text-slate-400 dark:text-[#7a7a7a] tabular-nums">{recordByTeam[game.away_team_id] ?? '0-0'}</span>
                         <span className="font-semibold text-sm text-slate-900 dark:text-white">{game.away_team?.short_name ?? '—'}</span>
                         <TeamBadge team={game.away_team} size="sm" />
                       </div>
@@ -159,15 +163,27 @@ export default async function SchedulePage() {
   const regularGames = allGames.filter(g => g.game_type === 'regular_season')
   const playoffGames = allGames.filter(g => PLAYOFF_TYPES.includes(g.game_type))
 
+  // Team record — REGULAR SEASON final games only
+  const wl: Record<string, { w: number; l: number }> = {}
+  for (const g of regularGames) {
+    if (g.status !== 'final' || g.home_score == null || g.away_score == null) continue
+    if (!wl[g.home_team_id]) wl[g.home_team_id] = { w: 0, l: 0 }
+    if (!wl[g.away_team_id]) wl[g.away_team_id] = { w: 0, l: 0 }
+    if (g.home_score > g.away_score) { wl[g.home_team_id].w++; wl[g.away_team_id].l++ }
+    else if (g.home_score < g.away_score) { wl[g.home_team_id].l++; wl[g.away_team_id].w++ }
+  }
+  const recordByTeam: Record<string, string> = {}
+  for (const [id, r] of Object.entries(wl)) recordByTeam[id] = `${r.w}-${r.l}`
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-black italic tracking-tight mb-6 text-slate-900 dark:text-white">
         Schedule <span className="text-slate-400 dark:text-[#7a7a7a] font-bold not-italic text-2xl">{season}</span>
       </h1>
 
       <ScheduleTabs
-        regular={<GameList games={regularGames} gamesWithStats={gamesWithStats} />}
-        playoffs={<GameList games={playoffGames} gamesWithStats={gamesWithStats} />}
+        regular={<GameList games={regularGames} gamesWithStats={gamesWithStats} recordByTeam={recordByTeam} />}
+        playoffs={<GameList games={playoffGames} gamesWithStats={gamesWithStats} recordByTeam={recordByTeam} />}
         bracket={<PlayoffBracket games={playoffGames} bracket={bracket ?? []} season={season} />}
       />
     </div>
