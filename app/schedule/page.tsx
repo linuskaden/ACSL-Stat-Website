@@ -4,6 +4,7 @@ import ScheduleTabs from '@/components/ScheduleTabs'
 import PlayoffBracket from '@/components/PlayoffBracket'
 import Link from 'next/link'
 import { getSelectedSeason } from '@/lib/season'
+import { computeRecords } from '@/lib/records'
 
 export const revalidate = 30
 
@@ -117,8 +118,35 @@ function GameList({ games, gamesWithStats, recordByTeam }: {
                     </div>
                   )}
 
-                  {/* Box score */}
-                  <div className="shrink-0">
+                  {/* Actions */}
+                  <div className="shrink-0 flex items-center gap-2">
+                    {/* Live → live view (greyed unless the game is live) */}
+                    {isLive ? (
+                      <Link href="/live"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#ff1d25] text-white text-xs font-bold hover:bg-[#e0181f] transition-colors">
+                        <span className="animate-pulse">●</span> Live
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.04] text-slate-300 dark:text-[#555] text-xs font-semibold cursor-not-allowed select-none">
+                        ● Live
+                      </span>
+                    )}
+
+                    {/* Highlights — only for finished games (greyed if no link yet) */}
+                    {isFinal && (
+                      game.highlights_url ? (
+                        <a href={game.highlights_url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-1.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] text-slate-700 dark:text-white text-xs font-semibold hover:bg-black/[0.08] dark:hover:bg-white/[0.12] transition-colors">
+                          Highlights
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.04] text-slate-300 dark:text-[#555] text-xs font-semibold cursor-not-allowed select-none">
+                          Highlights
+                        </span>
+                      )
+                    )}
+
+                    {/* Box score */}
                     {gamesWithStats.has(game.id) ? (
                       <Link href={`/games/${game.id}`}
                         className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#ff1d25]/10 text-[#ff1d25] text-xs font-semibold hover:bg-[#ff1d25]/20 transition-colors">
@@ -164,23 +192,10 @@ export default async function SchedulePage() {
   const playoffGames = allGames.filter(g => PLAYOFF_TYPES.includes(g.game_type))
 
   // Team record — REGULAR SEASON final games only
-  const wl: Record<string, { w: number; l: number }> = {}
-  for (const g of regularGames) {
-    if (g.status !== 'final' || g.home_score == null || g.away_score == null) continue
-    if (!wl[g.home_team_id]) wl[g.home_team_id] = { w: 0, l: 0 }
-    if (!wl[g.away_team_id]) wl[g.away_team_id] = { w: 0, l: 0 }
-    if (g.home_score > g.away_score) { wl[g.home_team_id].w++; wl[g.away_team_id].l++ }
-    else if (g.home_score < g.away_score) { wl[g.home_team_id].l++; wl[g.away_team_id].w++ }
-  }
-  const recordByTeam: Record<string, string> = {}
-  for (const [id, r] of Object.entries(wl)) recordByTeam[id] = `${r.w}-${r.l}`
+  const recordByTeam = computeRecords(allGames)
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-black italic tracking-tight mb-6 text-slate-900 dark:text-white">
-        Schedule <span className="text-slate-400 dark:text-[#7a7a7a] font-bold not-italic text-2xl">{season}</span>
-      </h1>
-
       <ScheduleTabs
         regular={<GameList games={regularGames} gamesWithStats={gamesWithStats} recordByTeam={recordByTeam} />}
         playoffs={<GameList games={playoffGames} gamesWithStats={gamesWithStats} recordByTeam={recordByTeam} />}

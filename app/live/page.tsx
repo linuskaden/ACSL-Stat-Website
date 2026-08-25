@@ -60,6 +60,10 @@ export default function LivePage() {
   const homePlayers = totals.filter((s: any) => s.player?.team_id === game.home_team?.id)
   const awayPlayers = totals.filter((s: any) => s.player?.team_id === game.away_team?.id)
 
+  const streamUrl: string | null = game.livestream_url ?? null
+  const host = typeof window !== 'undefined' ? window.location.hostname : ''
+  const embedUrl = streamUrl ? toEmbedUrl(streamUrl, host) : null
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
       {/* Scoreboard */}
@@ -85,6 +89,33 @@ export default function LivePage() {
         </div>
       </div>
 
+      {/* Watch Live */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-[#7a7a7a]">Watch Live</h2>
+        </div>
+        {embedUrl ? (
+          <div className="relative w-full overflow-hidden rounded-2xl border border-black/[0.07] dark:border-white/5 shadow-sm bg-black" style={{ aspectRatio: '16 / 9' }}>
+            <iframe
+              src={embedUrl}
+              className="absolute inset-0 w-full h-full"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              allowFullScreen
+              title="Live stream"
+            />
+          </div>
+        ) : streamUrl ? (
+          <a href={streamUrl} target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-[#ff1d25] text-white text-sm font-bold hover:bg-[#e0181f] transition-colors shadow-sm">
+            <span className="animate-pulse">●</span> Watch Live
+          </a>
+        ) : (
+          <div className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-black/[0.04] dark:bg-white/[0.04] text-slate-400 dark:text-[#555] text-sm font-semibold select-none border border-black/[0.05] dark:border-white/5">
+            Kein Stream verfügbar
+          </div>
+        )}
+      </div>
+
       {/* Stats tables */}
       <div className="grid md:grid-cols-2 gap-6">
         <LiveStatsTable title={game.home_team?.name} players={homePlayers} teamColor={game.home_team?.primary_color} />
@@ -92,6 +123,47 @@ export default function LivePage() {
       </div>
     </div>
   )
+}
+
+/* Turn a YouTube / Twitch / Vimeo watch URL into an embeddable player URL.
+   Returns null if the platform can't be embedded (→ fall back to a link-out). */
+function toEmbedUrl(url: string, host: string): string | null {
+  try {
+    const u = new URL(url)
+    const h = u.hostname.replace(/^www\./, '')
+
+    // YouTube
+    if (h === 'youtu.be') {
+      const id = u.pathname.slice(1)
+      return id ? `https://www.youtube.com/embed/${id}` : null
+    }
+    if (h === 'youtube.com' || h === 'm.youtube.com') {
+      if (u.pathname === '/watch') {
+        const v = u.searchParams.get('v')
+        return v ? `https://www.youtube.com/embed/${v}` : null
+      }
+      if (u.pathname.startsWith('/live/')) return `https://www.youtube.com/embed/${u.pathname.split('/')[2]}`
+      if (u.pathname.startsWith('/embed/')) return url
+    }
+
+    // Twitch (needs the embedding host as parent)
+    if (h === 'twitch.tv' || h.endsWith('.twitch.tv')) {
+      const parts = u.pathname.split('/').filter(Boolean)
+      const parent = host || 'localhost'
+      if (parts[0] === 'videos' && parts[1]) return `https://player.twitch.tv/?video=${parts[1]}&parent=${parent}`
+      if (parts[0]) return `https://player.twitch.tv/?channel=${parts[0]}&parent=${parent}`
+    }
+
+    // Vimeo
+    if (h === 'vimeo.com') {
+      const id = u.pathname.split('/').filter(Boolean)[0]
+      return id ? `https://player.vimeo.com/video/${id}` : null
+    }
+
+    return null
+  } catch {
+    return null
+  }
 }
 
 function aggregateStats(stats: any[]) {

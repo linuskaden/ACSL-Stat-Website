@@ -63,6 +63,8 @@ export type Database = {
           notes: string | null
           stage: string | null
           city: string | null
+          livestream_url: string | null
+          highlights_url: string | null
           created_at: string
           updated_at: string
         }

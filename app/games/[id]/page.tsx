@@ -286,6 +286,17 @@ export default async function BoxScorePage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
+      {/* Highlights */}
+      {isFinal && g.highlights_url && (
+        <div className="mb-6 -mt-2">
+          <a href={g.highlights_url} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#ff1d25] text-white text-sm font-bold hover:bg-[#e0181f] transition-colors shadow-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+            Highlights ansehen
+          </a>
+        </div>
+      )}
+
       {/* No stats yet */}
       {!hasStats && (
         <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-10 text-center text-slate-400 dark:text-[#555] text-sm shadow-sm">
