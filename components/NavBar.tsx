@@ -2,8 +2,10 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import SeasonSwitcher from '@/components/SeasonSwitcher'
+
+type NavTeam = { slug: string; name: string; short_name: string; logo_url: string | null; primary_color: string }
 
 const links = [
   { href: '/', label: 'Home' },
@@ -15,12 +17,26 @@ const links = [
   { href: '/live', label: 'Live' },
 ]
 
-export default function NavBar() {
+export default function NavBar({ teams = [] }: { teams?: NavTeam[] }) {
   const pathname = usePathname()
   const isOverlay = pathname.startsWith('/overlay')
   const isAdmin   = pathname.startsWith('/admin')
 
   const [theme, setTheme] = useState<'dark' | 'light'>('light')
+  const [teamsOpen, setTeamsOpen] = useState(false)
+  const teamsRef = useRef<HTMLDivElement>(null)
+
+  // Close the teams dropdown on navigation
+  useEffect(() => { setTeamsOpen(false) }, [pathname])
+
+  // Close the teams dropdown on outside click
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (teamsRef.current && !teamsRef.current.contains(e.target as Node)) setTeamsOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [])
 
   // Read stored theme on mount
   useEffect(() => {
@@ -65,6 +81,54 @@ export default function NavBar() {
         {!isAdmin && (
           <div className="flex items-center gap-1">
             {links.map(l => {
+              // "Teams" is a dropdown of all teams, not a page link
+              if (l.href === '/teams') {
+                const active = pathname === '/teams' || pathname.startsWith('/teams/')
+                return (
+                  <div key={l.href} ref={teamsRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setTeamsOpen(o => !o)}
+                      className={`relative flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        active ? 'text-[#ff1d25]' : 'text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                      aria-expanded={teamsOpen}
+                    >
+                      Teams
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                        className="transition-transform" style={{ transform: teamsOpen ? 'rotate(180deg)' : 'none' }}>
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                      {active && <span className="absolute left-3 right-6 -bottom-[1px] h-0.5 rounded-full bg-[#ff1d25]" />}
+                    </button>
+
+                    {teamsOpen && (
+                      <div className="absolute left-0 top-full mt-1.5 w-64 rounded-xl border border-black/[0.08] dark:border-white/10 bg-white dark:bg-[#111] shadow-lg py-1.5 z-50">
+                        {teams.length === 0 ? (
+                          <div className="px-3 py-2 text-sm text-slate-400 dark:text-[#7a7a7a]">Keine Teams</div>
+                        ) : teams.map(t => {
+                          const isActive = pathname === `/teams/${t.slug}` || pathname.startsWith(`/teams/${t.slug}/`)
+                          return (
+                            <Link
+                              key={t.slug}
+                              href={`/teams/${t.slug}`}
+                              onClick={() => setTeamsOpen(false)}
+                              className="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
+                              style={{ background: isActive ? `${t.primary_color}14` : undefined }}
+                            >
+                              {t.logo_url
+                                ? <img src={t.logo_url} alt="" className="w-7 h-7 object-contain shrink-0" />
+                                : <span className="w-7 h-7 rounded shrink-0" style={{ background: t.primary_color }} />}
+                              <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{t.name}</span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
               const active = pathname === l.href
               return (
                 <Link
