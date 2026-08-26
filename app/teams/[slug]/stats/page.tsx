@@ -1,13 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSelectedSeason } from '@/lib/season'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import TeamPageNav from '@/components/TeamPageNav'
 import TeamBand from '@/components/TeamBand'
+import TeamStatsTabs, { type StatGroup } from '@/components/TeamStatsTabs'
 
 export const revalidate = 60
 
-/* Team-leader categories (all incl. kicking). Values use merged columns so
+const PLAYOFF_TYPES = ['wildcard', 'semifinal', 'third_place', 'final']
+
+/* Leader categories (all incl. kicking). Values use merged columns so
    multi-position players count everywhere, consistent with /leaders. */
 const CATS: { group: string; abbr: string; get: (r: any) => number | null; fmt?: (v: number) => string }[] = [
   { group: 'Passing',   abbr: 'Pass YDS', get: r => r.pass_yards ?? 0 },
@@ -25,7 +27,49 @@ const CATS: { group: string; abbr: string; get: (r: any) => number | null; fmt?:
   { group: 'Kicking',   abbr: 'PTS',      get: r => (r.fg_made ?? 0) * 3 + (r.ep_made ?? 0) },
 ]
 
-type Top = { id: string; name: string; jersey: number | null; value: string }
+const NUM_KEYS = [
+  'pass_yards', 'pass_attempts', 'pass_completions', 'pass_tds',
+  'qb_rush_yards', 'qb_rush_tds', 'rush_yards', 'rush_tds',
+  'rb_rec_yards', 'rb_receptions', 'rec_yards', 'receptions', 'rec_tds',
+  'sacks', 'def_interceptions', 'fg_made', 'ep_made',
+] as const
+
+const GROUP_ORDER = ['Passing', 'Rushing', 'Receiving', 'Defense', 'Kicking']
+
+/* Sum per-game stat rows into one aggregate row per player. */
+function aggregate(rows: any[]): any[] {
+  const map = new Map<string, any>()
+  for (const s of rows) {
+    if (!s.player) continue
+    if (!map.has(s.player_id)) {
+      map.set(s.player_id, { player: s.player })
+    }
+    const acc = map.get(s.player_id)
+    for (const k of NUM_KEYS) acc[k] = (acc[k] ?? 0) + (s[k] ?? 0)
+  }
+  return [...map.values()]
+}
+
+function buildGroups(rows: any[]): StatGroup[] {
+  const leaders = CATS.map(cat => {
+    const top = rows
+      .map((r: any) => ({ r, v: cat.get(r) }))
+      .filter((x: any) => x.v != null && x.v > 0)
+      .sort((a: any, b: any) => b.v - a.v)
+      .slice(0, 3)
+      .map(({ r, v }: any) => ({
+        id: r.player.id as string,
+        name: `${r.player.first_name} ${r.player.last_name}`,
+        jersey: (r.player.jersey_number ?? null) as number | null,
+        value: cat.fmt ? cat.fmt(v) : String(Math.round(v)),
+      }))
+    return { group: cat.group, abbr: cat.abbr, top }
+  }).filter(c => c.top.length > 0)
+
+  return GROUP_ORDER
+    .map(g => ({ group: g, cats: leaders.filter(l => l.group === g).map(({ abbr, top }) => ({ abbr, top })) }))
+    .filter(g => g.cats.length > 0)
+}
 
 export default async function TeamStatsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -35,66 +79,35 @@ export default async function TeamStatsPage({ params }: { params: Promise<{ slug
   const { data: team } = await supabase.from('teams').select('*').eq('slug', slug).single()
   if (!team) notFound()
 
-  const { data: careerRows } = await supabase
-    .from('career_stats')
-    .select('*, player:players!inner(id, first_name, last_name, jersey_number, positions, team_id)')
-    .eq('season', season)
+  const { data: seasonGames } = await supabase
+    .from('games').select('id, game_type').eq('season', season)
 
-  const rows = (careerRows ?? []).filter((r: any) => r.player?.team_id === team.id)
+  const playoffIds = new Set((seasonGames ?? []).filter((g: any) => PLAYOFF_TYPES.includes(g.game_type)).map((g: any) => g.id))
+  const allIds = (seasonGames ?? []).map((g: any) => g.id)
 
-  const leaders = CATS.map(cat => {
-    const top: Top[] = rows
-      .map((r: any) => ({ r, v: cat.get(r) }))
-      .filter((x: any) => x.v != null && x.v > 0)
-      .sort((a: any, b: any) => b.v - a.v)
-      .slice(0, 3)
-      .map(({ r, v }: any) => ({
-        id: r.player.id, name: `${r.player.first_name} ${r.player.last_name}`,
-        jersey: r.player.jersey_number ?? null,
-        value: cat.fmt ? cat.fmt(v) : String(Math.round(v)),
-      }))
-    return { group: cat.group, abbr: cat.abbr, top }
-  }).filter(c => c.top.length > 0)
+  const { data: statRows } = allIds.length > 0
+    ? await supabase
+        .from('game_stats')
+        .select('*, player:players(id, first_name, last_name, jersey_number, positions, team_id)')
+        .eq('team_id', team.id)
+        .in('game_id', allIds)
+    : { data: [] as any[] }
+
+  const rows = (statRows ?? []) as any[]
+  const regularRows = rows.filter(r => !playoffIds.has(r.game_id))
+  const playoffRows = rows.filter(r => playoffIds.has(r.game_id))
+
+  const regular = buildGroups(aggregate(regularRows))
+  const playoff = buildGroups(aggregate(playoffRows))
 
   const primary = team.primary_color || '#111'
-  const groups = ['Passing', 'Rushing', 'Receiving', 'Defense', 'Kicking']
-    .map(g => ({ group: g, cats: leaders.filter(l => l.group === g) }))
-    .filter(g => g.cats.length > 0)
 
   return (
     <div>
       <TeamBand team={team} subtitle={`Team-Statistiken · Saison ${season}`} />
       <TeamPageNav slug={slug} primary={primary} />
-
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {groups.length === 0 ? (
-          <div className="text-center py-16 text-slate-400 dark:text-[#555] text-sm">Noch keine Statistiken für diese Saison.</div>
-        ) : (
-          <div className="space-y-8">
-            {groups.map(({ group, cats }) => (
-              <div key={group}>
-                <h2 className="text-xs font-bold uppercase tracking-[0.15em] mb-3" style={{ color: primary }}>{group}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {cats.map(cat => (
-                    <div key={cat.abbr} className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-2xl p-4 shadow-sm">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a] mb-2">{cat.abbr}</div>
-                      {cat.top.map((p, i) => (
-                        <Link key={p.id} href={`/players/${p.id}`}
-                          className="flex items-center gap-2 py-1.5 border-t first:border-t-0 border-black/[0.05] dark:border-white/5">
-                          <span className="w-4 text-center text-xs font-black" style={{ color: i === 0 ? primary : 'var(--fg-faint)' }}>{i + 1}</span>
-                          <span className={`flex-1 min-w-0 text-sm truncate ${i === 0 ? 'font-bold' : 'font-medium'} text-slate-900 dark:text-white`}>
-                            {p.jersey != null && <span className="text-slate-400 dark:text-[#666]">#{p.jersey} </span>}{p.name}
-                          </span>
-                          <span className="text-base font-black tabular-nums text-slate-900 dark:text-white">{p.value}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <TeamStatsTabs regular={regular} playoff={playoff} primary={primary} />
       </div>
     </div>
   )

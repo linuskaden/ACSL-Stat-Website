@@ -10,9 +10,6 @@ export default function TeamBand({ team, subtitle }: { team: any; subtitle?: str
           <img src={team.logo_url} alt="" className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-xl shrink-0" />
         )}
         <div className="min-w-0">
-          <div className="text-white/75 text-[10px] md:text-xs font-semibold uppercase tracking-[0.2em] drop-shadow">
-            {team.university}
-          </div>
           <h1 className="text-white font-black italic tracking-tight leading-tight drop-shadow-lg" style={{ fontSize: 'clamp(26px, 4.5vw, 44px)' }}>
             {team.name}
           </h1>

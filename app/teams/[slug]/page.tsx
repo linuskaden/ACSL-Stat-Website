@@ -127,9 +127,6 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ s
                 <img src={team.logo_url} alt="" className="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-2xl shrink-0" />
               )}
               <div className="min-w-0">
-                <div className="text-white/80 text-xs md:text-sm font-semibold uppercase tracking-[0.2em] mb-1 drop-shadow">
-                  {team.university}
-                </div>
                 <h1 className="text-white font-black italic tracking-tight leading-[0.9] drop-shadow-xl" style={{ fontSize: 'clamp(38px, 7vw, 80px)' }}>
                   {team.name}
                 </h1>
