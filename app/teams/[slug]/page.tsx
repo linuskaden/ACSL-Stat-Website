@@ -10,14 +10,33 @@ import TeamPageNav from '@/components/TeamPageNav'
 
 export const revalidate = 60
 
-/** Photos in public/teams/<slug>/ (drop files in — shown automatically). */
-function teamHeroImages(slug: string): string[] {
+/** Focal point from a filename suffix: `--top` / `--center` / `--bottom`
+    or `--y<0-100>` for an exact vertical position. Default: centered. */
+function focusToPosition(nameNoExt: string): string {
+  const m = nameNoExt.match(/--(top|center|bottom|y\d{1,3})$/i)
+  if (!m) return '50% 50%'
+  const tok = m[1].toLowerCase()
+  if (tok === 'top') return '50% 15%'
+  if (tok === 'bottom') return '50% 85%'
+  if (tok === 'center') return '50% 50%'
+  const y = Math.min(100, Math.max(0, parseInt(tok.slice(1), 10)))
+  return `50% ${y}%`
+}
+
+type HeroImage = { src: string; position: string }
+
+/** Photos in public/teams/<slug>/ (drop files in — shown automatically).
+    Sort + focal point come from the filename (see focusToPosition). */
+function teamHeroImages(slug: string): HeroImage[] {
   try {
     const dir = path.join(process.cwd(), 'public', 'teams', slug)
     return fs.readdirSync(dir)
       .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f))
       .sort()
-      .map(f => `/teams/${slug}/${encodeURIComponent(f)}`)
+      .map(f => ({
+        src: `/teams/${slug}/${encodeURIComponent(f)}`,
+        position: focusToPosition(f.replace(/\.[^.]+$/, '')),
+      }))
   } catch {
     return []
   }

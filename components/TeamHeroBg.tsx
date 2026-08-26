@@ -11,7 +11,7 @@ export default function TeamHeroBg({
   intervalMs = 5000,
   children,
 }: {
-  images: string[]
+  images: { src: string; position: string }[]
   primary: string
   secondary: string
   intervalMs?: number
@@ -33,14 +33,14 @@ export default function TeamHeroBg({
       <div className="absolute inset-0" style={{ background: gradient }} />
 
       {/* Crossfading photos */}
-      {images.map((src, i) => (
+      {images.map((img, i) => (
         <img
-          key={src}
-          src={src}
+          key={img.src}
+          src={img.src}
           alt=""
           aria-hidden
           className="absolute inset-0 w-full h-full object-cover transition-opacity ease-in-out"
-          style={{ opacity: i === idx ? 1 : 0, transitionDuration: '1500ms' }}
+          style={{ opacity: i === idx ? 1 : 0, transitionDuration: '1500ms', objectPosition: img.position }}
         />
       ))}
 
