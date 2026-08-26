@@ -8,7 +8,6 @@ import SeasonSwitcher from '@/components/SeasonSwitcher'
 type NavTeam = { slug: string; name: string; short_name: string; logo_url: string | null; primary_color: string }
 
 const links = [
-  { href: '/', label: 'Home' },
   { href: '/teams', label: 'Teams' },
   { href: '/schedule', label: 'Schedule' },
   { href: '/standings', label: 'Standings' },
