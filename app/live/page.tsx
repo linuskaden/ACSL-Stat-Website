@@ -49,7 +49,6 @@ export default function LivePage() {
 
   if (!game) return (
     <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-      <div className="text-6xl mb-4">📺</div>
       <h1 className="text-2xl font-black mb-2 text-slate-900 dark:text-white">No Live Game</h1>
       <p className="text-slate-500 dark:text-[#7a7a7a]">Check back when a game is in progress.</p>
       <Link href="/schedule" className="mt-4 inline-block text-[#ff1d25] text-sm hover:underline">View Schedule →</Link>
