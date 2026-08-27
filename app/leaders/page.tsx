@@ -55,12 +55,7 @@ function computeRow(player: PlayerMeta, t: Record<NumField, number>, games_playe
   }
 }
 
-function fromCareerStats(rows: any[]): Computed[] {
-  return (rows ?? []).filter(r => r.player).map(r => {
-    const totals = Object.fromEntries(NUM_FIELDS.map(f => [f, r[f] ?? 0])) as Record<NumField, number>
-    return computeRow(r.player as PlayerMeta, totals, r.games_played ?? 0)
-  })
-}
+const PLAYOFF_TYPES = ['wildcard', 'semifinal', 'third_place', 'final']
 
 function fromGameStats(rows: any[]): Computed[] {
   const map = new Map<string, { player: PlayerMeta; gameIds: Set<string>; totals: Record<NumField, number> }>()
@@ -139,37 +134,28 @@ export default async function LeadersPage() {
 
   const PLAYER_SELECT = 'id,first_name,last_name,jersey_number,positions,team:teams(id,name,short_name,slug,primary_color,logo_url)'
 
-  const { data: careerRows } = await supabase
-    .from('career_stats')
-    .select(`*, player:players(${PLAYER_SELECT})`)
-    .eq('season', season)
-
-  const { data: playoffGames } = await supabase
+  // Split regular vs playoff purely by game_type, straight from game_stats,
+  // so the two tabs are computed separately (career_stats mixes them together).
+  const { data: finalGames } = await supabase
     .from('games')
-    .select('id')
+    .select('id, game_type')
     .eq('season', season)
     .eq('status', 'final')
-    .in('game_type', ['wildcard', 'semifinal', 'third_place', 'final'])
 
-  const playoffIds = (playoffGames ?? []).map((g: any) => g.id as string)
+  const regularIds = new Set((finalGames ?? []).filter((g: any) => g.game_type === 'regular_season').map((g: any) => g.id))
+  const playoffIds = new Set((finalGames ?? []).filter((g: any) => PLAYOFF_TYPES.includes(g.game_type)).map((g: any) => g.id))
+  const allIds = [...regularIds, ...playoffIds]
 
-  const { data: playoffRows } = playoffIds.length > 0
-    ? await supabase.from('game_stats').select(`*, player:players(${PLAYER_SELECT})`).in('game_id', playoffIds)
+  const { data: statRows } = allIds.length > 0
+    ? await supabase.from('game_stats').select(`*, player:players(${PLAYER_SELECT})`).in('game_id', allIds)
     : { data: [] as any[] }
 
-  const regular = fromCareerStats(careerRows ?? [])
-  const playoff = fromGameStats(playoffRows ?? [])
+  const rows = (statRows ?? []) as any[]
+  const regular = fromGameStats(rows.filter(r => regularIds.has(r.game_id)))
+  const playoff = fromGameStats(rows.filter(r => playoffIds.has(r.game_id)))
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-          League <span className="text-[#ff1d25]">Leaders</span>
-        </h1>
-        <p className="text-slate-500 dark:text-[#7a7a7a] text-sm mt-1">
-          Bestenlisten je Kategorie · Saison {season}
-        </p>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <LeadersClient
         playersRegular={regular.map(toPlayerEntry)}
         playersPlayoff={playoff.map(toPlayerEntry)}

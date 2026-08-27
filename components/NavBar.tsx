@@ -12,7 +12,7 @@ const links = [
   { href: '/schedule', label: 'Schedule' },
   { href: '/standings', label: 'Standings' },
   { href: '/players', label: 'Players' },
-  { href: '/leaders', label: 'Leaders' },
+  { href: '/leaders', label: 'Stats' },
   { href: '/live', label: 'Live' },
 ]
 
