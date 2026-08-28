@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSelectedSeason } from '@/lib/season'
+import { getSelectedCompetition } from '@/lib/competition'
 import { notFound } from 'next/navigation'
 import TeamPageNav from '@/components/TeamPageNav'
 import TeamBand from '@/components/TeamBand'
@@ -74,13 +75,14 @@ function buildGroups(rows: any[]): StatGroup[] {
 export default async function TeamStatsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const supabase = await createClient()
-  const season = await getSelectedSeason()
+  const competition = await getSelectedCompetition()
+  const season = await getSelectedSeason(competition)
 
   const { data: team } = await supabase.from('teams').select('*').eq('slug', slug).single()
   if (!team) notFound()
 
   const { data: seasonGames } = await supabase
-    .from('games').select('id, game_type').eq('season', season)
+    .from('games').select('id, game_type').eq('competition_id', competition.id).eq('season', season)
 
   const playoffIds = new Set((seasonGames ?? []).filter((g: any) => PLAYOFF_TYPES.includes(g.game_type)).map((g: any) => g.id))
   const allIds = (seasonGames ?? []).map((g: any) => g.id)

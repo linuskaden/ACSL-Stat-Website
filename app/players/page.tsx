@@ -4,6 +4,15 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import TeamBadge from '@/components/TeamBadge'
 import type { PlayerWithTeam, Team } from '@/lib/supabase/types'
+import { resolveCompetition, COMPETITION_COOKIE } from '@/lib/competition-client'
+
+function clientCompetitionId(): string {
+  const host = typeof window !== 'undefined' ? window.location.hostname : ''
+  const cookie = typeof document !== 'undefined'
+    ? document.cookie.match(new RegExp(`${COMPETITION_COOKIE}=([^;]+)`))?.[1]
+    : undefined
+  return resolveCompetition(host, cookie).id
+}
 
 const POSITIONS = ['All', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
@@ -40,9 +49,10 @@ export default function PlayersPage() {
 
   useEffect(() => {
     const supabase = createClient()
+    const competitionId = clientCompetitionId()
     Promise.all([
       supabase.from('teams').select('*').order('name'),
-      supabase.from('players').select('*, team:teams(*)').eq('is_active', true).order('last_name'),
+      supabase.from('players').select('*, team:teams(*)').eq('competition_id', competitionId).eq('is_active', true).order('last_name'),
     ]).then(([{ data: t }, { data: p }]) => {
       setTeams(t ?? [])
       setPlayers((p ?? []) as PlayerWithTeam[])

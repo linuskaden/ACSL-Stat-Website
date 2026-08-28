@@ -4,6 +4,7 @@ import ScheduleTabs from '@/components/ScheduleTabs'
 import PlayoffBracket from '@/components/PlayoffBracket'
 import Link from 'next/link'
 import { getSelectedSeason } from '@/lib/season'
+import { getSelectedCompetition } from '@/lib/competition'
 import { computeRecords } from '@/lib/records'
 
 export const revalidate = 30
@@ -170,15 +171,17 @@ function GameList({ games, gamesWithStats, recordByTeam }: {
 
 export default async function SchedulePage() {
   const supabase = await createClient()
-  const season = await getSelectedSeason()
+  const competition = await getSelectedCompetition()
+  const season = await getSelectedSeason(competition)
 
   const [{ data: games }, { data: bracket }] = await Promise.all([
     supabase
       .from('games')
       .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
+      .eq('competition_id', competition.id)
       .eq('season', season)
       .order('scheduled_at', { nullsFirst: false }),
-    supabase.from('playoff_bracket').select('*').eq('season', season),
+    supabase.from('playoff_bracket').select('*').eq('competition_id', competition.id).eq('season', season),
   ])
 
   const allGames = (games ?? []) as any[]

@@ -10,9 +10,10 @@ export const DEFAULT_SEASON = 2027
  * Calling this in a Server Component opts the route into dynamic rendering
  * (cookies() is a request-time API), so each request reflects the chosen season.
  */
-export async function getSelectedSeason(): Promise<number> {
+export async function getSelectedSeason(competition?: { defaultSeason: number }): Promise<number> {
   const store = await cookies()
   const raw = store.get(SEASON_COOKIE)?.value
   const n = raw ? parseInt(raw, 10) : NaN
-  return Number.isFinite(n) ? n : DEFAULT_SEASON
+  if (Number.isFinite(n)) return n
+  return competition?.defaultSeason ?? DEFAULT_SEASON
 }

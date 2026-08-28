@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getSelectedCompetition } from '@/lib/competition'
 import { notFound } from 'next/navigation'
 import TeamPageNav from '@/components/TeamPageNav'
 import TeamRoster from '@/components/TeamRoster'
@@ -10,12 +11,14 @@ export default async function TeamRosterPage({ params }: { params: Promise<{ slu
   const { slug } = await params
   const supabase = await createClient()
 
+  const competition = await getSelectedCompetition()
   const { data: team } = await supabase.from('teams').select('*').eq('slug', slug).single()
   if (!team) notFound()
 
   const { data: players } = await supabase
     .from('players')
     .select('id, first_name, last_name, nickname, jersey_number, positions, field_of_study, height_cm, weight_kg')
+    .eq('competition_id', competition.id)
     .eq('team_id', team.id)
     .eq('is_active', true)
     .order('jersey_number', { nullsFirst: false })

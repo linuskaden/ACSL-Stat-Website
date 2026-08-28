@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSelectedSeason } from '@/lib/season'
+import { getSelectedCompetition } from '@/lib/competition'
 import LeadersClient, { type LeaderEntry } from '@/components/LeadersClient'
 
 export const revalidate = 60
@@ -130,7 +131,8 @@ function aggregateTeams(rows: Computed[]): LeaderEntry[] {
 
 export default async function StatsPage() {
   const supabase = await createClient()
-  const season = await getSelectedSeason()
+  const competition = await getSelectedCompetition()
+  const season = await getSelectedSeason(competition)
 
   const PLAYER_SELECT = 'id,first_name,last_name,jersey_number,positions,team:teams(id,name,short_name,slug,primary_color,logo_url)'
 
@@ -139,6 +141,7 @@ export default async function StatsPage() {
   const { data: finalGames } = await supabase
     .from('games')
     .select('id, game_type')
+    .eq('competition_id', competition.id)
     .eq('season', season)
     .eq('status', 'final')
 

@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { createClient } from '@/lib/supabase/server'
+import { getSelectedCompetition } from '@/lib/competition'
 import Link from 'next/link'
 import Image from 'next/image'
 import HeroSlideshow from '@/components/HeroSlideshow'
@@ -23,11 +24,13 @@ function slideshowImages(): string[] {
 
 export default async function HomePage() {
   const supabase = await createClient()
+  const competition = await getSelectedCompetition()
   const images = slideshowImages()
 
   const { data: liveGame } = await supabase
     .from('games')
     .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
+    .eq('competition_id', competition.id)
     .eq('status', 'live')
     .limit(1)
     .maybeSingle()

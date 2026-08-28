@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { createClient } from '@/lib/supabase/server'
 import { getSelectedSeason } from '@/lib/season'
+import { getSelectedCompetition } from '@/lib/competition'
 import { computeRecords, computeForm, type FormResult } from '@/lib/records'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -52,7 +53,8 @@ const LEADER_CATS: { label: string; get: (r: any) => number; unit?: string }[] =
 export default async function TeamOverviewPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const supabase = await createClient()
-  const season = await getSelectedSeason()
+  const competition = await getSelectedCompetition()
+  const season = await getSelectedSeason(competition)
 
   const { data: team } = await supabase.from('teams').select('*').eq('slug', slug).single()
   if (!team) notFound()
@@ -61,12 +63,14 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ s
     supabase
       .from('games')
       .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
+      .eq('competition_id', competition.id)
       .eq('season', season)
       .order('scheduled_at', { nullsFirst: false }),
-    supabase.from('standings').select('*, team:teams(*)').eq('season', season),
+    supabase.from('standings').select('*, team:teams(*)').eq('competition_id', competition.id).eq('season', season),
     supabase
       .from('career_stats')
       .select('*, player:players!inner(id, first_name, last_name, jersey_number, positions, team_id)')
+      .eq('competition_id', competition.id)
       .eq('season', season),
   ])
 
