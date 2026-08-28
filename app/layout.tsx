@@ -3,6 +3,7 @@ import { Archivo } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
 import { createClient } from "@/lib/supabase/server";
+import { getSelectedCompetition } from "@/lib/competition";
 
 const archivo = Archivo({
   subsets: ["latin"],
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
+  const competition = await getSelectedCompetition();
   const { data: navTeams } = await supabase
     .from("teams")
     .select("slug, name, short_name, logo_url, primary_color")
@@ -32,7 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         }} />
       </head>
       <body className="min-h-full flex flex-col bg-[var(--bg)] text-[var(--fg)] font-[family-name:var(--font-archivo)]">
-        <NavBar teams={navTeams ?? []} />
+        <NavBar teams={navTeams ?? []} competition={competition} />
         <main className="flex-1">{children}</main>
       </body>
     </html>

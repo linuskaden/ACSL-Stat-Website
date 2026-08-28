@@ -3,6 +3,15 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import TeamBadge from '@/components/TeamBadge'
+import { resolveCompetition, COMPETITION_COOKIE } from '@/lib/competition-client'
+
+function clientCompetitionId(): string {
+  const host = typeof window !== 'undefined' ? window.location.hostname : ''
+  const cookie = typeof document !== 'undefined'
+    ? document.cookie.match(new RegExp(`${COMPETITION_COOKIE}=([^;]+)`))?.[1]
+    : undefined
+  return resolveCompetition(host, cookie).id
+}
 
 export default function LivePage() {
   const [game, setGame] = useState<any>(null)
@@ -16,6 +25,7 @@ export default function LivePage() {
       const { data: g } = await supabase
         .from('games')
         .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
+        .eq('competition_id', clientCompetitionId())
         .eq('status', 'live')
         .limit(1)
         .maybeSingle()

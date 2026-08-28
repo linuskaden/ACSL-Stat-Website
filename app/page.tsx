@@ -53,7 +53,7 @@ export default async function HomePage() {
           className="text-white font-black italic tracking-tight"
           style={{ fontSize: 'clamp(34px, 9.5vw, 118px)', lineHeight: 0.92, textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
         >
-          FOOTBALL
+          {competition.sport === 'basketball' ? 'BASKETBALL' : 'FOOTBALL'}
         </div>
         <p className="mt-4 text-white/85 text-[11px] md:text-base font-semibold uppercase tracking-[0.25em]">
           Austrian College Sports League

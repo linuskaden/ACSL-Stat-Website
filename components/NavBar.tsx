@@ -1,9 +1,10 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import SeasonSwitcher from '@/components/SeasonSwitcher'
+import { COMPETITION_COOKIE, type Competition } from '@/lib/competition-client'
 
 type NavTeam = { slug: string; name: string; short_name: string; logo_url: string | null; primary_color: string }
 
@@ -16,10 +17,18 @@ const links = [
   { href: '/live', label: 'Live' },
 ]
 
-export default function NavBar({ teams = [] }: { teams?: NavTeam[] }) {
+export default function NavBar({ teams = [], competition }: { teams?: NavTeam[]; competition?: Competition }) {
   const pathname = usePathname()
+  const router = useRouter()
   const isOverlay = pathname.startsWith('/overlay')
   const isAdmin   = pathname.startsWith('/admin')
+  const isBasketball = competition?.sport === 'basketball'
+  const wordmark = isBasketball ? 'Basketball' : 'Football'
+
+  function setDivision(key: 'basketball_men' | 'basketball_women') {
+    document.cookie = `${COMPETITION_COOKIE}=${key}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
+    router.refresh()
+  }
 
   const [theme, setTheme] = useState<'dark' | 'light'>('light')
   const [teamsOpen, setTeamsOpen] = useState(false)
@@ -72,7 +81,7 @@ export default function NavBar({ teams = [] }: { teams?: NavTeam[] }) {
             className="h-6 w-auto dark:invert"
           />
           <span className="ml-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-[#7a7a7a] hidden sm:block">
-            Football
+            {wordmark}
           </span>
         </Link>
 
@@ -161,6 +170,21 @@ export default function NavBar({ teams = [] }: { teams?: NavTeam[] }) {
 
         {/* Right side */}
         <div className="ml-auto flex items-center gap-2">
+          {/* Herren/Damen division switch (basketball only) */}
+          {isBasketball && !isAdmin && (
+            <div className="flex gap-0.5 p-0.5 bg-black/[0.05] dark:bg-white/[0.06] rounded-lg">
+              {([['basketball_men', 'Herren'], ['basketball_women', 'Damen']] as const).map(([key, label]) => {
+                const active = competition?.key === key
+                return (
+                  <button key={key} onClick={() => setDivision(key)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-colors ${active ? 'bg-white dark:bg-[#222] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white'}`}>
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           {/* Season switcher */}
           <SeasonSwitcher />
 

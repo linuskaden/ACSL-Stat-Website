@@ -1,7 +1,26 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { COMPETITION_COOKIE, isCompetitionKey } from '@/lib/competition-client'
 
 export async function proxy(request: NextRequest) {
+  // Shareable competition links: /?comp=basketball_men sets the cookie and
+  // redirects to the clean URL. Runs on every route, before the auth work.
+  const comp = request.nextUrl.searchParams.get('comp')
+  if (comp && isCompetitionKey(comp)) {
+    const url = request.nextUrl.clone()
+    url.searchParams.delete('comp')
+    const res = NextResponse.redirect(url)
+    res.cookies.set(COMPETITION_COOKIE, comp, { path: '/', maxAge: 60 * 60 * 24 * 365, sameSite: 'lax' })
+    return res
+  }
+
+  const path = request.nextUrl.pathname
+  const isAdminRoute = path.startsWith('/admin')
+  const isOverlayRoute = path.startsWith('/overlay')
+
+  // Only admin/overlay need the Supabase session; skip it for public pages.
+  if (!isAdminRoute && !isOverlayRoute) return NextResponse.next()
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -22,20 +41,14 @@ export async function proxy(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
-  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
-  const isLoginPage = request.nextUrl.pathname === '/admin/login'
-  const isOverlayRoute = request.nextUrl.pathname.startsWith('/overlay')
+  const isLoginPage = path === '/admin/login'
 
   if (isAdminRoute && !isLoginPage && !user) {
     return NextResponse.redirect(new URL('/admin/login', request.url))
   }
-
   if (isLoginPage && user) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
-
-  // Overlay pages: no auth, no layout
   if (isOverlayRoute) {
     supabaseResponse.headers.set('x-overlay', '1')
   }
@@ -44,5 +57,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/overlay/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 }
