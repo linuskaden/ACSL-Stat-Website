@@ -25,7 +25,8 @@ function slideshowImages(): string[] {
 export default async function HomePage() {
   const supabase = await createClient()
   const competition = await getSelectedCompetition()
-  const images = slideshowImages()
+  // Slideshow photos are football shots — only show them on the football site.
+  const images = competition.sport === 'football' ? slideshowImages() : []
 
   const { data: liveGame } = await supabase
     .from('games')

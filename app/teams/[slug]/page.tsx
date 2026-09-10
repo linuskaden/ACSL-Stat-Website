@@ -26,16 +26,18 @@ function focusToPosition(nameNoExt: string): string {
 
 type HeroImage = { src: string; position: string }
 
-/** Photos in public/teams/<slug>/ (drop files in — shown automatically).
+/** Photos for a team's hero. Football uses public/teams/<slug>/; other sports
+    use public/teams/<slug>/<sport>/ (so football shots don't leak onto them).
     Sort + focal point come from the filename (see focusToPosition). */
-function teamHeroImages(slug: string): HeroImage[] {
+function teamHeroImages(slug: string, sport: string): HeroImage[] {
   try {
-    const dir = path.join(process.cwd(), 'public', 'teams', slug)
+    const rel = sport === 'football' ? `/teams/${slug}` : `/teams/${slug}/${sport}`
+    const dir = path.join(process.cwd(), 'public', ...rel.slice(1).split('/'))
     return fs.readdirSync(dir)
       .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f))
       .sort()
       .map(f => ({
-        src: `/teams/${slug}/${encodeURIComponent(f)}`,
+        src: `${rel}/${encodeURIComponent(f)}`,
         position: focusToPosition(f.replace(/\.[^.]+$/, '')),
       }))
   } catch {
@@ -116,7 +118,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ s
     } : null
   }).filter(Boolean) as { label: string; unit?: string; name: string; jersey: number | null; id: string; value: number }[]
 
-  const images = teamHeroImages(slug)
+  const images = teamHeroImages(slug, competition.sport)
   const primary = team.primary_color || '#111'
   const secondary = team.secondary_color || primary
 
