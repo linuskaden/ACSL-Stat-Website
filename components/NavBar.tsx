@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import SeasonSwitcher from '@/components/SeasonSwitcher'
+import SportSwitcher from '@/components/SportSwitcher'
 import { COMPETITION_COOKIE, type Competition } from '@/lib/competition-client'
 
 type NavTeam = { slug: string; name: string; short_name: string; logo_url: string | null; primary_color: string }
@@ -84,6 +85,9 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
             {wordmark}
           </span>
         </Link>
+
+        {/* Sport switcher (top-left) */}
+        {!isAdmin && competition && <SportSwitcher sport={competition.sport} />}
 
         {/* Nav links */}
         {!isAdmin && (
