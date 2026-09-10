@@ -4,7 +4,6 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import SeasonSwitcher from '@/components/SeasonSwitcher'
-import SportSwitcher from '@/components/SportSwitcher'
 import { COMPETITION_COOKIE, type Competition } from '@/lib/competition-client'
 
 type NavTeam = { slug: string; name: string; short_name: string; logo_url: string | null; primary_color: string }
@@ -27,6 +26,20 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
   const wordmark = isBasketball ? 'Basketball' : 'Football'
 
   function setDivision(key: 'basketball_men' | 'basketball_women') {
+    document.cookie = `${COMPETITION_COOKIE}=${key}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
+    router.refresh()
+  }
+
+  // Clicking the wordmark toggles between football and basketball.
+  function toggleSport() {
+    const target = isBasketball ? 'football' : 'basketball'
+    const parts = window.location.host.split('.')
+    if (parts[0] === 'football' || parts[0] === 'basketball') {
+      parts[0] = target
+      window.location.href = `${window.location.protocol}//${parts.join('.')}/`
+      return
+    }
+    const key = target === 'football' ? 'football' : 'basketball_men'
     document.cookie = `${COMPETITION_COOKIE}=${key}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
     router.refresh()
   }
@@ -81,13 +94,22 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
             priority
             className="h-6 w-auto dark:invert"
           />
+        </Link>
+
+        {/* Wordmark doubles as the Football/Basketball switcher */}
+        {!isAdmin && competition ? (
+          <button
+            onClick={toggleSport}
+            title={`Zu ${isBasketball ? 'Football' : 'Basketball'} wechseln`}
+            className="ml-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+          >
+            {wordmark}
+          </button>
+        ) : (
           <span className="ml-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-[#7a7a7a] hidden sm:block">
             {wordmark}
           </span>
-        </Link>
-
-        {/* Sport switcher (top-left) */}
-        {!isAdmin && competition && <SportSwitcher sport={competition.sport} />}
+        )}
 
         {/* Nav links */}
         {!isAdmin && (
