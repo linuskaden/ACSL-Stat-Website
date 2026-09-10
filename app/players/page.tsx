@@ -5,16 +5,15 @@ import Link from 'next/link'
 import TeamBadge from '@/components/TeamBadge'
 import type { PlayerWithTeam, Team } from '@/lib/supabase/types'
 import { resolveCompetition, COMPETITION_COOKIE } from '@/lib/competition-client'
+import { POSITIONS as SPORT_POSITIONS } from '@/lib/sportConfig'
 
-function clientCompetitionId(): string {
+function clientCompetition() {
   const host = typeof window !== 'undefined' ? window.location.hostname : ''
   const cookie = typeof document !== 'undefined'
     ? document.cookie.match(new RegExp(`${COMPETITION_COOKIE}=([^;]+)`))?.[1]
     : undefined
-  return resolveCompetition(host, cookie).id
+  return resolveCompetition(host, cookie)
 }
-
-const POSITIONS = ['All', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
 type SortKey = 'num' | 'name' | 'pos' | 'team' | 'study' | 'ht' | 'wt' | 'from'
 
@@ -37,6 +36,7 @@ export default function PlayersPage() {
   const [search, setSearch] = useState('')
   const [selectedTeam, setSelectedTeam] = useState('all')
   const [selectedPos, setSelectedPos] = useState('All')
+  const [positions, setPositions] = useState<string[]>(['All', ...SPORT_POSITIONS.football])
   const [selectedCountry, setSelectedCountry] = useState('all')
   const [loading, setLoading] = useState(true)
   const [sortKey, setSortKey] = useState<SortKey>('name')
@@ -49,7 +49,9 @@ export default function PlayersPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    const competitionId = clientCompetitionId()
+    const comp = clientCompetition()
+    const competitionId = comp.id
+    setPositions(['All', ...SPORT_POSITIONS[comp.sport]])
     Promise.all([
       supabase.from('teams').select('*').order('name'),
       supabase.from('players').select('*, team:teams(*)').eq('competition_id', competitionId).eq('is_active', true).order('last_name'),
@@ -121,7 +123,7 @@ export default function PlayersPage() {
           {countries.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <div className="flex gap-1">
-          {POSITIONS.map(pos => (
+          {positions.map(pos => (
             <button key={pos} onClick={() => setSelectedPos(pos)}
               className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
                 selectedPos === pos ? 'bg-[#ff1d25] text-white' : 'bg-white dark:bg-[#111] text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white border border-black/[0.07] dark:border-white/5'

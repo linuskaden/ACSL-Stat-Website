@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getSelectedSeason } from '@/lib/season'
 import { getSelectedCompetition } from '@/lib/competition'
 import { computeRecords, computeForm, type FormResult } from '@/lib/records'
+import { emptyBballTotals, addBballRow, bballDerived } from '@/lib/sportConfig'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import TeamHeroBg from '@/components/TeamHeroBg'
@@ -45,11 +46,17 @@ function teamHeroImages(slug: string, sport: string): HeroImage[] {
   }
 }
 
-const LEADER_CATS: { label: string; get: (r: any) => number; unit?: string }[] = [
+type TopCat = { label: string; get: (r: any) => number; unit?: string }
+const FB_TOP_CATS: TopCat[] = [
   { label: 'Passing Yards',   get: r => r.pass_yards ?? 0, unit: 'YDS' },
   { label: 'Rushing Yards',   get: r => (r.rush_yards ?? 0) + (r.qb_rush_yards ?? 0), unit: 'YDS' },
   { label: 'Receiving Yards', get: r => (r.rec_yards ?? 0) + (r.rb_rec_yards ?? 0), unit: 'YDS' },
   { label: 'Sacks',           get: r => r.sacks ?? 0, unit: 'SCK' },
+]
+const BB_TOP_CATS: TopCat[] = [
+  { label: 'Points',    get: r => r.pts ?? 0, unit: 'PTS' },
+  { label: 'Rebounds',  get: r => r.reb ?? 0, unit: 'REB' },
+  { label: 'Assists',   get: r => r.assists ?? 0, unit: 'AST' },
 ]
 
 export default async function TeamOverviewPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -101,10 +108,28 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ s
     .reverse()
     .slice(0, 3)
 
-  // Selected stat leaders (top player per key category)
-  const teamCareer = (careerRows ?? []).filter((r: any) => r.player?.team_id === team.id)
-  const topLeaders = LEADER_CATS.map(cat => {
-    const ranked = teamCareer
+  // Selected stat leaders (top player per key category), per sport
+  const TOP_CATS = competition.sport === 'basketball' ? BB_TOP_CATS : FB_TOP_CATS
+  let leaderRows: any[]
+  if (competition.sport === 'basketball') {
+    const ids = teamGames.map(g => g.id)
+    const { data: bb } = ids.length > 0
+      ? await supabase.from('bball_game_stats')
+          .select('*, player:players(id, first_name, last_name, jersey_number, team_id)')
+          .eq('team_id', team.id).in('game_id', ids)
+      : { data: [] as any[] }
+    const m = new Map<string, { player: any; totals: Record<string, number> }>()
+    for (const r of (bb ?? [])) {
+      if (!r.player) continue
+      if (!m.has(r.player_id)) m.set(r.player_id, { player: r.player, totals: emptyBballTotals() })
+      addBballRow(m.get(r.player_id)!.totals, r)
+    }
+    leaderRows = [...m.values()].map(({ player, totals }) => ({ player, ...bballDerived(totals) }))
+  } else {
+    leaderRows = (careerRows ?? []).filter((r: any) => r.player?.team_id === team.id)
+  }
+  const topLeaders = TOP_CATS.map(cat => {
+    const ranked = leaderRows
       .map((r: any) => ({ r, v: cat.get(r) }))
       .filter((x: any) => x.v > 0)
       .sort((a: any, b: any) => b.v - a.v)

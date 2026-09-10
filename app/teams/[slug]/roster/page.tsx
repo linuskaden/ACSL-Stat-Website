@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSelectedCompetition } from '@/lib/competition'
+import { POSITIONS } from '@/lib/sportConfig'
 import { notFound } from 'next/navigation'
 import TeamPageNav from '@/components/TeamPageNav'
 import TeamRoster from '@/components/TeamRoster'
@@ -30,7 +31,7 @@ export default async function TeamRosterPage({ params }: { params: Promise<{ slu
       <TeamBand team={team} subtitle={`${(players ?? []).length} Spieler`} />
       <TeamPageNav slug={slug} primary={primary} />
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <TeamRoster players={(players ?? []) as any[]} primary={primary} />
+        <TeamRoster players={(players ?? []) as any[]} primary={primary} positions={POSITIONS[competition.sport]} />
       </div>
     </div>
   )

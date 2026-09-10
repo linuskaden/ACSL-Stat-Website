@@ -1,6 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import type { StatCat } from '@/lib/sportConfig'
 
 // ── Unified leaderboard entry (player OR team) ───────────────────────────────
 export type LeaderEntry = {
@@ -18,39 +19,7 @@ export type LeaderEntry = {
   s: Record<string, number | null>
 }
 
-type Cat = {
-  key: string
-  label: string
-  abbr: string
-  group: string
-  pct?: boolean
-  decimals?: number
-  noPerGame?: boolean
-  minKey?: string
-  minVal?: number
-}
-
-const CATS: Cat[] = [
-  { key: 'pass_yards',          label: 'Passing Yards',   abbr: 'Pass Yds', group: 'Passing' },
-  { key: 'pass_tds',            label: 'Passing TDs',     abbr: 'Pass TDs', group: 'Passing' },
-  { key: 'comp_pct',            label: 'Completion %',    abbr: 'Comp %',   group: 'Passing', pct: true, noPerGame: true, minKey: 'pass_attempts', minVal: 5 },
-  { key: 'interceptions_thrown',label: 'INTs Thrown',     abbr: 'INT',      group: 'Passing' },
-  { key: 'total_rush_yards',    label: 'Rushing Yards',   abbr: 'Rush Yds', group: 'Rushing' },
-  { key: 'total_rush_tds',      label: 'Rushing TDs',     abbr: 'Rush TDs', group: 'Rushing' },
-  { key: 'total_rec_yards',     label: 'Receiving Yards', abbr: 'Rec Yds',  group: 'Receiving' },
-  { key: 'total_receptions',    label: 'Receptions',      abbr: 'Rec',      group: 'Receiving' },
-  { key: 'rec_tds',             label: 'Receiving TDs',   abbr: 'Rec TDs',  group: 'Receiving' },
-  { key: 'total_tds',           label: 'Total TDs',       abbr: 'TDs',      group: 'Scoring' },
-  { key: 'points',              label: 'Points',          abbr: 'PTS',      group: 'Scoring' },
-  { key: 'sacks',               label: 'Sacks',           abbr: 'Sacks',    group: 'Defense', decimals: 1 },
-  { key: 'def_interceptions',   label: 'Interceptions',   abbr: 'Def INT',  group: 'Defense' },
-  { key: 'fg_made',             label: 'Field Goals',     abbr: 'FG',       group: 'Kicking' },
-  { key: 'ep_made',             label: 'Extra Points',    abbr: 'XP',       group: 'Kicking' },
-  { key: 'fg_pct',              label: 'FG %',            abbr: 'FG %',     group: 'Kicking', pct: true, noPerGame: true, minKey: 'fg_attempts', minVal: 1 },
-]
-
-const GROUPS = ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Defense', 'Kicking']
-const POSITIONS = ['All', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
+type Cat = StatCat
 
 function fmt(v: number, cat: Cat): string {
   if (cat.pct) return `${v.toFixed(1)}%`
@@ -149,13 +118,17 @@ function Detail({ cat, entries, teamsMode, onBack }: { cat: Cat; entries: Leader
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function LeadersClient({
-  playersRegular, playersPlayoff, teamsRegular, teamsPlayoff,
+  playersRegular, playersPlayoff, teamsRegular, teamsPlayoff, cats, groups, positions,
 }: {
   playersRegular: LeaderEntry[]
   playersPlayoff: LeaderEntry[]
   teamsRegular: LeaderEntry[]
   teamsPlayoff: LeaderEntry[]
+  cats: Cat[]
+  groups: string[]
+  positions: string[]
 }) {
+  const POSITIONS = ['All', ...positions]
   const [mode, setMode] = useState<'players' | 'teams'>('players')
   const [phase, setPhase] = useState<'regular' | 'playoff'>('regular')
   const [teamFilter, setTeamFilter] = useState('all')
@@ -187,7 +160,7 @@ export default function LeadersClient({
   }, [base, teamsMode, teamFilter, posFilter])
 
   const noPlayoffData = phase === 'playoff' && base.length === 0
-  const detailCat = detailKey ? CATS.find(c => c.key === detailKey) ?? null : null
+  const detailCat = detailKey ? cats.find(c => c.key === detailKey) ?? null : null
 
   const pill = (active: boolean) =>
     `px-4 py-2 rounded-lg text-sm font-bold transition-all ${active ? 'bg-white dark:bg-[#222] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white'}`
@@ -226,13 +199,14 @@ export default function LeadersClient({
       ) : detailCat ? (
         <Detail cat={detailCat} entries={entries} teamsMode={teamsMode} onBack={() => setDetailKey(null)} />
       ) : (
-        GROUPS.map(group => {
-          const cats = CATS.filter(c => c.group === group)
+        groups.map(group => {
+          const groupCats = cats.filter(c => c.group === group)
+          if (groupCats.length === 0) return null
           return (
             <div key={group} className="mb-10">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-[#7a7a7a] mb-4">{group}</h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {cats.map(cat => (
+                {groupCats.map(cat => (
                   <CatCard key={cat.key} cat={cat} entries={entries} teamsMode={teamsMode} onOpen={() => setDetailKey(cat.key)} />
                 ))}
               </div>

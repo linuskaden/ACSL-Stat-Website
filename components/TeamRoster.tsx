@@ -8,9 +8,8 @@ type Player = {
   field_of_study: string | null; height_cm: number | null; weight_kg: number | null
 }
 
-const POSITIONS = ['All', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
-
-export default function TeamRoster({ players, primary }: { players: Player[]; primary: string }) {
+export default function TeamRoster({ players, primary, positions }: { players: Player[]; primary: string; positions: string[] }) {
+  const POSITIONS = ['All', ...positions]
   const [filter, setFilter] = useState('All')
   const [search, setSearch] = useState('')
 
