@@ -10,6 +10,7 @@ export default function TeamPageNav({ slug, primary }: { slug: string; primary: 
     { href: base, label: 'Übersicht' },
     { href: `${base}/roster`, label: 'Roster' },
     { href: `${base}/stats`, label: 'Stats' },
+    { href: `${base}/accolades`, label: 'Accolades' },
   ]
 
   return (
