@@ -42,6 +42,10 @@ export function isCompetitionKey(v: unknown): v is CompetitionKey {
   return typeof v === 'string' && v in COMPETITIONS
 }
 
+export function competitionById(id: string | null | undefined): Competition | undefined {
+  return COMPETITION_LIST.find(c => c.id === id)
+}
+
 /**
  * Resolve the active competition from the request host + the division cookie:
  * - `football.*` → football; `basketball.*` → basketball (men default, women via cookie)

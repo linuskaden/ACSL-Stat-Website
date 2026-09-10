@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
+import { competitionById } from '@/lib/competition'
 import StatsTracker from '@/components/StatsTracker'
+import BballTracker from '@/components/BballTracker'
 
 export default async function TrackPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -17,12 +19,33 @@ export default async function TrackPage({ params }: { params: Promise<{ id: stri
 
   const homeId = (game as any).home_team?.id
   const awayId = (game as any).away_team?.id
+  const competitionId = (game as any).competition_id as string | null
+  const sport = competitionById(competitionId)?.sport ?? 'football'
+
+  const playerQuery = (teamId: string) => {
+    let q = supabase.from('players').select('*').eq('team_id', teamId).eq('is_active', true)
+    if (competitionId) q = q.eq('competition_id', competitionId)
+    return q.order('jersey_number', { nullsFirst: false })
+  }
+
+  const statsTable = sport === 'basketball' ? 'bball_game_stats' : 'game_stats'
 
   const [{ data: homePlayers }, { data: awayPlayers }, { data: existingStats }] = await Promise.all([
-    homeId ? supabase.from('players').select('*').eq('team_id', homeId).eq('is_active', true).order('jersey_number', { nullsFirst: false }) : { data: [] },
-    awayId ? supabase.from('players').select('*').eq('team_id', awayId).eq('is_active', true).order('jersey_number', { nullsFirst: false }) : { data: [] },
-    supabase.from('game_stats').select('*').eq('game_id', id),
+    homeId ? playerQuery(homeId) : Promise.resolve({ data: [] as any[] }),
+    awayId ? playerQuery(awayId) : Promise.resolve({ data: [] as any[] }),
+    supabase.from(statsTable).select('*').eq('game_id', id),
   ])
+
+  if (sport === 'basketball') {
+    return (
+      <BballTracker
+        game={game as any}
+        homePlayers={homePlayers ?? []}
+        awayPlayers={awayPlayers ?? []}
+        initialStats={existingStats ?? []}
+      />
+    )
+  }
 
   return (
     <StatsTracker
