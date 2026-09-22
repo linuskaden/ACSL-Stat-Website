@@ -28,7 +28,9 @@ export default function PlayoffBracket({ games, bracket }: { games: any[]; brack
     .filter(Boolean) as any[]
 
   const wcCol = orderedWildcard.length === wildcard.length ? orderedWildcard : wildcard
-  const showBracket = semifinal.length === 2 && wcCol.length === 2
+  // 4-team playoff (no wildcard round) still gets the full bracket, starting at the semifinals.
+  const isFourTeam = semifinal.length === 2 && wildcard.length === 0
+  const showBracket = semifinal.length === 2 && (wcCol.length === 2 || isFourTeam)
 
   const finalBe = finalGame ? bracketByGameId[finalGame.id] : null
   const champTeam =
@@ -70,8 +72,12 @@ export default function PlayoffBracket({ games, bracket }: { games: any[]; brack
     <div className="pf-scroll">
       <div className="pf-inner">
         <div className="pf-heads">
-          <div className="pf-head">Wildcard</div>
-          <div className="pf-head--gap" />
+          {!isFourTeam && (
+            <>
+              <div className="pf-head">Wildcard</div>
+              <div className="pf-head--gap" />
+            </>
+          )}
           <div className="pf-head">Semifinals</div>
           <div className="pf-head--gap" />
           <div className="pf-head">Final &amp; 3rd</div>
@@ -80,14 +86,18 @@ export default function PlayoffBracket({ games, bracket }: { games: any[]; brack
         </div>
 
         <div className="pf-bracket">
-          <div className="pf-col">
-            {wcCol.map((g) => <MatchBox key={g.id} game={g} be={bracketByGameId[g.id]} />)}
-          </div>
+          {!isFourTeam && (
+            <>
+              <div className="pf-col">
+                {wcCol.map((g) => <MatchBox key={g.id} game={g} be={bracketByGameId[g.id]} />)}
+              </div>
 
-          <div className="pf-conn pf-conn--feed">
-            <span className="pf-line h-top" style={lineBg(wcTopColor)} />
-            <span className="pf-line h-bot" style={lineBg(wcBotColor)} />
-          </div>
+              <div className="pf-conn pf-conn--feed">
+                <span className="pf-line h-top" style={lineBg(wcTopColor)} />
+                <span className="pf-line h-bot" style={lineBg(wcBotColor)} />
+              </div>
+            </>
+          )}
 
           <div className="pf-col">
             {semifinal.map((g) => <MatchBox key={g.id} game={g} be={bracketByGameId[g.id]} />)}
