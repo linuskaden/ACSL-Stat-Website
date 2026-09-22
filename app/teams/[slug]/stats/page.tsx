@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import TeamPageNav from '@/components/TeamPageNav'
 import TeamBand from '@/components/TeamBand'
 import TeamStatsTabs, { type StatGroup } from '@/components/TeamStatsTabs'
+import { seasonLabel } from '@/lib/utils'
 
 export const revalidate = 60
 
@@ -109,7 +110,7 @@ export default async function TeamStatsPage({ params }: { params: Promise<{ slug
 
   return (
     <div>
-      <TeamBand team={team} subtitle={`Team-Statistiken · Saison ${season}`} />
+      <TeamBand team={team} subtitle={`Team-Statistiken · Saison ${seasonLabel(season)}`} />
       <TeamPageNav slug={slug} primary={primary} />
       <div className="max-w-6xl mx-auto px-4 py-8">
         <TeamStatsTabs regular={regular} playoff={playoff} primary={primary} />

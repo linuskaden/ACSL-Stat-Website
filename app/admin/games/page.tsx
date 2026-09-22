@@ -5,6 +5,7 @@ import TeamBadge from '@/components/TeamBadge'
 import GameStatsDownloadButton from '@/components/GameStatsDownloadButton'
 import { getSelectedSeason } from '@/lib/season'
 import { computeRecords } from '@/lib/records'
+import { seasonLabel } from '@/lib/utils'
 
 const STATUS_OPTIONS = ['scheduled', 'live', 'final']
 const PLAYOFF_TYPES = ['wildcard', 'semifinal', 'third_place', 'final']
@@ -359,7 +360,7 @@ export default async function AdminGamesPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white">Game Management <span className="text-slate-400 dark:text-[#7a7a7a] font-bold">{season}</span></h1>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white">Game Management <span className="text-slate-400 dark:text-[#7a7a7a] font-bold">{seasonLabel(season)}</span></h1>
       </div>
       <p className="text-xs text-slate-500 dark:text-[#7a7a7a] mb-6">
         Nächster Spieltag oben · abgeschlossene Spieltage unten · Playoff-Sieger mit &quot;Advance →&quot; weitersetzen

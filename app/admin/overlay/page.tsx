@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { buildLineupScreens, groupsForSide, STARTER_TARGETS, POSITION_ORDER, type LineupSide } from '@/lib/lineup'
+import { seasonLabel } from '@/lib/utils'
 import LineupBand from '@/components/LineupBand'
 import LineupFullPanel from '@/components/LineupFullPanel'
 import StreamControls from '@/components/StreamControls'
@@ -1652,7 +1653,7 @@ function CareerStats({ cs, positions }: { cs: any; positions: string[] }) {
   const items = buildStatItems(positions, cs)
   return (
     <div>
-      {cs.season && <div style={{ fontSize: 10, color: '#555', marginBottom: 8 }}>Saison {cs.season} · {cs.games_played ?? 0} Spiele</div>}
+      {cs.season && <div style={{ fontSize: 10, color: '#555', marginBottom: 8 }}>Saison {seasonLabel(cs.season)} · {cs.games_played ?? 0} Spiele</div>}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
         {items.map(item => (
           <div key={item.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '8px 4px', textAlign: 'center' }}>

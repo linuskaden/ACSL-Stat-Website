@@ -4,6 +4,12 @@ export function cn(...classes: (string | undefined | null | false)[]) {
   return classes.filter(Boolean).join(' ')
 }
 
+/** Academic-year label for a season int: 2027 -> "2026/27", 2026 -> "2025/26". */
+export function seasonLabel(season: number | null | undefined): string {
+  if (!season) return ''
+  return `${season - 1}/${String(season).slice(-2)}`
+}
+
 export function getPlayerDisplayName(player: Player) {
   return `${player.first_name} ${player.last_name}`
 }

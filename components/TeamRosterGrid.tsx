@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { seasonLabel } from '@/lib/utils'
 
 const POSITIONS = ['All', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
@@ -357,7 +358,7 @@ function LeadersBoard({ leaders, team, season }: { leaders: LeaderCat[]; team: T
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
       <div style={{ fontSize: 11, color: 'var(--fg-faint)', marginBottom: 14 }}>
-        Top 3 je Kategorie · Saison {season ?? ''}
+        Top 3 je Kategorie · Saison {seasonLabel(season)}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         {byGroup.map(({ group, cats }) => (
@@ -800,7 +801,7 @@ function CareerStatsDisplay({ cs, positions }: { cs: any; positions: string[] })
     <div>
       {cs.season && (
         <div style={{ fontSize: 10, color: 'var(--fg-faint)', marginBottom: 8 }}>
-          Saison {cs.season} · {cs.games_played ?? 0} Spiele
+          Saison {seasonLabel(cs.season)} · {cs.games_played ?? 0} Spiele
         </div>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>

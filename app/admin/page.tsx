@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getSelectedSeason } from '@/lib/season'
+import { seasonLabel } from '@/lib/utils'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -61,7 +62,7 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Active Players', value: playerCount ?? 0, href: '/admin/players' },
-          { label: `Games ${season}`, value: gameCount ?? 0, href: '/admin/games' },
+          { label: `Games ${seasonLabel(season)}`, value: gameCount ?? 0, href: '/admin/games' },
           { label: 'Live Games', value: liveGames?.length ?? 0 },
           { label: 'Season', value: String(season) },
         ].map(s => (

@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import TeamBadge from '@/components/TeamBadge'
+import { seasonLabel } from '@/lib/utils'
 
 /* ─── Stat helpers (merged columns + all of a player's positions) ─── */
 function positionCategories(positions: string[]): string[] {
@@ -196,7 +197,7 @@ export default function PlayerPageClient({
               return (
                 <div key={cs.id} className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-5 shadow-sm">
                   <div className="flex items-baseline justify-between mb-4">
-                    <h3 className="font-black text-sm text-slate-900 dark:text-white">Saison {cs.season}</h3>
+                    <h3 className="font-black text-sm text-slate-900 dark:text-white">Saison {seasonLabel(cs.season)}</h3>
                     <span className="text-xs text-slate-400 dark:text-[#7a7a7a]">{gp} Spiele</span>
                   </div>
                   <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-[#7a7a7a] mb-2">Total</div>

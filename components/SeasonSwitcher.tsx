@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { seasonLabel } from '@/lib/utils'
 
 const DEFAULT_SEASON = 2027
 const COOKIE = 'acsl-season'
@@ -45,7 +46,7 @@ export default function SeasonSwitcher() {
       className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 dark:text-white focus:outline-none focus:border-[#ff1d25] cursor-pointer"
     >
       {seasons.map(s => (
-        <option key={s} value={s}>{s}</option>
+        <option key={s} value={s}>{seasonLabel(s)}</option>
       ))}
     </select>
   )

@@ -25,12 +25,12 @@ export const COMPETITIONS: Record<CompetitionKey, Competition> = {
   basketball_men: {
     id: '00000000-0000-0000-0000-0000000000b1',
     key: 'basketball_men', sport: 'basketball', division: 'men',
-    name: 'ACSL Basketball Herren', subdomain: 'basketball', defaultSeason: 2026,
+    name: 'ACSL Basketball Herren', subdomain: 'basketball', defaultSeason: 2027,
   },
   basketball_women: {
     id: '00000000-0000-0000-0000-0000000000b2',
     key: 'basketball_women', sport: 'basketball', division: 'women',
-    name: 'ACSL Basketball Damen', subdomain: 'basketball', defaultSeason: 2026,
+    name: 'ACSL Basketball Damen', subdomain: 'basketball', defaultSeason: 2027,
   },
 }
 

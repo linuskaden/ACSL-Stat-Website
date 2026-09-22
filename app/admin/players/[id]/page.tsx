@@ -3,7 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import DeletePlayerButton from './DeletePlayerButton'
-import { formatDate } from '@/lib/utils'
+import { formatDate, seasonLabel } from '@/lib/utils'
 
 const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
@@ -368,7 +368,7 @@ function AdminStatsContent({
               <tbody>
                 {career.map((cs: any) => (
                   <tr key={cs.id} className="border-b border-black/[0.05] dark:border-white/5 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
-                    <td className={td}>{cs.season}</td>
+                    <td className={td}>{seasonLabel(cs.season)}</td>
                     <td className={tdNum}>{cs.games_played ?? 0}</td>
                     {cols.map(c => (
                       <td key={c.field} className={tdNum}>{(cs as any)[c.field] ?? 0}</td>
