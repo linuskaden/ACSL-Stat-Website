@@ -87,7 +87,7 @@ export default function PlayoffBracket({ games, bracket, sport }: { games: any[]
           <div className="pf-head pf-head--champ">Champion</div>
         </div>
 
-        <div className="pf-bracket">
+        <div className={`pf-bracket${showThird ? '' : ' pf-bracket--no-third'}`}>
           {!isFourTeam && (
             <>
               <div className="pf-col">
@@ -113,7 +113,7 @@ export default function PlayoffBracket({ games, bracket, sport }: { games: any[]
             {showThird && <span className="pf-line h-los pf-line--bronze" />}
           </div>
 
-          <div className="pf-col">
+          <div className="pf-col pf-col--final">
             {finalGame
               ? <MatchBox game={finalGame} be={finalBe} highlight title={finalGame.notes || finalTitle} />
               : <PlaceholderBox label="Final" />}

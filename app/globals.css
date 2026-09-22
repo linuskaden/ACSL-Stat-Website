@@ -164,3 +164,11 @@ body {
 
 /* 1:1 center (final → champion, both at 25%) */
 .pf-conn--single .h-mid { top: 25%; left: 0; width: 100%; }
+
+/* No 3rd-place game (basketball): a single final centered between the two
+   semifinals, so the winner line, final box and champion all sit at 50%. */
+.pf-bracket--no-third .pf-col--final { justify-content: center; }
+.pf-bracket--no-third .pf-conn--merge .h-win { top: 50%; }
+.pf-bracket--no-third .pf-conn--single .h-mid { top: 50%; }
+.pf-bracket--no-third .pf-col--champ { justify-content: center; }
+.pf-bracket--no-third .pf-champ-spacer { display: none; }
