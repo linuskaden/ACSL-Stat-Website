@@ -191,7 +191,7 @@ export default async function SchedulePage() {
     : { data: [] as any[] }
   const gamesWithStats = new Set((statsRows ?? []).map((r: any) => r.game_id as string))
 
-  const regularGames = allGames.filter(g => g.game_type === 'regular_season' || g.game_type === 'preseason')
+  const regularGames = allGames.filter(g => g.game_type === 'regular_season')
   const playoffGames = allGames.filter(g => PLAYOFF_TYPES.includes(g.game_type))
 
   // Team record — REGULAR SEASON final games only
