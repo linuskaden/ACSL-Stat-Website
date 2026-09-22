@@ -110,6 +110,7 @@ export default function PlayoffBracket({ games, bracket, sport }: { games: any[]
             <span className="pf-line h-dn" style={lineBg(sfBotColor)} />
             <span className="pf-line v" style={lineBg(champLineColor)} />
             <span className="pf-line h-win" style={lineBg(champLineColor)} />
+            {showThird && <span className="pf-line h-los" />}
           </div>
 
           <div className="pf-col pf-col--final">
