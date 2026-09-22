@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
 import { createClient } from "@/lib/supabase/server";
 import { getSelectedCompetition } from "@/lib/competition";
 
-const archivo = Archivo({
+// Montserrat mirrors the type used on acsl.at, tying the stats site to the
+// main league site instead of a generic default face.
+const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
-  variable: "--font-archivo",
+  variable: "--font-montserrat",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,14 +32,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     .order("name");
 
   return (
-    <html lang="en" className={`${archivo.variable} h-full`} suppressHydrationWarning>
-      {/* Apply saved theme before first paint to prevent flash (light is default). */}
+    <html lang="en" className={`${montserrat.variable} h-full`} suppressHydrationWarning>
+      {/* Dark mode is an admin-only convenience; the public site is always light. */}
       <head>
         <script dangerouslySetInnerHTML={{
-          __html: `try{if(localStorage.getItem('acsl-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`
+          __html: `try{if(location.pathname.startsWith('/admin')&&localStorage.getItem('acsl-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`
         }} />
       </head>
-      <body className="min-h-full flex flex-col bg-[var(--bg)] text-[var(--fg)] font-[family-name:var(--font-archivo)]">
+      <body className="min-h-full flex flex-col bg-[var(--bg)] text-[var(--fg)] font-[family-name:var(--font-montserrat)]">
         <NavBar teams={navTeams ?? []} competition={competition} />
         <main className="flex-1">{children}</main>
       </body>

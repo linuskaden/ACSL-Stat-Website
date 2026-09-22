@@ -4,20 +4,23 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  /* ACSL brand — matched to acsl.at: deep navy is the primary colour,
+     red is a rare highlight (live only). */
+  --acsl-navy: #16163f;
   --acsl-red: #ff1d25;
-  --acsl-gray: #64748b;
+  --acsl-gray: #6b6b76;
 
   /* Semantic tokens — LIGHT (default / base) */
-  --bg: #f7f8fa;          /* page background */
+  --bg: #ffffff;          /* page background — white, like acsl.at */
   --surface: #ffffff;     /* cards / panels */
-  --surface-2: #f1f5f9;   /* subtle raised / hover */
-  --border: rgba(0, 0, 0, 0.08);
-  --subtle: rgba(0, 0, 0, 0.04); /* faint fills / hovers */
-  --fg: #0f172a;          /* primary text */
-  --fg-muted: #64748b;    /* secondary text */
-  --fg-faint: #94a3b8;    /* tertiary / labels */
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --surface-2: #f4f4f7;   /* subtle raised / hover */
+  --border: rgba(22, 22, 63, 0.10);
+  --subtle: rgba(22, 22, 63, 0.04); /* faint fills / hovers */
+  --fg: #16163f;          /* primary text — navy ink */
+  --fg-muted: #6b6b76;    /* secondary text */
+  --fg-faint: #9a9aa6;    /* tertiary / labels */
+  --shadow: 0 1px 2px rgba(22, 22, 63, 0.05);
+  --shadow-lg: 0 8px 30px rgba(22, 22, 63, 0.07);
 }
 
 .dark {

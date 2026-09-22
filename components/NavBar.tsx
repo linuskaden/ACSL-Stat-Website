@@ -60,13 +60,20 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
     return () => document.removeEventListener('mousedown', onDoc)
   }, [])
 
-  // Read stored theme on mount
+  // Keep the theme in sync per route: the public site is always light; only
+  // the admin area may switch to dark (and remembers the choice).
   useEffect(() => {
+    const root = document.documentElement
+    if (!pathname.startsWith('/admin')) {
+      root.classList.remove('dark')
+      return
+    }
     try {
-      const stored = localStorage.getItem('acsl-theme')
-      if (stored === 'dark') setTheme('dark')
+      const dark = localStorage.getItem('acsl-theme') === 'dark'
+      root.classList.toggle('dark', dark)
+      setTheme(dark ? 'dark' : 'light')
     } catch {}
-  }, [])
+  }, [pathname])
 
   function toggleTheme() {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -124,7 +131,7 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
                       type="button"
                       onClick={() => setTeamsOpen(o => !o)}
                       className={`relative flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        active ? 'text-[#ff1d25]' : 'text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white'
+                        active ? 'text-[#16163f]' : 'text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white'
                       }`}
                       aria-expanded={teamsOpen}
                     >
@@ -133,7 +140,7 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
                         className="transition-transform" style={{ transform: teamsOpen ? 'rotate(180deg)' : 'none' }}>
                         <path d="M6 9l6 6 6-6" />
                       </svg>
-                      {active && <span className="absolute left-3 right-6 -bottom-[1px] h-0.5 rounded-full bg-[#ff1d25]" />}
+                      {active && <span className="absolute left-3 right-6 -bottom-[1px] h-0.5 rounded-full bg-[#16163f]" />}
                     </button>
 
                     {teamsOpen && (
@@ -170,13 +177,13 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
                   href={l.href}
                   className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     active
-                      ? 'text-[#ff1d25]'
+                      ? 'text-[#16163f]'
                       : 'text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   {l.label}
                   {active && (
-                    <span className="absolute left-3 right-3 -bottom-[1px] h-0.5 rounded-full bg-[#ff1d25]" />
+                    <span className="absolute left-3 right-3 -bottom-[1px] h-0.5 rounded-full bg-[#16163f]" />
                   )}
                 </Link>
               )
@@ -214,43 +221,32 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
           {/* Season switcher */}
           <SeasonSwitcher />
 
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle light/dark mode"
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/5 transition-all"
-            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-          >
-            {theme === 'dark' ? (
-              // Sun
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-              </svg>
-            ) : (
-              // Moon
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-            )}
-          </button>
+          {/* Theme toggle + back link live in the admin area only; the public
+              site stays light and uncluttered, and /admin is the way in. */}
+          {isAdmin && (
+            <>
+              <button
+                onClick={toggleTheme}
+                aria-label="Toggle light/dark mode"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/5 transition-all"
+                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              >
+                {theme === 'dark' ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+              </button>
 
-          {isAdmin ? (
-            <Link href="/" className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">
-              ← Public Site
-            </Link>
-          ) : (
-            <Link
-              href="/admin"
-              aria-label="Admin"
-              title="Admin"
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/5 transition-all"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </Link>
+              <Link href="/" className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">
+                ← Public Site
+              </Link>
+            </>
           )}
         </div>
       </div>
