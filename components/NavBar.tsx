@@ -39,7 +39,7 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
       window.location.href = `${window.location.protocol}//${parts.join('.')}/`
       return
     }
-    const key = target === 'football' ? 'football' : 'basketball_men'
+    const key = target === 'football' ? 'football' : 'basketball_women'
     document.cookie = `${COMPETITION_COOKIE}=${key}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
     router.refresh()
   }
@@ -199,7 +199,7 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
           {/* Herren/Damen division switch (basketball only) */}
           {isBasketball && !isAdmin && (
             <div className="flex gap-0.5 p-0.5 bg-black/[0.05] dark:bg-white/[0.06] rounded-lg">
-              {([['basketball_men', 'Herren'], ['basketball_women', 'Damen']] as const).map(([key, label]) => {
+              {([['basketball_women', 'Damen'], ['basketball_men', 'Herren']] as const).map(([key, label]) => {
                 const active = competition?.key === key
                 return (
                   <button key={key} onClick={() => setDivision(key)}

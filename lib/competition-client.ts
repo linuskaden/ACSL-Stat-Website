@@ -56,7 +56,8 @@ export function resolveCompetition(host: string | null | undefined, cookieValue?
   const cookieKey = isCompetitionKey(cookieValue) ? cookieValue : undefined
 
   if (sub === 'basketball') {
-    return cookieKey === 'basketball_women' ? COMPETITIONS.basketball_women : COMPETITIONS.basketball_men
+    // Damen is the default division; Herren only when explicitly chosen via cookie.
+    return cookieKey === 'basketball_men' ? COMPETITIONS.basketball_men : COMPETITIONS.basketball_women
   }
   if (sub === 'football') return COMPETITIONS.football
   if (cookieKey) return COMPETITIONS[cookieKey]
