@@ -12,10 +12,14 @@ const archivo = Archivo({
   variable: "--font-archivo",
 });
 
-export const metadata: Metadata = {
-  title: "ACSL Football",
-  description: "Austrian College Sports League – Football: live scores, standings & player stats",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const competition = await getSelectedCompetition();
+  const sportLabel = competition.sport === "basketball" ? "Basketball" : "Football";
+  return {
+    title: competition.name,
+    description: `Austrian College Sports League – ${sportLabel}: live scores, standings & player stats`,
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
