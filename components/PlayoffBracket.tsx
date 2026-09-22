@@ -3,6 +3,7 @@ const ROUND_ORDER = ['wildcard', 'semifinal', 'third_place', 'final']
 /* Renders the playoff bracket from already-fetched games + bracket rows. */
 export default function PlayoffBracket({ games, bracket, sport }: { games: any[]; bracket: any[]; season?: number; sport?: string }) {
   const showThird = sport !== 'basketball'
+  const finalTitle = sport === 'basketball' ? 'ACSL Season Finals' : 'ACSL Summer Bowl'
   const bracketByGameId: Record<string, any> = {}
   ;(bracket ?? []).forEach((b: any) => { if (b.game_id) bracketByGameId[b.game_id] = b })
 
@@ -114,7 +115,7 @@ export default function PlayoffBracket({ games, bracket, sport }: { games: any[]
 
           <div className="pf-col">
             {finalGame
-              ? <MatchBox game={finalGame} be={finalBe} highlight title={finalGame.notes || 'ACSL Summer Bowl'} />
+              ? <MatchBox game={finalGame} be={finalBe} highlight title={finalGame.notes || finalTitle} />
               : <PlaceholderBox label="Final" />}
             {showThird && (thirdPlace
               ? <MatchBox game={thirdPlace} be={bracketByGameId[thirdPlace.id]} accent="bronze" title="3rd Place" />
