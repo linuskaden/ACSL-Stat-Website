@@ -110,7 +110,6 @@ export default function PlayoffBracket({ games, bracket, sport }: { games: any[]
             <span className="pf-line h-dn" style={lineBg(sfBotColor)} />
             <span className="pf-line v" style={lineBg(champLineColor)} />
             <span className="pf-line h-win" style={lineBg(champLineColor)} />
-            {showThird && <span className="pf-line h-los pf-line--bronze" />}
           </div>
 
           <div className="pf-col pf-col--final">
@@ -230,14 +229,14 @@ function PlaceholderBox({ label }: { label: string }) {
 
 function ChampionBox({ team }: { team: any }) {
   const color = team?.primary_color ?? null
-  const fg = color ? textOn(color) : '#ff1d25'
-  const accent = color ? fg : '#ff1d25'
+  const fg = color ? textOn(color) : '#9aa0b5'
+  const accent = color ? fg : '#9aa0b5'
   return (
     <div
       className="pf-champ"
       style={color
         ? { background: color, borderColor: color }
-        : { background: 'rgba(255,29,37,0.05)', borderColor: 'rgba(255,29,37,0.4)' }}
+        : { background: 'transparent', borderColor: 'rgba(128,128,128,0.3)' }}
     >
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 6 }}>
         <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
@@ -249,9 +248,9 @@ function ChampionBox({ team }: { team: any }) {
       </svg>
       <div className="pf-champ-label" style={{ color: accent, opacity: 0.85 }}>Champion</div>
       {team?.logo_url && <img src={team.logo_url} alt="" className="pf-champ-logo" />}
-      <div className="pf-champ-name" style={{ color: color ? fg : '#94a3b8' }}>
-        {team?.short_name ?? 'TBD'}
-      </div>
+      {team && (
+        <div className="pf-champ-name" style={{ color: fg }}>{team.short_name}</div>
+      )}
     </div>
   )
 }
