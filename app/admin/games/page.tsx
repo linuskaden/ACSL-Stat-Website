@@ -215,7 +215,7 @@ export default async function AdminGamesPage() {
         <div className="flex items-center gap-4">
           <div className="w-14 text-center shrink-0 text-sm font-bold text-slate-900 dark:text-white tabular-nums">
             {game.scheduled_at
-              ? new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })
+              ? new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Vienna' })
               : 'TBD'}
           </div>
 
@@ -335,7 +335,7 @@ export default async function AdminGamesPage() {
             <div className="mb-3">
               <h3 className="text-lg font-black text-slate-900 dark:text-white">{grp.stage}</h3>
               <div className="text-xs text-slate-500 dark:text-[#7a7a7a] mt-0.5">
-                {grp.date && new Date(grp.date).toLocaleDateString('de-AT', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                {grp.date && new Date(grp.date).toLocaleDateString('de-AT', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Vienna' })}
                 {grp.city && <> · {grp.city}</>}
                 {grp.venue && <> · {grp.venue}</>}
               </div>

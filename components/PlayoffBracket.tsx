@@ -164,7 +164,7 @@ function MatchBox({ game, be, highlight, title }: {
   const homeState = !decided ? 'neutral' : winnerId === game.home_team_id ? 'win' : 'lose'
   const awayState = !decided ? 'neutral' : winnerId === game.away_team_id ? 'win' : 'lose'
   const date = game.scheduled_at
-    ? `${new Date(game.scheduled_at).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit' })} · ${new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })}`
+    ? `${new Date(game.scheduled_at).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Vienna' })} · ${new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Vienna' })}`
     : null
 
   return (

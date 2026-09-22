@@ -310,10 +310,10 @@ function GameRow({ game, teamId, final }: { game: any; teamId: string; final?: b
   const won = final && myScore != null && opScore != null && myScore > opScore
   const lost = final && myScore != null && opScore != null && myScore < opScore
   const date = game.scheduled_at
-    ? new Date(game.scheduled_at).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    ? new Date(game.scheduled_at).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Vienna' })
     : 'TBD'
   const time = game.scheduled_at
-    ? new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })
+    ? new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Vienna' })
     : ''
 
   return (

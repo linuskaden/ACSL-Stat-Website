@@ -36,7 +36,7 @@ export default async function BoxScorePage({ params }: { params: Promise<{ id: s
   const isLive = g.status === 'live'
 
   const gameDate = g.scheduled_at
-    ? new Date(g.scheduled_at).toLocaleDateString('de-AT', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' })
+    ? new Date(g.scheduled_at).toLocaleDateString('de-AT', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' })
     : null
 
   const GAME_TYPE_LABELS: Record<string, string> = {

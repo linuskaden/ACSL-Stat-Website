@@ -38,13 +38,13 @@ export function calcKickerPoints(fgMade: number, epMade: number): number {
 
 export function formatDate(iso: string | null): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Vienna' })
 }
 
 export function formatGameTime(iso: string | null): string {
   if (!iso) return 'TBD'
   return new Date(iso).toLocaleString('de-AT', {
-    weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+    weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Vienna'
   })
 }
 

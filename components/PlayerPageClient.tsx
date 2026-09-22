@@ -221,7 +221,7 @@ export default function PlayerPageClient({
             {gameLog.map((g: any) => {
               const items = buildTotals(pos, g.stats)
               const resultColor = g.result === 'W' ? '#04a550' : g.result === 'L' ? '#ff1d25' : 'var(--fg-muted)'
-              const dateStr = g.date ? new Date(g.date).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: '2-digit' }) : ''
+              const dateStr = g.date ? new Date(g.date).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Vienna' }) : ''
               return (
                 <Link key={g.gameId} href={`/games/${g.gameId}`} className="block">
                   <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-4 shadow-sm hover:border-black/20 dark:hover:border-white/20 transition-colors">
