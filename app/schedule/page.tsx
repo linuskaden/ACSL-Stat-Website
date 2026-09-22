@@ -202,7 +202,7 @@ export default async function SchedulePage() {
       <ScheduleTabs
         regular={<GameList games={regularGames} gamesWithStats={gamesWithStats} recordByTeam={recordByTeam} />}
         playoffs={<GameList games={playoffGames} gamesWithStats={gamesWithStats} recordByTeam={recordByTeam} />}
-        bracket={<PlayoffBracket games={playoffGames} bracket={bracket ?? []} season={season} />}
+        bracket={<PlayoffBracket games={playoffGames} bracket={bracket ?? []} season={season} sport={competition.sport} />}
       />
     </div>
   )

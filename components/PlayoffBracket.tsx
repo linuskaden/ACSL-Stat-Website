@@ -1,7 +1,8 @@
 const ROUND_ORDER = ['wildcard', 'semifinal', 'third_place', 'final']
 
 /* Renders the playoff bracket from already-fetched games + bracket rows. */
-export default function PlayoffBracket({ games, bracket }: { games: any[]; bracket: any[]; season?: number }) {
+export default function PlayoffBracket({ games, bracket, sport }: { games: any[]; bracket: any[]; season?: number; sport?: string }) {
+  const showThird = sport !== 'basketball'
   const bracketByGameId: Record<string, any> = {}
   ;(bracket ?? []).forEach((b: any) => { if (b.game_id) bracketByGameId[b.game_id] = b })
 
@@ -80,7 +81,7 @@ export default function PlayoffBracket({ games, bracket }: { games: any[]; brack
           )}
           <div className="pf-head">Semifinals</div>
           <div className="pf-head--gap" />
-          <div className="pf-head">Final &amp; 3rd</div>
+          <div className="pf-head">{showThird ? 'Final & 3rd' : 'Final'}</div>
           <div className="pf-head--gap" />
           <div className="pf-head pf-head--champ">Champion</div>
         </div>
@@ -108,16 +109,16 @@ export default function PlayoffBracket({ games, bracket }: { games: any[]; brack
             <span className="pf-line h-dn" style={lineBg(sfBotColor)} />
             <span className="pf-line v" style={lineBg(champLineColor)} />
             <span className="pf-line h-win" style={lineBg(champLineColor)} />
-            <span className="pf-line h-los pf-line--bronze" />
+            {showThird && <span className="pf-line h-los pf-line--bronze" />}
           </div>
 
           <div className="pf-col">
             {finalGame
               ? <MatchBox game={finalGame} be={finalBe} highlight title={finalGame.notes || 'ACSL Summer Bowl'} />
               : <PlaceholderBox label="Final" />}
-            {thirdPlace
+            {showThird && (thirdPlace
               ? <MatchBox game={thirdPlace} be={bracketByGameId[thirdPlace.id]} accent="bronze" title="3rd Place" />
-              : <PlaceholderBox label="3rd Place" />}
+              : <PlaceholderBox label="3rd Place" />)}
           </div>
 
           <div className="pf-conn pf-conn--single">
