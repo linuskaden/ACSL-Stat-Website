@@ -37,7 +37,7 @@ function LayoutField({ label, value, onChange }: { label: string; value: number;
         <span style={{ fontSize: 11, color: '#888' }}>{value}%</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input type="range" min={0} max={100} value={value} onChange={e => onChange(clamp(Number(e.target.value), 0, 100))} style={{ flex: 1, accentColor: '#ff1d25' }} />
+        <input type="range" min={0} max={100} value={value} onChange={e => onChange(clamp(Number(e.target.value), 0, 100))} style={{ flex: 1, accentColor: '#16163f' }} />
         <input type="number" min={0} max={100} value={value} onChange={e => onChange(clamp(Number(e.target.value), 0, 100))}
           style={{ width: 58, background: '#131826', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '4px 6px', color: '#fff', fontSize: 12, outline: 'none' }} />
       </div>
@@ -109,7 +109,7 @@ export default function BroadcastMonitor() {
             className="flex-1 min-w-[260px] bg-slate-50 dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#555] outline-none"
           />
           <button onClick={load}
-            className="px-4 py-2 text-sm font-bold rounded-lg bg-[#ff1d25] text-white hover:opacity-90 transition">
+            className="px-4 py-2 text-sm font-bold rounded-lg bg-[#16163f] text-white hover:opacity-90 transition">
             Laden
           </button>
           <button onClick={() => setBgVisible(v => !v)} disabled={!bgUrl}
@@ -181,7 +181,7 @@ export default function BroadcastMonitor() {
 
         {/* LIVE marker */}
         <div style={{ position: 'absolute', top: 10, left: 12, display: 'flex', alignItems: 'center', gap: 6, zIndex: 10 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff1d25', boxShadow: '0 0 8px #ff1d25' }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#16163f', boxShadow: '0 0 8px #16163f' }} />
           <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>LIVE PREVIEW</span>
         </div>
       </div>
@@ -213,8 +213,8 @@ export default function BroadcastMonitor() {
                 return (
                   <button key={p.label} onClick={() => setLayout(p.layout)}
                     style={{ padding: '6px 10px', fontSize: 11, fontWeight: 700, borderRadius: 7, cursor: 'pointer',
-                      background: active ? '#ff1d25' : '#131826', color: active ? '#fff' : '#999',
-                      border: `1px solid ${active ? '#ff1d25' : 'rgba(255,255,255,0.1)'}` }}>
+                      background: active ? '#16163f' : '#131826', color: active ? '#fff' : '#999',
+                      border: `1px solid ${active ? '#16163f' : 'rgba(255,255,255,0.1)'}` }}>
                     {p.label}
                   </button>
                 )

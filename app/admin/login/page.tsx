@@ -37,7 +37,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="font-black italic tracking-tight text-3xl text-slate-900 dark:text-white mb-3">
-            ACSL<span className="text-[#ff1d25]">.</span>
+            ACSL<span className="text-[#16163f]">.</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">ACSL Admin</h1>
           <p className="text-slate-500 dark:text-[#7a7a7a] text-sm mt-1">Operator Access</p>
@@ -50,7 +50,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]"
+              className="w-full bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#16163f]"
               required
             />
           </div>
@@ -60,17 +60,17 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]"
+              className="w-full bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#16163f]"
               required
             />
           </div>
 
-          {error && <p className="text-[#ff1d25] text-sm">{error}</p>}
+          {error && <p className="text-[#16163f] text-sm">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#ff1d25] hover:bg-[#e0181f] disabled:opacity-50 text-white font-bold py-2.5 rounded-lg transition-colors"
+            className="w-full bg-[#16163f] hover:bg-[#101033] disabled:opacity-50 text-white font-bold py-2.5 rounded-lg transition-colors"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>

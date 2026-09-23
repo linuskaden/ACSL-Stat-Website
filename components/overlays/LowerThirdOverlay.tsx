@@ -146,7 +146,7 @@ export default function LowerThirdOverlay() {
   const statItems     = buildStats(pos, playerStats)
   const hasStats      = statItems.length > 0
 
-  const primaryColor = team?.primary_color ?? '#ff1d25'
+  const primaryColor = team?.primary_color ?? '#16163f'
   const onPrimary    = textOn(primaryColor)
   const dimOnPrimary = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)'
   const hairline     = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'

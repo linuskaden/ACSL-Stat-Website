@@ -17,7 +17,7 @@ export default async function AdminPlayersPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-black text-slate-900 dark:text-white">Player Management</h1>
         <Link href="/admin/players/new"
-          className="bg-[#ff1d25] text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-[#e0181f] transition-colors">
+          className="bg-[#16163f] text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-[#101033] transition-colors">
           + Add Player
         </Link>
       </div>

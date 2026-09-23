@@ -104,12 +104,12 @@ export default function PlayersPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name, #, position, study..."
-          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#7a7a7a] focus:outline-none focus:border-[#ff1d25] w-64"
+          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#7a7a7a] focus:outline-none focus:border-[#16163f] w-64"
         />
         <select
           value={selectedTeam}
           onChange={e => setSelectedTeam(e.target.value)}
-          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#ff1d25]"
+          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#16163f]"
         >
           <option value="all">All Teams</option>
           {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -117,7 +117,7 @@ export default function PlayersPage() {
         <select
           value={selectedCountry}
           onChange={e => setSelectedCountry(e.target.value)}
-          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#ff1d25]"
+          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#16163f]"
         >
           <option value="all">All Countries</option>
           {countries.map(c => <option key={c} value={c}>{c}</option>)}
@@ -126,7 +126,7 @@ export default function PlayersPage() {
           {positions.map(pos => (
             <button key={pos} onClick={() => setSelectedPos(pos)}
               className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
-                selectedPos === pos ? 'bg-[#ff1d25] text-white' : 'bg-white dark:bg-[#111] text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white border border-black/[0.07] dark:border-white/5'
+                selectedPos === pos ? 'bg-[#16163f] text-white' : 'bg-white dark:bg-[#111] text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white border border-black/[0.07] dark:border-white/5'
               }`}>
               {pos}
             </button>
@@ -160,7 +160,7 @@ export default function PlayersPage() {
                     <span className="font-mono text-xs text-slate-500 dark:text-[#7a7a7a]">{p.jersey_number ?? '—'}</span>
                   </td>
                   <td className="px-4 py-2.5">
-                    <Link href={`/players/${p.id}`} className="hover:text-[#ff1d25] transition-colors">
+                    <Link href={`/players/${p.id}`} className="hover:text-[#16163f] transition-colors">
                       <span className="font-semibold text-slate-900 dark:text-white">{p.first_name} {p.last_name}</span>
                     </Link>
                     {p.nickname && <span className="text-slate-400 dark:text-[#7a7a7a] text-xs ml-1">"{p.nickname}"</span>}
@@ -212,7 +212,7 @@ function SortHeader({ label, sk, active, dir, onSort, className, center }: {
         className={`inline-flex items-center gap-1 select-none hover:text-slate-900 dark:hover:text-white transition-colors ${center ? 'justify-center' : ''} ${isActive ? 'text-slate-900 dark:text-white' : ''}`}
       >
         {label}
-        <span className={`text-[9px] leading-none ${isActive ? 'text-[#ff1d25]' : 'opacity-0'}`}>
+        <span className={`text-[9px] leading-none ${isActive ? 'text-[#16163f]' : 'opacity-0'}`}>
           {isActive && dir === 'desc' ? '▼' : '▲'}
         </span>
       </button>

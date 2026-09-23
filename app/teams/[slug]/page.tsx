@@ -176,7 +176,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ s
                   <div className="flex gap-1">
                     {form.map((r, i) => (
                       <span key={i} className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-black text-white"
-                        style={{ background: r === 'W' ? '#04a550' : r === 'L' ? '#ff1d25' : 'rgba(255,255,255,0.3)' }}>
+                        style={{ background: r === 'W' ? '#04a550' : r === 'L' ? '#16163f' : 'rgba(255,255,255,0.3)' }}>
                         {r}
                       </span>
                     ))}
@@ -332,7 +332,7 @@ function GameRow({ game, teamId, final }: { game: any; teamId: string; final?: b
       {final ? (
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-[10px] font-black uppercase w-4 text-center"
-            style={{ color: won ? '#04a550' : lost ? '#ff1d25' : '#7a7a7a' }}>
+            style={{ color: won ? '#04a550' : lost ? '#16163f' : '#7a7a7a' }}>
             {won ? 'W' : lost ? 'L' : 'T'}
           </span>
           <span className="text-sm font-black tabular-nums text-slate-900 dark:text-white">{myScore ?? 0}–{opScore ?? 0}</span>

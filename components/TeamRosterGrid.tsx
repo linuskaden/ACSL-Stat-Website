@@ -169,7 +169,7 @@ export default function TeamRosterGrid({
             }}>
               <div style={{
                 width: 26, height: 26, borderRadius: 4,
-                background: '#ff1d25',
+                background: '#16163f',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 9, fontWeight: 900, color: 'white', flexShrink: 0,
               }}>
@@ -600,8 +600,8 @@ function PlayerDetailPanel({
       {overlayMode && onOverlayPush && (
         <div style={{
           margin: '0 16px 16px',
-          background: isOnAir ? 'rgba(4,165,80,0.1)' : 'rgba(255,29,37,0.06)',
-          border: `1px solid ${isOnAir ? '#04a550' : 'rgba(255,29,37,0.2)'}`,
+          background: isOnAir ? 'rgba(4,165,80,0.1)' : 'rgba(22,22,63,0.06)',
+          border: `1px solid ${isOnAir ? '#04a550' : 'rgba(22,22,63,0.2)'}`,
           borderRadius: 10,
           padding: '12px',
         }}>
@@ -623,7 +623,7 @@ function PlayerDetailPanel({
                 padding: '10px 8px',
                 fontSize: 12, fontWeight: 800,
                 border: 'none', borderRadius: 8, cursor: 'pointer',
-                background: isOnAir ? '#ff1d25' : '#ff1d25',
+                background: isOnAir ? '#16163f' : '#16163f',
                 color: 'white',
                 letterSpacing: 0.5,
               }}

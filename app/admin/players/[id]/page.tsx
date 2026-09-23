@@ -139,7 +139,7 @@ export default async function EditPlayerPage({
           <Link
             href={`/admin/players/${id}?tab=edit`}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              activeTab === 'edit' ? 'bg-[#ff1d25] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/5'
+              activeTab === 'edit' ? 'bg-[#16163f] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/5'
             }`}
           >
             Bearbeiten
@@ -147,7 +147,7 @@ export default async function EditPlayerPage({
           <Link
             href={`/admin/players/${id}?tab=stats`}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              activeTab === 'stats' ? 'bg-[#ff1d25] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/5'
+              activeTab === 'stats' ? 'bg-[#16163f] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/5'
             }`}
           >
             Career Stats
@@ -170,7 +170,7 @@ export default async function EditPlayerPage({
               <div>
                 <label className="text-xs text-slate-500 dark:text-[#7a7a7a] uppercase tracking-wider block mb-2">Team</label>
                 <select name="team_id" defaultValue={player?.team_id ?? ''}
-                  className="w-full bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]">
+                  className="w-full bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#16163f]">
                   <option value="">No Team</option>
                   {(teams ?? []).map((t: any) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
@@ -185,7 +185,7 @@ export default async function EditPlayerPage({
                     <label key={pos} className="flex items-center gap-1.5 cursor-pointer">
                       <input type="checkbox" name="positions" value={pos}
                         defaultChecked={player?.positions?.includes(pos)}
-                        className="accent-[#ff1d25]" />
+                        className="accent-[#16163f]" />
                       <span className="text-sm text-slate-700 dark:text-white">{pos}</span>
                     </label>
                   ))}
@@ -219,7 +219,7 @@ export default async function EditPlayerPage({
               <div>
                 <label className="text-xs text-slate-500 dark:text-[#7a7a7a] uppercase tracking-wider block mb-2">Active Status</label>
                 <select name="is_active" defaultValue={player?.is_active !== false ? 'true' : 'false'}
-                  className="bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]">
+                  className="bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#16163f]">
                   <option value="true">Active</option>
                   <option value="false">Inactive</option>
                 </select>
@@ -228,7 +228,7 @@ export default async function EditPlayerPage({
 
             <div className="flex items-center gap-4 pt-2">
               <button type="submit"
-                className="bg-[#ff1d25] hover:bg-[#e0181f] text-white font-bold px-6 py-2.5 rounded-lg transition-colors">
+                className="bg-[#16163f] hover:bg-[#101033] text-white font-bold px-6 py-2.5 rounded-lg transition-colors">
                 {isNew ? 'Add Player' : 'Save Changes'}
               </button>
               <Link href="/admin/players" className="text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white text-sm transition-colors">Cancel</Link>
@@ -436,7 +436,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function Field({ label, name, defaultValue, type = 'text', required, textarea }: {
   label: string; name: string; defaultValue?: string; type?: string; required?: boolean; textarea?: boolean
 }) {
-  const cls = "w-full bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#ff1d25]"
+  const cls = "w-full bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-[#16163f]"
   return (
     <div>
       <label className="text-xs text-slate-500 dark:text-[#7a7a7a] uppercase tracking-wider block mb-1.5">{label}</label>

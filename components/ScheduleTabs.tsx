@@ -29,7 +29,7 @@ export default function ScheduleTabs({
             onClick={() => setTab(t.id)}
             className={`px-4 py-2.5 text-sm font-bold transition-colors -mb-px border-b-2 ${
               tab === t.id
-                ? 'border-[#ff1d25] text-slate-900 dark:text-white'
+                ? 'border-[#16163f] text-slate-900 dark:text-white'
                 : 'border-transparent text-slate-400 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white'
             }`}
           >

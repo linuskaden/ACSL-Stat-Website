@@ -72,7 +72,7 @@ function TeamBoxTable({ title, color, players }: { title: string; color: string;
           {sorted.map(p => (
             <tr key={p.player_id} className="bg-white dark:bg-[#111]">
               <Td>
-                <Link href={`/players/${p.player_id}`} className="font-semibold text-slate-900 dark:text-white hover:text-[#ff1d25] transition-colors">
+                <Link href={`/players/${p.player_id}`} className="font-semibold text-slate-900 dark:text-white hover:text-[#16163f] transition-colors">
                   {p.player?.first_name} {p.player?.last_name}
                 </Link>
                 <span className="ml-1.5 text-[11px] text-slate-400 dark:text-[#555]">{p.player?.positions.join('/')}</span>

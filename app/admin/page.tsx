@@ -42,15 +42,15 @@ export default async function AdminDashboard() {
 
       {/* Live game alert */}
       {liveGames && liveGames.length > 0 && (
-        <div className="bg-[#ff1d25]/10 border border-[#ff1d25]/30 rounded-xl p-4 mb-6">
+        <div className="bg-[#16163f]/10 border border-[#16163f]/30 rounded-xl p-4 mb-6">
           {liveGames.map((g: any) => (
             <div key={g.id} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="animate-pulse w-2 h-2 rounded-full bg-[#ff1d25] inline-block" />
-                <span className="font-bold text-[#ff1d25] text-sm">LIVE: {g.home_team?.short_name} vs {g.away_team?.short_name}</span>
+                <span className="animate-pulse w-2 h-2 rounded-full bg-[#16163f] inline-block" />
+                <span className="font-bold text-[#16163f] text-sm">LIVE: {g.home_team?.short_name} vs {g.away_team?.short_name}</span>
               </div>
               <Link href={`/admin/games/${g.id}/track`}
-                className="bg-[#ff1d25] text-white text-xs font-bold px-4 py-1.5 rounded hover:bg-[#e0181f] transition-colors">
+                className="bg-[#16163f] text-white text-xs font-bold px-4 py-1.5 rounded hover:bg-[#101033] transition-colors">
                 Open Tracker →
               </Link>
             </div>
@@ -106,7 +106,7 @@ function AdminCard({ title, desc, href, icon, external }: {
     <Link href={href} target={external ? '_blank' : undefined}
       className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-black/15 dark:hover:border-white/20 transition-all group">
       <div className="text-2xl mb-3">{icon}</div>
-      <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-[#ff1d25] transition-colors">{title}</h3>
+      <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-[#16163f] transition-colors">{title}</h3>
       <p className="text-xs text-slate-500 dark:text-[#7a7a7a] mt-1">{desc}</p>
     </Link>
   )

@@ -7,7 +7,7 @@
   /* ACSL brand — matched to acsl.at: deep navy is the primary colour,
      red is a rare highlight (live only). */
   --acsl-navy: #16163f;
-  --acsl-red: #ff1d25;
+  --acsl-red: #16163f;
   --acsl-gray: #6b6b76;
 
   /* Semantic tokens — LIGHT (default / base) */
@@ -68,12 +68,12 @@ body {
 .dark .stats-cell input { color: #ffffff; }
 
 .stats-cell:focus-within {
-  background: rgba(255, 29, 37, 0.15) !important;
+  background: rgba(22, 22, 63, 0.15) !important;
   outline: 1px solid var(--acsl-red);
 }
 
 /* ── Focus rings ── */
-*:focus-visible { outline-color: var(--acsl-red); }
+*:focus-visible { outline-color: var(--acsl-navy); }
 
 /* ===== Playoff bracket tree ===== */
 :root { --pf-line: rgba(0, 0, 0, 0.20); --pf-bronze: rgba(245, 166, 35, 0.65); }
@@ -139,7 +139,7 @@ body {
   font-size: 9px; font-weight: 600; color: var(--fg-faint); white-space: nowrap;
 }
 .pf-meta-title { font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--fg-muted); }
-.pf-meta-live { color: #ff1d25; font-weight: 800; }
+.pf-meta-live { color: #16163f; font-weight: 800; }
 
 .pf-champ {
   height: 150px; border-radius: 15px; border: 2px solid;

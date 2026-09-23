@@ -65,7 +65,7 @@ export default async function HomePage() {
       {liveGame && (
         <Link
           href="/live"
-          className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-[#ff1d25] rounded-lg px-4 py-1.5 text-white font-bold text-xs hover:bg-[#e0181f] transition-colors shadow-lg"
+          className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-[#16163f] rounded-lg px-4 py-1.5 text-white font-bold text-xs hover:bg-[#101033] transition-colors shadow-lg"
         >
           <span className="animate-pulse w-1.5 h-1.5 rounded-full bg-white inline-block" />
           LIVE: {(liveGame as any).home_team?.short_name ?? '—'} {liveGame.home_score ?? 0}–{liveGame.away_score ?? 0} {(liveGame as any).away_team?.short_name ?? '—'} →

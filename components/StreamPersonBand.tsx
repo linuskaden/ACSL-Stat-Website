@@ -6,7 +6,7 @@
 ─────────────────────────────────────────────── */
 export type StreamPerson = { name: string; role: string | null; logo_url?: string | null }
 
-const ACSL_RED = '#ff1d25'
+const ACSL_RED = '#16163f'
 
 export default function StreamPersonBand({ person, visible }: { person: StreamPerson | null; visible: boolean }) {
   const active = visible && !!person

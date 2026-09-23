@@ -154,10 +154,10 @@ export default function StreamControls() {
             return (
               <button key={p.id} onClick={() => showPerson(p.id)}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
-                  background: on ? 'rgba(255,29,37,0.16)' : '#171c2e', border: `1px solid ${on ? '#ff1d25' : 'rgba(255,255,255,0.06)'}`, boxShadow: on ? '0 0 12px rgba(255,29,37,0.3)' : 'none' }}>
+                  background: on ? 'rgba(22,22,63,0.16)' : '#171c2e', border: `1px solid ${on ? '#16163f' : 'rgba(255,255,255,0.06)'}`, boxShadow: on ? '0 0 12px rgba(22,22,63,0.3)' : 'none' }}>
                 <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', lineHeight: 1.15 }}>{p.name}</span>
                 <span style={{ fontSize: 11, color: on ? '#ff6b70' : '#7a7a9a', lineHeight: 1.15 }}>{p.role}</span>
-                {on && <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: 1, color: '#ff1d25', marginTop: 2 }}>ON AIR</span>}
+                {on && <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: 1, color: '#16163f', marginTop: 2 }}>ON AIR</span>}
               </button>
             )
           })}

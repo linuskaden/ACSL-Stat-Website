@@ -52,7 +52,7 @@ export default async function BoxScorePage({ params }: { params: Promise<{ id: s
     <div className="max-w-5xl mx-auto px-4 py-8">
 
       {/* Back */}
-      <Link href="/schedule" className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#7a7a7a] hover:text-[#ff1d25] transition-colors mb-6">
+      <Link href="/schedule" className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#7a7a7a] hover:text-[#16163f] transition-colors mb-6">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 5l-7 7 7 7" />
         </svg>
@@ -88,7 +88,7 @@ export default async function BoxScorePage({ params }: { params: Promise<{ id: s
             ) : (
               <span className="text-slate-400 dark:text-[#555] font-semibold">vs</span>
             )}
-            <div className="mt-1 text-xs font-semibold" style={{ color: isFinal ? '#04a550' : isLive ? '#ff1d25' : '#7a7a7a' }}>
+            <div className="mt-1 text-xs font-semibold" style={{ color: isFinal ? '#04a550' : isLive ? '#16163f' : '#7a7a7a' }}>
               {isLive && <span className="animate-pulse mr-1">●</span>}
               {isFinal ? 'Final' : isLive ? 'LIVE' : 'Upcoming'}
             </div>
@@ -109,7 +109,7 @@ export default async function BoxScorePage({ params }: { params: Promise<{ id: s
       {isFinal && g.highlights_url && (
         <div className="mb-6 -mt-2">
           <a href={g.highlights_url} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#ff1d25] text-white text-sm font-bold hover:bg-[#e0181f] transition-colors shadow-sm">
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#16163f] text-white text-sm font-bold hover:bg-[#101033] transition-colors shadow-sm">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
             Highlights ansehen
           </a>

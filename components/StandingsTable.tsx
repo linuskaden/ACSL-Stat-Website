@@ -83,7 +83,7 @@ export default function StandingsTable({ standings, formByTeam = {} }: {
                   <td className="px-4 py-4">
                     <Link href={`/teams/${s.team?.slug ?? ''}`} className="flex items-center gap-3">
                       <TeamBadge team={s.team} size="md" />
-                      <span className="font-bold text-slate-900 dark:text-white group-hover:text-[#ff1d25] transition-colors">{s.team?.short_name}</span>
+                      <span className="font-bold text-slate-900 dark:text-white group-hover:text-[#16163f] transition-colors">{s.team?.short_name}</span>
                     </Link>
                   </td>
                   <td className="text-center px-3 py-4 font-bold text-slate-900 dark:text-white tabular-nums">{s.wins ?? 0}-{s.losses ?? 0}</td>
@@ -96,7 +96,7 @@ export default function StandingsTable({ standings, formByTeam = {} }: {
                   </td>
                   <td className="text-center px-3 py-4 text-slate-500 dark:text-[#7a7a7a] tabular-nums">{s.points_for}</td>
                   <td className="text-center px-3 py-4 text-slate-500 dark:text-[#7a7a7a] tabular-nums">{s.points_against}</td>
-                  <td className={`text-center px-3 py-4 font-semibold tabular-nums ${diff > 0 ? 'text-[#04a550]' : diff < 0 ? 'text-[#ff1d25]' : 'text-slate-500 dark:text-[#7a7a7a]'}`}>
+                  <td className={`text-center px-3 py-4 font-semibold tabular-nums ${diff > 0 ? 'text-[#04a550]' : diff < 0 ? 'text-[#16163f]' : 'text-slate-500 dark:text-[#7a7a7a]'}`}>
                     {diff > 0 ? `+${diff}` : diff}
                   </td>
                 </tr>
@@ -112,7 +112,7 @@ export default function StandingsTable({ standings, formByTeam = {} }: {
 function FormBadge({ result }: { result: FormResult }) {
   const style =
     result === 'W' ? 'bg-[#04a550] text-white'
-    : result === 'L' ? 'bg-[#ff1d25] text-white'
+    : result === 'L' ? 'bg-[#16163f] text-white'
     : 'bg-black/[0.12] dark:bg-white/[0.15] text-slate-600 dark:text-[#bbb]'
   return (
     <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-black ${style}`} title={result === 'W' ? 'Win' : result === 'L' ? 'Loss' : 'Tie'}>
@@ -138,7 +138,7 @@ function SortTh({ label, sk, active, dir, onSort, align = 'center' }: {
         className={`inline-flex items-center gap-1 select-none hover:text-slate-900 dark:hover:text-white transition-colors ${align === 'center' ? 'justify-center' : ''} ${isActive ? 'text-slate-900 dark:text-white' : ''}`}
       >
         {label}
-        <span className={`text-[9px] leading-none ${isActive ? 'text-[#ff1d25]' : 'opacity-0'}`}>
+        <span className={`text-[9px] leading-none ${isActive ? 'text-[#16163f]' : 'opacity-0'}`}>
           {isActive && dir === 'desc' ? '▼' : '▲'}
         </span>
       </button>

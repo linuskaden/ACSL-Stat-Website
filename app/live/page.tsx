@@ -61,7 +61,7 @@ export default function LivePage() {
     <div className="max-w-4xl mx-auto px-4 py-16 text-center">
       <h1 className="text-2xl font-black mb-2 text-slate-900 dark:text-white">No Live Game</h1>
       <p className="text-slate-500 dark:text-[#7a7a7a]">Check back when a game is in progress.</p>
-      <Link href="/schedule" className="mt-4 inline-block text-[#ff1d25] text-sm hover:underline">View Schedule →</Link>
+      <Link href="/schedule" className="mt-4 inline-block text-[#16163f] dark:text-white text-sm font-semibold hover:underline">View Schedule</Link>
     </div>
   )
 
@@ -76,10 +76,10 @@ export default function LivePage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
       {/* Scoreboard */}
-      <div className="bg-white dark:bg-[#111] border border-[#ff1d25]/30 rounded-2xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#111] border border-[#16163f]/30 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-center gap-1 mb-4">
-          <span className="animate-pulse w-2 h-2 rounded-full bg-[#ff1d25] inline-block" />
-          <span className="text-[#ff1d25] text-xs font-bold uppercase tracking-widest">Live</span>
+          <span className="animate-pulse w-2 h-2 rounded-full bg-[#16163f] inline-block" />
+          <span className="text-[#16163f] text-xs font-bold uppercase tracking-widest">Live</span>
         </div>
         <div className="flex items-center justify-center gap-8">
           <div className="text-center flex flex-col items-center gap-2">
@@ -115,7 +115,7 @@ export default function LivePage() {
           </div>
         ) : streamUrl ? (
           <a href={streamUrl} target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-[#ff1d25] text-white text-sm font-bold hover:bg-[#e0181f] transition-colors shadow-sm">
+            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-[#16163f] text-white text-sm font-bold hover:bg-[#101033] transition-colors shadow-sm">
             <span className="animate-pulse">●</span> Watch Live
           </a>
         ) : (
@@ -292,7 +292,7 @@ function LiveStatsTable({ title, players, teamColor }: { title: string; players:
                           const color = zeroAccent
                             ? 'text-slate-300 dark:text-[#555]'
                             : c.accent === 'green' ? 'text-[#04a550]'
-                            : c.accent === 'red' ? 'text-[#ff1d25]'
+                            : c.accent === 'red' ? 'text-[#16163f]'
                             : 'text-slate-900 dark:text-white'
                           return (
                             <td key={c.h} className={`text-center px-2 py-2 font-semibold tabular-nums ${color}`}>

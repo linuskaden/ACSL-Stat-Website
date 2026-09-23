@@ -50,12 +50,12 @@ function EntryRow({ e, i, cat, teamsMode, big }: { e: LeaderEntry; i: number; ca
   const pg = perGame(e, cat, teamsMode)
   return (
     <Link href={e.href} className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors group">
-      <span className={`w-5 text-center text-xs font-black tabular-nums shrink-0 ${i === 0 ? 'text-[#ff1d25]' : 'text-slate-300 dark:text-[#555]'}`}>{i + 1}</span>
+      <span className={`w-5 text-center text-xs font-black tabular-nums shrink-0 ${i === 0 ? 'text-[#16163f]' : 'text-slate-300 dark:text-[#555]'}`}>{i + 1}</span>
       {e.logo
         ? <img src={e.logo} alt="" className={`${big ? 'w-8 h-8' : 'w-6 h-6'} object-contain shrink-0`} />
         : <span className={`${big ? 'w-8 h-8' : 'w-6 h-6'} rounded shrink-0`} style={{ background: e.color }} />}
       <div className="flex-1 min-w-0">
-        <span className={`font-semibold text-slate-900 dark:text-white group-hover:text-[#ff1d25] transition-colors truncate block ${big ? 'text-base' : 'text-sm'}`}>
+        <span className={`font-semibold text-slate-900 dark:text-white group-hover:text-[#16163f] transition-colors truncate block ${big ? 'text-base' : 'text-sm'}`}>
           {e.jersey != null && <span className="text-slate-400 dark:text-[#666]">#{e.jersey} </span>}{e.name}
         </span>
         {e.subtitle && <span className="text-[11px] text-slate-400 dark:text-[#666] truncate block">{e.subtitle}</span>}
@@ -84,8 +84,8 @@ function CatCard({ cat, entries, teamsMode, onOpen }: { cat: Cat; entries: Leade
           {top.map((e, i) => <EntryRow key={e.id} e={e} i={i} cat={cat} teamsMode={teamsMode} />)}
         </div>
       )}
-      <button onClick={onOpen} className="px-4 py-2.5 border-t border-black/[0.06] dark:border-white/5 text-xs font-bold text-[#ff1d25] hover:bg-[#ff1d25]/[0.06] transition-colors text-left">
-        Ganze Rangliste →
+      <button onClick={onOpen} className="px-4 py-2.5 border-t border-black/[0.06] dark:border-white/5 text-xs font-bold text-[#16163f] dark:text-white hover:bg-[#16163f]/[0.06] transition-colors text-left">
+        Ganze Rangliste
       </button>
     </div>
   )
@@ -96,7 +96,7 @@ function Detail({ cat, entries, teamsMode, onBack }: { cat: Cat; entries: Leader
   const ranked = rank(entries, cat, 50)
   return (
     <div>
-      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#7a7a7a] hover:text-[#ff1d25] transition-colors mb-4">
+      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-[#7a7a7a] hover:text-[#16163f] transition-colors mb-4">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
         Alle Kategorien
       </button>
@@ -164,7 +164,7 @@ export default function LeadersClient({
 
   const pill = (active: boolean) =>
     `px-4 py-2 rounded-lg text-sm font-bold transition-all ${active ? 'bg-white dark:bg-[#222] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white'}`
-  const selectCls = 'bg-white dark:bg-[#111] border border-black/[0.1] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#ff1d25]'
+  const selectCls = 'bg-white dark:bg-[#111] border border-black/[0.1] dark:border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-[#16163f]'
 
   return (
     <div>

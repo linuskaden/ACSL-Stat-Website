@@ -13,7 +13,7 @@ const FIELDS = ['fg_made', 'fg_att', 'three_made', 'three_att', 'ft_made', 'ft_a
 const HEADERS = ['FGM', 'FGA', '3PM', '3PA', 'FTM', 'FTA', 'REB', 'AST']
 
 function darkSafe(hex?: string | null): string {
-  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return '#ff1d25'
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return '#16163f'
   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16)
   const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
   if (lum >= 0.22) return hex
@@ -196,22 +196,22 @@ export default function BballTracker({ game, homePlayers, awayPlayers, initialSt
         <div className="flex gap-1 ml-2">
           {[...QUARTERS, 'Total'].map(q => (
             <button key={q} onClick={() => setQuarter(q)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${quarter === q ? 'bg-[#ff1d25] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white bg-[#f1f5f9] dark:bg-[#1a1a1a]'}`}>
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${quarter === q ? 'bg-[#16163f] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white bg-[#f1f5f9] dark:bg-[#1a1a1a]'}`}>
               {q}
             </button>
           ))}
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          {saveError ? <span className="text-xs text-[#ff1d25] font-semibold">⚠ Nicht gespeichert – neuer Versuch…</span>
+          {saveError ? <span className="text-xs text-[#16163f] font-semibold">⚠ Nicht gespeichert – neuer Versuch…</span>
             : Object.keys(saving).length > 0 ? <span className="text-xs text-slate-500 dark:text-[#7a7a7a] animate-pulse">Speichert…</span>
             : <span className="text-xs text-[#04a550]/80">✓ Gespeichert</span>}
-          <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${status === 'live' ? 'bg-[#ff1d25]/15 text-[#ff1d25] animate-pulse' : status === 'final' ? 'bg-[#04a550]/15 text-[#04a550]' : 'bg-black/10 dark:bg-white/10 text-slate-500 dark:text-[#7a7a7a]'}`}>
+          <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${status === 'live' ? 'bg-[#16163f]/15 text-[#16163f] animate-pulse' : status === 'final' ? 'bg-[#04a550]/15 text-[#04a550]' : 'bg-black/10 dark:bg-white/10 text-slate-500 dark:text-[#7a7a7a]'}`}>
             {status === 'live' ? '● Live' : status === 'final' ? 'Abgeschlossen' : 'Geplant'}
           </span>
           {status !== 'final' && (
             <button onClick={() => setGameStatus(status === 'live' ? 'scheduled' : 'live')}
-              className={`text-xs px-3 py-1.5 rounded transition-colors font-medium border ${status === 'live' ? 'border-black/15 dark:border-white/15 text-slate-500 dark:text-[#7a7a7a] hover:bg-black/5 dark:hover:bg-white/5' : 'border-[#ff1d25]/40 text-[#ff1d25] hover:bg-[#ff1d25]/10'}`}>
+              className={`text-xs px-3 py-1.5 rounded transition-colors font-medium border ${status === 'live' ? 'border-black/15 dark:border-white/15 text-slate-500 dark:text-[#7a7a7a] hover:bg-black/5 dark:hover:bg-white/5' : 'border-[#16163f]/40 text-[#16163f] hover:bg-[#16163f]/10'}`}>
               {status === 'live' ? 'Live beenden' : '● LIVE schalten'}
             </button>
           )}

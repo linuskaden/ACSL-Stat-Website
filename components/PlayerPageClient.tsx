@@ -111,7 +111,7 @@ export default function PlayerPageClient({
 }) {
   const [tab, setTab] = useState<'profile' | 'stats' | 'games'>('profile')
   const pos: string[] = player.positions ?? []
-  const accent = team?.primary_color ?? '#ff1d25'
+  const accent = team?.primary_color ?? '#16163f'
 
   const TABS: { id: typeof tab; label: string }[] = [
     { id: 'profile', label: 'Profil' },
@@ -221,7 +221,7 @@ export default function PlayerPageClient({
           <div className="space-y-2">
             {gameLog.map((g: any) => {
               const items = buildTotals(pos, g.stats)
-              const resultColor = g.result === 'W' ? '#04a550' : g.result === 'L' ? '#ff1d25' : 'var(--fg-muted)'
+              const resultColor = g.result === 'W' ? '#04a550' : g.result === 'L' ? '#16163f' : 'var(--fg-muted)'
               const dateStr = g.date ? new Date(g.date).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Vienna' }) : ''
               return (
                 <Link key={g.gameId} href={`/games/${g.gameId}`} className="block">

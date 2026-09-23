@@ -30,7 +30,7 @@ const K_HEADERS = ['FGM','FGA','EPM','EPA']
  * unchanged.
  */
 function darkSafe(hex?: string | null): string {
-  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return '#ff1d25'
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return '#16163f'
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
@@ -393,14 +393,14 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center">
             <input value={homeScore} onChange={e => { setHomeScore(Number(e.target.value)) }} onBlur={updateScore}
-              type="number" className="w-12 bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
-            <span className="text-[10px] text-[#ff1d25] leading-none mt-0.5">auto</span>
+              type="number" className="w-12 bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-white text-center text-sm focus:outline-none focus:border-[#16163f]" />
+            <span className="text-[10px] text-[#16163f] leading-none mt-0.5">auto</span>
           </div>
           <span className="text-slate-400 dark:text-[#7a7a7a]">–</span>
           <div className="flex flex-col items-center">
             <input value={awayScore} onChange={e => { setAwayScore(Number(e.target.value)) }} onBlur={updateScore}
-              type="number" className="w-12 bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-white text-center text-sm focus:outline-none focus:border-[#ff1d25]" />
-            <span className="text-[10px] text-[#ff1d25] leading-none mt-0.5">auto</span>
+              type="number" className="w-12 bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-white text-center text-sm focus:outline-none focus:border-[#16163f]" />
+            <span className="text-[10px] text-[#16163f] leading-none mt-0.5">auto</span>
           </div>
         </div>
 
@@ -408,7 +408,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
         <div className="flex gap-1 ml-2">
           {[...QUARTERS, 'Total'].map(q => (
             <button key={q} onClick={() => setQuarter(q)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${quarter === q ? 'bg-[#ff1d25] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white bg-[#f1f5f9] dark:bg-[#1a1a1a]'}`}>
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${quarter === q ? 'bg-[#16163f] text-white' : 'text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white bg-[#f1f5f9] dark:bg-[#1a1a1a]'}`}>
               {q}
             </button>
           ))}
@@ -417,7 +417,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
         <div className="ml-auto flex items-center gap-3">
           {/* Save status — never leave the operator guessing whether data is saved */}
           {saveError ? (
-            <span className="text-xs text-[#ff1d25] font-semibold">⚠ Nicht gespeichert – neuer Versuch…</span>
+            <span className="text-xs text-[#16163f] font-semibold">⚠ Nicht gespeichert – neuer Versuch…</span>
           ) : Object.keys(saving).length > 0 ? (
             <span className="text-xs text-slate-500 dark:text-[#7a7a7a] animate-pulse">Speichert…</span>
           ) : (
@@ -426,7 +426,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
 
           {/* Game status badge — makes the (previously invisible) live flag visible */}
           <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${
-            status === 'live' ? 'bg-[#ff1d25]/15 text-[#ff1d25] animate-pulse'
+            status === 'live' ? 'bg-[#16163f]/15 text-[#16163f] animate-pulse'
             : status === 'final' ? 'bg-[#04a550]/15 text-[#04a550]'
             : 'bg-black/10 dark:bg-white/10 text-slate-500 dark:text-[#7a7a7a]'}`}>
             {status === 'live' ? '● Live' : status === 'final' ? 'Abgeschlossen' : 'Geplant'}
@@ -436,7 +436,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
               className={`text-xs px-3 py-1.5 rounded transition-colors font-medium border ${
                 status === 'live'
                   ? 'border-black/15 dark:border-white/15 text-slate-500 dark:text-[#7a7a7a] hover:bg-black/5 dark:hover:bg-white/5'
-                  : 'border-[#ff1d25]/40 text-[#ff1d25] hover:bg-[#ff1d25]/10'}`}>
+                  : 'border-[#16163f]/40 text-[#16163f] hover:bg-[#16163f]/10'}`}>
               {status === 'live' ? 'Live beenden' : '● LIVE schalten'}
             </button>
           )}
@@ -487,7 +487,7 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
               <span>TDs: <strong className="text-[#04a550]">{t.totalTDs}</strong></span>
               <span>FG: <strong className="text-slate-900 dark:text-white">{t.totalFGM}/{t.totalFGA}</strong></span>
               <span>EP: <strong className="text-slate-900 dark:text-white">{t.totalEPM}/{t.totalEPA}</strong></span>
-              <span>INTs: <strong className="text-[#ff1d25]">{t.totalINTs}</strong></span>
+              <span>INTs: <strong className="text-[#16163f]">{t.totalINTs}</strong></span>
               <span>FUM: <strong className="text-slate-500 dark:text-[#7a7a7a]">{t.totalFumbles}</strong></span>
             </>
           })()}

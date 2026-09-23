@@ -30,11 +30,11 @@ export default function PlayerOverlay({ params, searchParams }: { params: { id: 
         minWidth: 520,
       }}>
         {/* Color bar */}
-        <div style={{ width: 8, background: team?.primary_color ?? '#ff1d25' }} />
+        <div style={{ width: 8, background: team?.primary_color ?? '#16163f' }} />
 
         {/* Number */}
         <div style={{
-          background: team?.primary_color ?? '#ff1d25', color: 'white',
+          background: team?.primary_color ?? '#16163f', color: 'white',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '12px 20px', minWidth: 80,
         }}>

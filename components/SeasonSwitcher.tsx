@@ -43,7 +43,7 @@ export default function SeasonSwitcher() {
       onChange={onChange}
       aria-label="Season"
       title="Season"
-      className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 dark:text-white focus:outline-none focus:border-[#ff1d25] cursor-pointer"
+      className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 dark:text-white focus:outline-none focus:border-[#16163f] cursor-pointer"
     >
       {seasons.map(s => (
         <option key={s} value={s}>{seasonLabel(s)}</option>

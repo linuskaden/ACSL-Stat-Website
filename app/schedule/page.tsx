@@ -11,7 +11,7 @@ export const revalidate = 30
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   scheduled: { label: 'Upcoming', color: '#7a7a7a' },
-  live: { label: 'LIVE', color: '#ff1d25' },
+  live: { label: 'LIVE', color: '#16163f' },
   final: { label: 'Final', color: '#04a550' },
 }
 
@@ -77,7 +77,7 @@ function GameList({ games, gamesWithStats, recordByTeam }: {
               const bothTeams = game.home_team && game.away_team
               return (
                 <div key={game.id}
-                  className={`bg-white dark:bg-[#111] border rounded-xl p-4 flex items-center gap-4 shadow-sm ${isLive ? 'border-[#ff1d25]/40' : 'border-black/[0.07] dark:border-white/5'}`}>
+                  className={`bg-white dark:bg-[#111] border rounded-xl p-4 flex items-center gap-4 shadow-sm ${isLive ? 'border-[#16163f]/40' : 'border-black/[0.07] dark:border-white/5'}`}>
                   {/* Kickoff */}
                   <div className="w-14 text-center shrink-0">
                     <div className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
@@ -124,7 +124,7 @@ function GameList({ games, gamesWithStats, recordByTeam }: {
                     {/* Live → live view (greyed unless the game is live) */}
                     {isLive ? (
                       <Link href="/live"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#ff1d25] text-white text-xs font-bold hover:bg-[#e0181f] transition-colors">
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#16163f] text-white text-xs font-bold hover:bg-[#101033] transition-colors">
                         <span className="animate-pulse">●</span> Live
                       </Link>
                     ) : (
@@ -150,7 +150,7 @@ function GameList({ games, gamesWithStats, recordByTeam }: {
                     {/* Box score */}
                     {gamesWithStats.has(game.id) ? (
                       <Link href={`/games/${game.id}`}
-                        className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#ff1d25]/10 text-[#ff1d25] text-xs font-semibold hover:bg-[#ff1d25]/20 transition-colors">
+                        className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#16163f]/10 text-[#16163f] text-xs font-semibold hover:bg-[#16163f]/20 transition-colors">
                         Box Score
                       </Link>
                     ) : (

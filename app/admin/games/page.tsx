@@ -204,13 +204,13 @@ export default async function AdminGamesPage() {
     const homeWon = bEntry?.winner_id === game.home_team_id
     const awayWon = bEntry?.winner_id === game.away_team_id
     const status = isLive ? 'live' : isFinal ? 'final' : 'scheduled'
-    const statusColor = isLive ? '#ff1d25' : isFinal ? '#04a550' : '#7a7a7a'
+    const statusColor = isLive ? '#16163f' : isFinal ? '#04a550' : '#7a7a7a'
 
-    const inputCls = 'bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded px-1.5 py-1 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#ff1d25]'
+    const inputCls = 'bg-[#f7f8fa] dark:bg-[#0a0a0a] border border-black/10 dark:border-white/10 rounded px-1.5 py-1 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#16163f]'
 
     return (
       <div key={game.id}
-        className={`bg-white dark:bg-[#111] border rounded-xl p-4 shadow-sm ${isLive ? 'border-[#ff1d25]/40' : alreadyAdvanced ? 'border-[#04a550]/20' : 'border-black/[0.07] dark:border-white/5'}`}>
+        className={`bg-white dark:bg-[#111] border rounded-xl p-4 shadow-sm ${isLive ? 'border-[#16163f]/40' : alreadyAdvanced ? 'border-[#04a550]/20' : 'border-black/[0.07] dark:border-white/5'}`}>
 
         {/* Matchup */}
         <div className="flex items-center gap-4">
@@ -280,7 +280,7 @@ export default async function AdminGamesPage() {
 
           {/* Live view link — greyed unless the game is live */}
           {isLive ? (
-            <Link href="/live" className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded bg-[#ff1d25] text-white hover:bg-[#e0181f] transition-colors">
+            <Link href="/live" className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded bg-[#16163f] text-white hover:bg-[#101033] transition-colors">
               <span className="animate-pulse">●</span> Live
             </Link>
           ) : (
@@ -291,7 +291,7 @@ export default async function AdminGamesPage() {
 
           {isLive || game.status === 'scheduled' ? (
             <Link href={`/admin/games/${game.id}/track`}
-              className="bg-[#ff1d25] text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-[#e0181f] transition-colors">
+              className="bg-[#16163f] text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-[#101033] transition-colors">
               Track Stats
             </Link>
           ) : (

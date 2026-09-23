@@ -163,7 +163,7 @@ export default function TeamStatsOverlay() {
     { label: 'COMP / ATT',  h: `${homeStats.completions}/${homeStats.attempts}`, a: `${awayStats.completions}/${awayStats.attempts}` },
     { label: 'TOTAL TDs',   h: homeStats.tds,      a: awayStats.tds,      accent: '#04a550' },
     { label: 'FIELD GOALS', h: homeStats.fgMade,   a: awayStats.fgMade   },
-    { label: 'INT',         h: homeStats.ints,     a: awayStats.ints,     accent: '#ff1d25' },
+    { label: 'INT',         h: homeStats.ints,     a: awayStats.ints,     accent: '#16163f' },
     { label: 'FUMBLES',     h: homeStats.fumbles,  a: awayStats.fumbles,  accent: '#f59e0b' },
   ]
 
@@ -206,7 +206,7 @@ export default function TeamStatsOverlay() {
           <div style={{ fontSize: 52, fontWeight: 900, letterSpacing: 2, color: 'rgba(255,255,255,0.12)', fontFamily: '"Arial Black", Impact, sans-serif', lineHeight: 1, textTransform: 'uppercase' }}>TEAM</div>
           <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 6, color: 'rgba(255,255,255,0.22)', fontFamily: '"Arial Black", sans-serif', lineHeight: 1, textTransform: 'uppercase', marginTop: -4 }}>STATS</div>
           {statusLabel && (
-            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 3, color: gameMeta?.status === 'live' ? '#ff1d25' : '#04a550', textTransform: 'uppercase', fontFamily: '"Arial Black", sans-serif', marginTop: 4 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 3, color: gameMeta?.status === 'live' ? '#16163f' : '#04a550', textTransform: 'uppercase', fontFamily: '"Arial Black", sans-serif', marginTop: 4 }}>
               {statusLabel}
             </div>
           )}

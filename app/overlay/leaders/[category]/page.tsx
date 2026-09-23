@@ -68,7 +68,7 @@ export default function LeadersOverlay({ params, searchParams }: {
   return (
     <div style={{ position: 'absolute', bottom: 80, left: 80 }}>
       <div style={{ background: 'rgba(10,10,10,0.92)', backdropFilter: 'blur(12px)', borderRadius: 8, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', minWidth: 380 }}>
-        <div style={{ background: '#ff1d25', padding: '8px 16px' }}>
+        <div style={{ background: '#16163f', padding: '8px 16px' }}>
           <span style={{ color: 'white', fontSize: 14, fontWeight: 900, fontFamily: 'Arial Black, sans-serif', letterSpacing: 2 }}>
             {CATEGORY_LABELS[params.category] ?? params.category.toUpperCase()}
           </span>
@@ -87,7 +87,7 @@ export default function LeadersOverlay({ params, searchParams }: {
             return (
               <div key={s.player_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 16px', borderBottom: i < leaders.length-1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                 <span style={{ color: '#7a7a7a', fontSize: 13, fontWeight: 700, width: 20, textAlign: 'center' }}>{i+1}</span>
-                <div style={{ width: 4, height: 32, borderRadius: 2, background: team?.primary_color ?? '#ff1d25', flexShrink: 0 }} />
+                <div style={{ width: 4, height: 32, borderRadius: 2, background: team?.primary_color ?? '#16163f', flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ color: 'white', fontSize: 14, fontWeight: 800, fontFamily: 'Arial Black, sans-serif' }}>
                     {p?.first_name?.[0]}. {p?.last_name} <span style={{ color: '#7a7a7a', fontSize: 11, fontWeight: 400 }}>#{p?.jersey_number}</span>

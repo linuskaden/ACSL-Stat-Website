@@ -309,7 +309,7 @@ export default function OverlayControlPage() {
           {([['game', 'Live Game Broadcast'], ['stream', 'Stream Einblendungen']] as const).map(([val, txt]) => (
             <button key={val} onClick={() => switchMode(val)}
               className="px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
-              style={{ background: adminMode === val ? '#ff1d25' : '#131826', color: adminMode === val ? 'white' : '#777' }}>
+              style={{ background: adminMode === val ? '#16163f' : '#131826', color: adminMode === val ? 'white' : '#777' }}>
               {txt}
             </button>
           ))}
@@ -421,7 +421,7 @@ export default function OverlayControlPage() {
             {(['live', 'career'] as const).map(m => (
               <button key={m} onClick={() => pushOverlay({ mode: m })}
                 className="px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
-                style={{ background: overlay.mode === m ? '#ff1d25' : '#131826', color: overlay.mode === m ? 'white' : '#666' }}>
+                style={{ background: overlay.mode === m ? '#16163f' : '#131826', color: overlay.mode === m ? 'white' : '#666' }}>
                 {m === 'live' ? '⚡ Live' : '📊 Career'}
               </button>
             ))}
@@ -680,7 +680,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
   awayPlayers: Player[]
   gameStatsRows: any[]
 }) {
-  const primaryColor   = team?.primary_color   ?? '#ff1d25'
+  const primaryColor   = team?.primary_color   ?? '#16163f'
   const onPrimary      = team ? textOn(primaryColor) : '#ffffff'
   const dimOnPrimary   = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)'
   const hairline       = onPrimary === '#ffffff' ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'
@@ -831,7 +831,7 @@ function OperatorPreview({ player, team, stats, mode, visible,
               { label: 'COMP/ATT',   h: `${hS.completions}/${hS.attempts}`, a: `${aS.completions}/${aS.attempts}` },
               { label: 'TOTAL TDs',  h: hS.tds,      a: aS.tds,      accent: '#04a550' },
               { label: 'FIELD GOALS',h: hS.fgm,      a: aS.fgm      },
-              { label: 'INT',        h: hS.ints,      a: aS.ints,     accent: '#ff1d25' },
+              { label: 'INT',        h: hS.ints,      a: aS.ints,     accent: '#16163f' },
               { label: 'FUMBLES',    h: hS.fumbles,   a: aS.fumbles,  accent: '#f59e0b' },
             ]
             return (
@@ -1160,7 +1160,7 @@ function PlayerModal({ player, team, gameId, careerStats, loadingStats, overlayA
   onHide: () => void
 }) {
   const isOnAir = player.id === overlayActiveId
-  const primaryColor = team?.primary_color ?? '#ff1d25'
+  const primaryColor = team?.primary_color ?? '#16163f'
 
   // Live stats for this player in the current game (summed across quarters),
   // kept fresh via realtime so the popout updates as stats are entered.
@@ -1254,10 +1254,10 @@ function PlayerModal({ player, team, gameId, careerStats, loadingStats, overlayA
                   onClick={() => isLiveActive ? onHide() : onShow('live')}
                   style={{
                     flex: 1, padding: '10px 8px', fontSize: 12, fontWeight: 800,
-                    border: isLiveActive ? '1px solid #ff1d25' : 'none',
+                    border: isLiveActive ? '1px solid #16163f' : 'none',
                     borderRadius: 8, cursor: 'pointer',
-                    background: isLiveActive ? 'rgba(255,29,37,0.15)' : '#ff1d25',
-                    color: isLiveActive ? '#ff1d25' : 'white',
+                    background: isLiveActive ? 'rgba(22,22,63,0.15)' : '#16163f',
+                    color: isLiveActive ? '#16163f' : 'white',
                   }}
                 >
                   {isLiveActive ? '▼ Live Stats ausblenden' : '▲ Live Stats einblenden'}
@@ -1532,7 +1532,7 @@ function KeyPlayerControl({ keyPlayerOverlay, selectedGame, homePlayers, awayPla
             {[4, 6, 8, 10].map(sec => (
               <button key={sec} onClick={() => onPush({ rotation_seconds: sec })}
                 style={{ padding: '6px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer', border: 'none',
-                  background: keyPlayerOverlay.rotation_seconds === sec ? '#ff1d25' : '#131826',
+                  background: keyPlayerOverlay.rotation_seconds === sec ? '#16163f' : '#131826',
                   color: keyPlayerOverlay.rotation_seconds === sec ? 'white' : '#666' }}>
                 {sec}s
               </button>
@@ -1611,7 +1611,7 @@ function KeyPlayerColumn({ label, team, players, selected, count, onToggle }: {
         <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: '#888', textTransform: 'uppercase' }}>
           {label} · {team?.short_name ?? '—'}
         </span>
-        <span style={{ fontSize: 10, fontWeight: 700, color: full ? '#ff1d25' : '#555', marginLeft: 'auto' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: full ? '#16163f' : '#555', marginLeft: 'auto' }}>
           {count}/{MAX_KEY_PER_TEAM}
         </span>
       </div>
@@ -1742,7 +1742,7 @@ function LineupControl({ lineupOverlay, selectedGame, startersByTeam, onPush, on
             {(['offense', 'defense'] as const).map(s => (
               <button key={s} onClick={() => onPush({ side: s })}
                 style={{ padding: '8px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', border: 'none', textTransform: 'uppercase', letterSpacing: 1,
-                  background: lineupOverlay.side === s ? '#ff1d25' : '#131826', color: lineupOverlay.side === s ? 'white' : '#666' }}>
+                  background: lineupOverlay.side === s ? '#16163f' : '#131826', color: lineupOverlay.side === s ? 'white' : '#666' }}>
                 {s === 'offense' ? 'Offense' : 'Defense'}
               </button>
             ))}
@@ -1767,7 +1767,7 @@ function LineupControl({ lineupOverlay, selectedGame, startersByTeam, onPush, on
                 {[6, 8, 10, 12].map(sec => (
                   <button key={sec} onClick={() => onPush({ rotation_seconds: sec })}
                     style={{ padding: '6px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer', border: 'none',
-                      background: lineupOverlay.rotation_seconds === sec ? '#ff1d25' : '#131826', color: lineupOverlay.rotation_seconds === sec ? 'white' : '#666' }}>
+                      background: lineupOverlay.rotation_seconds === sec ? '#16163f' : '#131826', color: lineupOverlay.rotation_seconds === sec ? 'white' : '#666' }}>
                     {sec}s
                   </button>
                 ))}
@@ -1781,7 +1781,7 @@ function LineupControl({ lineupOverlay, selectedGame, startersByTeam, onPush, on
             ✎ Starter bearbeiten
           </button>
 
-          <span style={{ fontSize: 11, color: sideCount === 0 ? '#ff1d25' : '#555' }}>
+          <span style={{ fontSize: 11, color: sideCount === 0 ? '#16163f' : '#555' }}>
             {activeTeam?.short_name ?? '—'} · {lineupOverlay.side === 'offense' ? 'Offense' : 'Defense'}: {sideCount} Starter
           </span>
         </div>

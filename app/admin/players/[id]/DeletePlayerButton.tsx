@@ -11,7 +11,7 @@ export default function DeletePlayerButton({ action }: { action: () => Promise<v
     >
       <button
         type="submit"
-        className="text-[#ff1d25] hover:text-red-400 text-sm border border-[#ff1d25]/30 hover:border-[#ff1d25] px-3 py-2 rounded transition-colors"
+        className="text-slate-500 dark:text-[#7a7a7a] hover:text-[#16163f] dark:hover:text-white text-sm border border-black/10 dark:border-white/10 hover:border-[#16163f] px-3 py-2 rounded transition-colors"
       >
         Delete Player
       </button>

@@ -39,7 +39,7 @@ export default function LineupBand({ team, side, screens, idx, shown, visible }:
 }) {
   const current = screens[idx] ?? null
   const active = visible && team && current
-  const primary = team?.primary_color ?? '#ff1d25'
+  const primary = team?.primary_color ?? '#16163f'
   const onPrimary = textOn(primary)
 
   return (

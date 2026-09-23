@@ -90,7 +90,7 @@ export default async function TeamAccoladesPage({ params }: { params: Promise<{ 
                         <div className="font-semibold text-slate-900 dark:text-white">{a.title || 'MVP'}</div>
                       </div>
                       {a.player ? (
-                        <Link href={`/players/${a.player.id}`} className="text-sm font-semibold text-slate-700 dark:text-[#ccc] hover:text-[#ff1d25] transition-colors truncate">
+                        <Link href={`/players/${a.player.id}`} className="text-sm font-semibold text-slate-700 dark:text-[#ccc] hover:text-[#16163f] transition-colors truncate">
                           {a.player.jersey_number != null && <span className="text-slate-400 dark:text-[#666]">#{a.player.jersey_number} </span>}
                           {a.player.first_name} {a.player.last_name}
                         </Link>
