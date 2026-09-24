@@ -27,23 +27,33 @@ function focusToPosition(nameNoExt: string): string {
 
 type HeroImage = { src: string; position: string }
 
-/** Photos for a team's hero. Football uses public/teams/<slug>/; other sports
-    use public/teams/<slug>/<sport>/ (so football shots don't leak onto them).
+/** Photos for a team's hero. Football uses public/teams/<slug>/; basketball is
+    division-specific — public/teams/<slug>/basketball-women|men/ (so Damen and
+    Herren shots stay separate), falling back to a shared /basketball/ folder.
     Sort + focal point come from the filename (see focusToPosition). */
-function teamHeroImages(slug: string, sport: string): HeroImage[] {
-  try {
-    const rel = sport === 'football' ? `/teams/${slug}` : `/teams/${slug}/${sport}`
-    const dir = path.join(process.cwd(), 'public', ...rel.slice(1).split('/'))
-    return fs.readdirSync(dir)
-      .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f))
-      .sort()
-      .map(f => ({
-        src: `${rel}/${encodeURIComponent(f)}`,
-        position: focusToPosition(f.replace(/\.[^.]+$/, '')),
-      }))
-  } catch {
-    return []
+function teamHeroImages(slug: string, competition: { sport: string; division: 'men' | 'women' | null }): HeroImage[] {
+  const candidates =
+    competition.sport === 'football'
+      ? [`/teams/${slug}`]
+      : [
+          ...(competition.division ? [`/teams/${slug}/basketball-${competition.division}`] : []),
+          `/teams/${slug}/basketball`,
+        ]
+  for (const rel of candidates) {
+    try {
+      const dir = path.join(process.cwd(), 'public', ...rel.slice(1).split('/'))
+      const files = fs.readdirSync(dir)
+        .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f))
+        .sort()
+      if (files.length) {
+        return files.map(f => ({
+          src: `${rel}/${encodeURIComponent(f)}`,
+          position: focusToPosition(f.replace(/\.[^.]+$/, '')),
+        }))
+      }
+    } catch {}
   }
+  return []
 }
 
 type TopCat = { label: string; get: (r: any) => number; unit?: string }
@@ -143,7 +153,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ s
     } : null
   }).filter(Boolean) as { label: string; unit?: string; name: string; jersey: number | null; id: string; value: number }[]
 
-  const images = teamHeroImages(slug, competition.sport)
+  const images = teamHeroImages(slug, competition)
   const primary = team.primary_color || '#111'
   const secondary = team.secondary_color || primary
 

@@ -8,25 +8,34 @@ import HeroSlideshow from '@/components/HeroSlideshow'
 
 export const revalidate = 30
 
-/** All images in public/slideshow (added simply by dropping files in). */
-function slideshowImages(): string[] {
-  try {
-    const dir = path.join(process.cwd(), 'public', 'slideshow')
-    return fs
-      .readdirSync(dir)
-      .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f))
-      .sort()
-      .map(f => `/slideshow/${encodeURIComponent(f)}`)
-  } catch {
-    return []
+/** Homepage slideshow photos. Football uses public/slideshow/; basketball is
+    division-specific (public/slideshow/basketball-women|men/), falling back to a
+    shared /slideshow/basketball/ folder. Drop files in to add them. */
+function slideshowImages(competition: { sport: string; division: 'men' | 'women' | null }): string[] {
+  const candidates =
+    competition.sport === 'football'
+      ? [['slideshow']]
+      : [
+          ...(competition.division ? [['slideshow', `basketball-${competition.division}`]] : []),
+          ['slideshow', 'basketball'],
+        ]
+  for (const parts of candidates) {
+    try {
+      const dir = path.join(process.cwd(), 'public', ...parts)
+      const files = fs
+        .readdirSync(dir)
+        .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f))
+        .sort()
+      if (files.length) return files.map(f => `/${parts.join('/')}/${encodeURIComponent(f)}`)
+    } catch {}
   }
+  return []
 }
 
 export default async function HomePage() {
   const supabase = await createClient()
   const competition = await getSelectedCompetition()
-  // Slideshow photos are football shots — only show them on the football site.
-  const images = competition.sport === 'football' ? slideshowImages() : []
+  const images = slideshowImages(competition)
 
   const { data: liveGame } = await supabase
     .from('games')
