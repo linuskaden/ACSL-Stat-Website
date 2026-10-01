@@ -118,10 +118,18 @@ export default function LowerThirdOverlay() {
           setPlayerStats(totals)
         } else setPlayerStats({})
       } else if (state.mode === 'career') {
-        const { data: cs } = await supabase
-          .from('career_stats').select('*').eq('player_id', state.active_player_id)
-          .order('season', { ascending: false }).limit(1).maybeSingle()
-        setPlayerStats(cs ?? {})
+        // Season totals from tracked game_stats (career_stats is paused).
+        const { data: gs } = await supabase
+          .from('game_stats').select('*, game:games(season)').eq('player_id', state.active_player_id)
+        const rows = (gs ?? []) as any[]
+        if (rows.length > 0) {
+          const season = Math.max(...rows.map(r => r.game?.season ?? 0))
+          const totals: Record<string, number> = {}
+          rows.filter(r => (r.game?.season ?? 0) === season).forEach(row => Object.entries(row).forEach(([k, v]) => {
+            if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v
+          }))
+          setPlayerStats(totals)
+        } else setPlayerStats({})
       }
     }
 

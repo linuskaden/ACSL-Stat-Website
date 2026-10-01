@@ -108,20 +108,29 @@ export default async function EditPlayerPage({
   let gamesData: any[] = []
 
   if (activeTab === 'stats' && !isNew) {
-    const [csResult, gsResult] = await Promise.all([
-      supabase.from('career_stats').select('*').eq('player_id', id).order('season', { ascending: false }),
-      supabase.from('game_stats').select('*').eq('player_id', id),
-    ])
-    career = csResult.data ?? []
-    gameStatsRaw = gsResult.data ?? []
+    const { data: gs } = await supabase.from('game_stats').select('*').eq('player_id', id)
+    gameStatsRaw = gs ?? []
 
     if (gameStatsRaw.length > 0) {
       const gameIds = [...new Set(gameStatsRaw.map((r: any) => r.game_id))]
       const { data: gd } = await supabase
         .from('games')
-        .select('id, scheduled_at, home_score, away_score, home_team:teams!games_home_team_id_fkey(short_name), away_team:teams!games_away_team_id_fkey(short_name)')
+        .select('id, season, scheduled_at, home_score, away_score, home_team:teams!games_home_team_id_fkey(short_name), away_team:teams!games_away_team_id_fkey(short_name)')
         .in('id', gameIds)
       gamesData = gd ?? []
+
+      // Per-season totals from tracked game_stats (career_stats is paused).
+      const seasonById = new Map<string, number>((gamesData as any[]).map(g => [g.id, g.season]))
+      const bySeason = new Map<number, any>()
+      for (const r of gameStatsRaw as any[]) {
+        const season = seasonById.get(r.game_id)
+        if (season == null) continue
+        if (!bySeason.has(season)) bySeason.set(season, { season, games_played: 0, _g: new Set<string>() })
+        const e = bySeason.get(season)
+        e._g.add(r.game_id)
+        for (const [k, v] of Object.entries(r)) if (typeof v === 'number') e[k] = (e[k] ?? 0) + v
+      }
+      career = [...bySeason.values()].map(e => { e.games_played = e._g.size; delete e._g; return e }).sort((a, b) => b.season - a.season)
     }
   }
 

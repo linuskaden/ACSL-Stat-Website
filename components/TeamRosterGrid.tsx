@@ -61,19 +61,31 @@ export default function TeamRosterGrid({
   const [view, setView] = useState<'roster' | 'leaders'>('roster')
   const showTabs = !overlayMode && !!leaders && leaders.length > 0
 
-  // Load career stats when player is selected
+  // Load the player's most-recent-season totals from tracked game_stats
+  // (career_stats is paused — season stats are derived live).
   useEffect(() => {
     if (!selected) { setCareerStats(null); return }
     setLoadingStats(true)
     const supabase = createClient()
     supabase
-      .from('career_stats')
-      .select('*')
+      .from('game_stats')
+      .select('*, game:games(season)')
       .eq('player_id', selected.id)
-      .order('season', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => { setCareerStats(data); setLoadingStats(false) })
+      .then(({ data }) => {
+        const rows = (data ?? []) as any[]
+        if (rows.length === 0) { setCareerStats(null); setLoadingStats(false); return }
+        const season = Math.max(...rows.map(r => r.game?.season ?? 0))
+        const seasonRows = rows.filter(r => (r.game?.season ?? 0) === season)
+        const totals: any = { season, games_played: new Set(seasonRows.map(r => r.game_id)).size }
+        for (const r of seasonRows) {
+          for (const [k, v] of Object.entries(r)) {
+            if (['id', 'game_id', 'player_id', 'team_id', 'quarter', 'created_at', 'updated_at', 'game'].includes(k)) continue
+            const n = typeof v === 'number' ? v : Number(v)
+            if (Number.isFinite(n)) totals[k] = (totals[k] ?? 0) + n
+          }
+        }
+        setCareerStats(totals); setLoadingStats(false)
+      })
   }, [selected?.id])
 
   const filtered = players.filter(p => {

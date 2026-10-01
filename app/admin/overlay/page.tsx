@@ -139,13 +139,23 @@ export default function OverlayControlPage() {
     setStartersByTeam(map)
   }
 
-  // Load career stats when player selected (for modal)
+  // Load the selected player's most-recent-season totals from tracked
+  // game_stats (career_stats is paused — season stats derived live)
   useEffect(() => {
     if (!selectedPlayer) { setCareerStats(null); return }
     setLoadingStats(true)
     const supabase = createClient()
-    supabase.from('career_stats').select('*').eq('player_id', selectedPlayer.id).order('season', { ascending: false }).limit(1).maybeSingle()
-      .then(({ data }) => { setCareerStats(data); setLoadingStats(false) })
+    supabase.from('game_stats').select('*, game:games(season)').eq('player_id', selectedPlayer.id)
+      .then(({ data }) => {
+        const rows = (data ?? []) as any[]
+        if (rows.length === 0) { setCareerStats(null); setLoadingStats(false); return }
+        const season = Math.max(...rows.map(r => r.game?.season ?? 0))
+        const totals: any = { season }
+        rows.filter(r => (r.game?.season ?? 0) === season).forEach(row => Object.entries(row).forEach(([k, v]) => {
+          if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v
+        }))
+        setCareerStats(totals); setLoadingStats(false)
+      })
   }, [selectedPlayer?.id])
 
   // Load preview stats for the ACTIVE overlay player (realtime)
@@ -163,9 +173,18 @@ export default function OverlayControlPage() {
           setPreviewStats(totals)
         } else setPreviewStats({})
       } else {
-        const { data } = await supabase.from('career_stats').select('*')
-          .eq('player_id', overlay.active_player_id).order('season', { ascending: false }).limit(1).maybeSingle()
-        setPreviewStats(data ?? {})
+        // Season totals from tracked game_stats (career_stats is paused)
+        const { data } = await supabase.from('game_stats').select('*, game:games(season)')
+          .eq('player_id', overlay.active_player_id)
+        const rows = (data ?? []) as any[]
+        if (rows.length > 0) {
+          const season = Math.max(...rows.map(r => r.game?.season ?? 0))
+          const totals: Record<string, number> = {}
+          rows.filter(r => (r.game?.season ?? 0) === season).forEach(row => Object.entries(row).forEach(([k, v]) => {
+            if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v
+          }))
+          setPreviewStats(totals)
+        } else setPreviewStats({})
       }
     }
 

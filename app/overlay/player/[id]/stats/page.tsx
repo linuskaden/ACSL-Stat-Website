@@ -22,8 +22,17 @@ export default function PlayerStatsOverlay({ params, searchParams }: {
       setPlayer(p)
 
       if (mode === 'career') {
-        const { data: cs } = await supabase.from('career_stats').select('*').eq('player_id', params.id).eq('season', 2026).single()
-        setStats(cs)
+        // Season totals from tracked game_stats (career_stats is paused).
+        const { data: gs } = await supabase
+          .from('game_stats').select('*, game:games(season)').eq('player_id', params.id)
+        const rows = (gs ?? []).filter((r: any) => (r.game?.season ?? 0) === 2026)
+        if (rows.length > 0) {
+          const totals: Record<string, number> = {}
+          rows.forEach((s: any) => Object.entries(s).forEach(([k, v]) => { if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v }))
+          setStats(totals)
+        } else {
+          setStats(null)
+        }
       } else if (searchParams.game_id) {
         const { data: gs } = await supabase.from('game_stats').select('*').eq('game_id', searchParams.game_id).eq('player_id', params.id)
         if (gs) {
