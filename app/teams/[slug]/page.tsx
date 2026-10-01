@@ -78,7 +78,7 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ s
   const { data: team } = await supabase.from('teams').select('*').eq('slug', slug).single()
   if (!team) notFound()
 
-  const [{ data: games }, { data: standings }, { data: careerRows }] = await Promise.all([
+  const [{ data: games }, { data: standings }] = await Promise.all([
     supabase
       .from('games')
       .select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)')
@@ -86,11 +86,6 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ s
       .eq('season', season)
       .order('scheduled_at', { nullsFirst: false }),
     supabase.from('standings').select('*, team:teams(*)').eq('competition_id', competition.id).eq('season', season),
-    supabase
-      .from('career_stats')
-      .select('*, player:players!inner(id, first_name, last_name, jersey_number, positions, team_id)')
-      .eq('competition_id', competition.id)
-      .eq('season', season),
   ])
 
   const allGames = (games ?? []) as any[]
@@ -136,7 +131,25 @@ export default async function TeamOverviewPage({ params }: { params: Promise<{ s
     }
     leaderRows = [...m.values()].map(({ player, totals }) => ({ player, ...bballDerived(totals) }))
   } else {
-    leaderRows = (careerRows ?? []).filter((r: any) => r.player?.team_id === team.id)
+    // Football: season totals from tracked game_stats (career_stats is paused).
+    const ids = teamGames.map(g => g.id)
+    const { data: fb } = ids.length > 0
+      ? await supabase.from('game_stats')
+          .select('*, player:players(id, first_name, last_name, jersey_number, team_id)')
+          .eq('team_id', team.id).in('game_id', ids)
+      : { data: [] as any[] }
+    const m = new Map<string, { player: any; totals: Record<string, number> }>()
+    for (const r of (fb ?? [])) {
+      if (!r.player) continue
+      if (!m.has(r.player_id)) m.set(r.player_id, { player: r.player, totals: {} })
+      const t = m.get(r.player_id)!.totals
+      for (const [k, v] of Object.entries(r)) {
+        if (['id', 'game_id', 'player_id', 'team_id', 'quarter', 'created_at', 'updated_at'].includes(k)) continue
+        const n = typeof v === 'number' ? v : Number(v)
+        if (Number.isFinite(n)) t[k] = (t[k] ?? 0) + n
+      }
+    }
+    leaderRows = [...m.values()].map(({ player, totals }) => ({ player, ...totals }))
   }
   const topLeaders = TOP_CATS.map(cat => {
     const ranked = leaderRows

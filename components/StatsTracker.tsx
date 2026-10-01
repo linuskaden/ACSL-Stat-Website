@@ -333,46 +333,20 @@ export default function StatsTracker({ game, homePlayers, awayPlayers, initialSt
   }
 
   async function finalizeGame() {
-    if (!confirm('Spiel abschließen und Saisonwerte aktualisieren?')) return
+    if (!confirm('Spiel abschließen?')) return
 
-    // Make sure every pending edit is written before we recompute from the DB
+    // Make sure every pending edit is written before we close the game
     await Promise.all(Object.entries(pendingSaves.current).map(([key, { playerId, q }]) => {
       if (saveTimers.current[key]) { clearTimeout(saveTimers.current[key]); delete saveTimers.current[key] }
       return persistStat(playerId, q)
     }))
 
-    // Mark the game final
+    // Mark the game final. Season stats are derived live from game_stats; we no
+    // longer write a career_stats aggregate (that concept is paused until there
+    // are multiple fully-tracked seasons).
     await supabase.from('games').update({ status: 'final', home_score: homeScore, away_score: awayScore }).eq('id', game.id)
     setStatus('final')
-
-    // Recompute career_stats from ALL final games of the season — idempotent,
-    // so finalizing twice (or after a correction) can never double-count.
-    const { data: finalGames } = await supabase.from('games').select('id').eq('season', game.season).eq('status', 'final')
-    const finalIds = (finalGames ?? []).map((g: any) => g.id)
-    if (finalIds.length === 0) { alert('Spiel abgeschlossen.'); return }
-
-    const allPlayers = [...homePlayers, ...awayPlayers]
-    for (const player of allPlayers) {
-      const { data: rows } = await supabase.from('game_stats').select('*').eq('player_id', player.id).in('game_id', finalIds)
-      const gameRows = rows ?? []
-
-      const totals: StatRow = {}
-      const playedGames = new Set<string>()
-      gameRows.forEach((r: any) => {
-        playedGames.add(r.game_id)
-        Object.entries(r).forEach(([k, v]) => { if (typeof v === 'number') totals[k] = (totals[k] ?? 0) + v })
-      })
-      const games_played = playedGames.size
-      if (games_played === 0) continue // leave players without final-game stats untouched
-
-      const existing = await supabase.from('career_stats').select('id').eq('player_id', player.id).eq('season', game.season).maybeSingle()
-      if (existing.data) {
-        await supabase.from('career_stats').update({ ...totals, games_played }).eq('id', existing.data.id)
-      } else {
-        await supabase.from('career_stats').insert({ player_id: player.id, season: game.season, games_played, ...totals })
-      }
-    }
-    alert('Spiel abgeschlossen – Saisonwerte aktualisiert.')
+    alert('Spiel abgeschlossen.')
   }
 
   const homeTotals = teamTotals(allStats, homePlayers, quarter === 'Total' ? 'Total' : quarter)

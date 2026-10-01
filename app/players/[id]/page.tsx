@@ -17,17 +17,10 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
 
   if (!player) notFound()
 
-  const [{ data: career }, { data: statRows }] = await Promise.all([
-    supabase
-      .from('career_stats')
-      .select('*')
-      .eq('player_id', id)
-      .order('season', { ascending: false }),
-    supabase
-      .from('game_stats')
-      .select('*, game:games(id, season, game_type, status, scheduled_at, home_team_id, away_team_id, home_score, away_score, home_team:teams!games_home_team_id_fkey(id, short_name, slug, primary_color, logo_url), away_team:teams!games_away_team_id_fkey(id, short_name, slug, primary_color, logo_url))')
-      .eq('player_id', id),
-  ])
+  const { data: statRows } = await supabase
+    .from('game_stats')
+    .select('*, game:games(id, season, game_type, status, scheduled_at, home_team_id, away_team_id, home_score, away_score, home_team:teams!games_home_team_id_fkey(id, short_name, slug, primary_color, logo_url), away_team:teams!games_away_team_id_fkey(id, short_name, slug, primary_color, logo_url))')
+    .eq('player_id', id)
 
   const team = (player as any).team
   const teamId = (player as any).team_id
@@ -65,6 +58,19 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       }
     })
     .sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime())
+
+  // Per-season totals derived from the tracked game log (career_stats is paused).
+  const bySeason = new Map<number, any>()
+  for (const g of gameLog) {
+    if (g.season == null) continue
+    if (!bySeason.has(g.season)) bySeason.set(g.season, { season: g.season, games_played: 0, _g: new Set<string>() })
+    const e = bySeason.get(g.season)
+    e._g.add(g.gameId)
+    for (const [k, v] of Object.entries(g.stats)) if (typeof v === 'number') e[k] = (e[k] ?? 0) + v
+  }
+  const career = [...bySeason.values()]
+    .map(e => { e.games_played = e._g.size; delete e._g; return e })
+    .sort((a, b) => b.season - a.season)
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
