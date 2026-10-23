@@ -26,6 +26,15 @@ type RawStat = {
   rec_tds: number
   sacks: number
   def_interceptions: number
+  def_total_tackles: number
+  def_solo: number
+  def_assist: number
+  def_tfl: number
+  def_forced_fumbles: number
+  def_fumble_recovered: number
+  def_tds: number
+  def_pbu: number
+  def_return_yards: number
   fg_made: number
   fg_attempts: number
   ep_made: number
@@ -42,7 +51,9 @@ function addStats(a: Partial<RawStat>, b: RawStat): Partial<RawStat> {
     'pass_yards','pass_attempts','pass_completions','pass_tds','interceptions_thrown',
     'qb_rush_yards','qb_rush_tds','rush_carries','rush_yards','rush_tds',
     'rb_rec_yards','rb_receptions','rec_yards','receptions','rec_tds',
-    'sacks','def_interceptions','fg_made','fg_attempts','ep_made','ep_attempts',
+    'sacks','def_interceptions','def_total_tackles','def_solo','def_assist','def_tfl',
+    'def_forced_fumbles','def_fumble_recovered','def_tds','def_pbu','def_return_yards',
+    'fg_made','fg_attempts','ep_made','ep_attempts',
   ] as const
   const out: any = { ...a }
   for (const k of NUM_KEYS) out[k] = ((a as any)[k] ?? 0) + (b[k] ?? 0)
@@ -120,7 +131,11 @@ export default function FootballBoxScore({ g, stats }: { g: any; stats: RawStat[
   const passers = (arr: typeof allPlayers) => arr.filter(p => (p.totals.pass_attempts ?? 0) > 0).sort((a,b) => (b.totals.pass_yards ?? 0) - (a.totals.pass_yards ?? 0))
   const rushers = (arr: typeof allPlayers) => arr.filter(p => ((p.totals.rush_yards ?? 0) + (p.totals.qb_rush_yards ?? 0)) > 0).sort((a,b) => ((b.totals.rush_yards ?? 0) + (b.totals.qb_rush_yards ?? 0)) - ((a.totals.rush_yards ?? 0) + (a.totals.qb_rush_yards ?? 0)))
   const receivers = (arr: typeof allPlayers) => arr.filter(p => ((p.totals.receptions ?? 0) + (p.totals.rb_receptions ?? 0)) > 0).sort((a,b) => ((b.totals.rec_yards ?? 0) + (b.totals.rb_rec_yards ?? 0)) - ((a.totals.rec_yards ?? 0) + (a.totals.rb_rec_yards ?? 0)))
-  const defenders = (arr: typeof allPlayers) => arr.filter(p => (p.totals.sacks ?? 0) > 0 || (p.totals.def_interceptions ?? 0) > 0).sort((a,b) => (b.totals.sacks ?? 0) - (a.totals.sacks ?? 0))
+  const defenders = (arr: typeof allPlayers) => arr.filter(p =>
+    (p.totals.def_total_tackles ?? 0) > 0 || (p.totals.sacks ?? 0) > 0 || (p.totals.def_interceptions ?? 0) > 0 ||
+    (p.totals.def_tfl ?? 0) > 0 || (p.totals.def_forced_fumbles ?? 0) > 0 || (p.totals.def_fumble_recovered ?? 0) > 0 ||
+    (p.totals.def_tds ?? 0) > 0 || (p.totals.def_pbu ?? 0) > 0 || (p.totals.def_return_yards ?? 0) > 0
+  ).sort((a,b) => (b.totals.def_total_tackles ?? 0) - (a.totals.def_total_tackles ?? 0) || (b.totals.sacks ?? 0) - (a.totals.sacks ?? 0))
 
   const TeamCell = ({ p }: { p: PlayerTotal }) => (
     <Td>
@@ -288,15 +303,26 @@ export default function FootballBoxScore({ g, stats }: { g: any; stats: RawStat[
           <SectionHeader title="Defense" />
           <TableWrapper>
             <thead>
-              <tr><Th>Player</Th><Th>Team</Th><Th right>SACKS</Th><Th right>INT</Th></tr>
+              <tr>
+                <Th>Player</Th><Th>Team</Th>
+                <Th right>TCK</Th><Th right>SOLO</Th><Th right>AST</Th><Th right>TFL</Th>
+                <Th right>SACKS</Th><Th right>FF</Th><Th right>FR</Th><Th right>INT</Th><Th right>TD</Th>
+              </tr>
             </thead>
             <tbody>
               {[...defenders(homePlayers), ...defenders(awayPlayers)].map(p => (
                 <tr key={p.player_id} className="bg-white dark:bg-[#111]">
                   <NameCell p={p} />
                   <TeamCell p={p} />
+                  <Td right bold>{n(p.totals.def_total_tackles, 1)}</Td>
+                  <Td right>{n(p.totals.def_solo)}</Td>
+                  <Td right>{n(p.totals.def_assist)}</Td>
+                  <Td right>{n(p.totals.def_tfl, 1)}</Td>
                   <Td right bold>{n(p.totals.sacks, 1)}</Td>
+                  <Td right>{n(p.totals.def_forced_fumbles)}</Td>
+                  <Td right>{n(p.totals.def_fumble_recovered)}</Td>
                   <Td right>{n(p.totals.def_interceptions)}</Td>
+                  <Td right>{n(p.totals.def_tds)}</Td>
                 </tr>
               ))}
             </tbody>

@@ -15,6 +15,8 @@ const NUM_FIELDS = [
   'qb_rush_yards','qb_rush_tds','rush_yards','rush_tds','rush_carries',
   'rb_rec_yards','rb_receptions','rb_targets','rec_yards','rec_tds','receptions','rec_targets',
   'sacks','def_interceptions','fg_made','fg_attempts','ep_made','ep_attempts',
+  'def_total_tackles','def_solo','def_assist','def_tfl','def_forced_fumbles',
+  'def_fumble_recovered','def_tds','def_pbu','def_return_yards',
 ] as const
 type NumField = typeof NUM_FIELDS[number]
 type Team = { id: string; name: string; short_name: string; slug: string; primary_color: string; logo_url: string | null }
@@ -35,9 +37,11 @@ function footballRow(player: PlayerMeta, t: Record<NumField, number>, games_play
       total_receptions: (t.receptions ?? 0) + (t.rb_receptions ?? 0), rec_tds: t.rec_tds ?? 0,
       total_tds, points: total_tds * 6 + (t.fg_made ?? 0) * 3 + (t.ep_made ?? 0),
       sacks: t.sacks ?? 0, def_interceptions: t.def_interceptions ?? 0,
-      fg_made: t.fg_made ?? 0, fg_attempts: t.fg_attempts ?? 0, ep_made: t.ep_made ?? 0,
+      def_total_tackles: t.def_total_tackles ?? 0, def_solo: t.def_solo ?? 0, def_assist: t.def_assist ?? 0,
+      def_tfl: t.def_tfl ?? 0, def_forced_fumbles: t.def_forced_fumbles ?? 0,
+      def_fumble_recovered: t.def_fumble_recovered ?? 0, def_tds: t.def_tds ?? 0,
+      def_pbu: t.def_pbu ?? 0, def_return_yards: t.def_return_yards ?? 0,
       comp_pct: passAtt >= 5 ? Math.round((t.pass_completions ?? 0) / passAtt * 1000) / 10 : null,
-      fg_pct: (t.fg_attempts ?? 0) >= 1 ? Math.round((t.fg_made ?? 0) / t.fg_attempts * 1000) / 10 : null,
     },
   }
 }
@@ -55,7 +59,7 @@ function footballFromGameStats(rows: any[]): Computed[] {
   return [...map.values()].map(({ player, gameIds, totals }) => footballRow(player, totals, gameIds.size))
 }
 
-const FB_SUMMABLE = ['pass_yards','pass_tds','pass_completions','pass_attempts','interceptions_thrown','total_rush_yards','total_rush_tds','total_rec_yards','total_receptions','rec_tds','total_tds','points','sacks','def_interceptions','fg_made','fg_attempts','ep_made']
+const FB_SUMMABLE = ['pass_yards','pass_tds','pass_completions','pass_attempts','interceptions_thrown','total_rush_yards','total_rush_tds','total_rec_yards','total_receptions','rec_tds','total_tds','points','sacks','def_interceptions','def_total_tackles','def_solo','def_assist','def_tfl','def_forced_fumbles','def_fumble_recovered','def_tds','def_pbu','def_return_yards']
 
 function footballTeams(rows: Computed[]): LeaderEntry[] {
   const map = new Map<string, { team: Team; sums: Record<string, number> }>()
@@ -68,7 +72,6 @@ function footballTeams(rows: Computed[]): LeaderEntry[] {
   return [...map.values()].map(({ team, sums }) => {
     const s: Record<string, number | null> = { ...sums }
     s.comp_pct = sums.pass_attempts >= 1 ? Math.round(sums.pass_completions / sums.pass_attempts * 1000) / 10 : null
-    s.fg_pct = sums.fg_attempts >= 1 ? Math.round(sums.fg_made / sums.fg_attempts * 1000) / 10 : null
     return teamEntry(team, s)
   })
 }

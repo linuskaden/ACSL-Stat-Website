@@ -33,11 +33,17 @@ const FOOTBALL_CATS: StatCat[] = [
   { key: 'rec_tds',             label: 'Receiving TDs',   abbr: 'Rec TDs',  group: 'Receiving' },
   { key: 'total_tds',           label: 'Total TDs',       abbr: 'TDs',      group: 'Scoring' },
   { key: 'points',              label: 'Points',          abbr: 'PTS',      group: 'Scoring' },
-  { key: 'sacks',               label: 'Sacks',           abbr: 'Sacks',    group: 'Defense', decimals: 1 },
-  { key: 'def_interceptions',   label: 'Interceptions',   abbr: 'Def INT',  group: 'Defense' },
-  { key: 'fg_made',             label: 'Field Goals',     abbr: 'FG',       group: 'Kicking' },
-  { key: 'ep_made',             label: 'Extra Points',    abbr: 'XP',       group: 'Kicking' },
-  { key: 'fg_pct',              label: 'FG %',            abbr: 'FG %',     group: 'Kicking', pct: true, noPerGame: true, minKey: 'fg_attempts', minVal: 1 },
+  { key: 'def_total_tackles',   label: 'Tackles',          abbr: 'TCK',     group: 'Defense', decimals: 1 },
+  { key: 'def_solo',            label: 'Solo Tackles',     abbr: 'Solo',    group: 'Defense' },
+  { key: 'def_assist',          label: 'Assist Tackles',   abbr: 'Ast',     group: 'Defense' },
+  { key: 'def_tfl',             label: 'Tackles for Loss', abbr: 'TFL',     group: 'Defense', decimals: 1 },
+  { key: 'sacks',               label: 'Sacks',            abbr: 'Sacks',   group: 'Defense', decimals: 1 },
+  { key: 'def_interceptions',   label: 'Interceptions',    abbr: 'Def INT', group: 'Defense' },
+  { key: 'def_forced_fumbles',  label: 'Forced Fumbles',   abbr: 'FF',      group: 'Defense' },
+  { key: 'def_fumble_recovered',label: 'Fumble Recoveries',abbr: 'FR',      group: 'Defense' },
+  { key: 'def_tds',             label: 'Defensive TDs',    abbr: 'Def TD',  group: 'Defense' },
+  { key: 'def_pbu',             label: 'Pass Breakups',    abbr: 'PBU',     group: 'Defense' },
+  { key: 'def_return_yards',    label: 'Return Yards',     abbr: 'Ret Yds', group: 'Defense' },
 ]
 
 const BASKETBALL_CATS: StatCat[] = [
@@ -57,7 +63,7 @@ export const LEADER_CATS: Record<Sport, StatCat[]> = {
 }
 
 export const LEADER_GROUPS: Record<Sport, string[]> = {
-  football: ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Defense', 'Kicking'],
+  football: ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Defense'],
   basketball: ['Scoring', 'Rebounding', 'Playmaking', 'Shooting'],
 }
 
