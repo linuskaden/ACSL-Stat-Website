@@ -40,6 +40,8 @@ interface Props {
   overlayActiveId?: string | null
   /** Whether overlay is currently visible (overlayMode only) */
   overlayVisible?: boolean
+  /** Base path for the team sidebar links (e.g. "/teams" or "/admin/roster"). */
+  basePath?: string
 }
 
 export default function TeamRosterGrid({
@@ -52,6 +54,7 @@ export default function TeamRosterGrid({
   onOverlayPush,
   overlayActiveId,
   overlayVisible,
+  basePath = '/teams',
 }: Props) {
   const [selected, setSelected] = useState<Player | null>(null)
   const [careerStats, setCareerStats] = useState<any>(null)
@@ -127,7 +130,7 @@ export default function TeamRosterGrid({
           {allTeams.map(t => {
             const isActive = t.id === team.id
             return (
-              <Link key={t.id} href={`/teams/${t.slug}`} style={{ textDecoration: 'none' }}>
+              <Link key={t.id} href={`${basePath}/${t.slug}`} style={{ textDecoration: 'none' }}>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '8px 16px',

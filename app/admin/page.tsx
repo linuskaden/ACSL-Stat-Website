@@ -94,6 +94,12 @@ export default async function AdminDashboard() {
           href="/admin/overlay"
           icon="📺"
         />
+        <AdminCard
+          title="Team Rosters"
+          desc="Per-team player tiles — click a player for season stats and profile (nickname, hometown, fun facts)."
+          href="/admin/roster"
+          icon="📇"
+        />
       </div>
     </div>
   )
