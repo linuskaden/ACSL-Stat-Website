@@ -91,6 +91,12 @@ export default function TeamRosterGrid({
       })
   }, [selected?.id])
 
+  const jnum = (p: Player) => {
+    const v = p.jersey_number
+    if (v == null || String(v).trim() === '') return Infinity
+    const n = Number(v)
+    return Number.isFinite(n) ? n : Infinity
+  }
   const filtered = players.filter(p => {
     const q = search.toLowerCase()
     const matchSearch = !q || [
@@ -99,7 +105,7 @@ export default function TeamRosterGrid({
     ].some(v => v.toLowerCase().includes(q))
     const matchPos = filter === 'All' || p.positions.includes(filter)
     return matchSearch && matchPos
-  })
+  }).sort((a, b) => jnum(a) - jnum(b))
 
   return (
     <div style={{
@@ -611,6 +617,25 @@ function PlayerDetailPanel({
         )}
       </div>
 
+      {/* ── Fun Fact (prominent — commentary gold) ── */}
+      {player.fun_fact && (
+        <div style={{
+          margin: '0 16px 12px',
+          background: `${primaryColor}10`,
+          border: `1px solid ${primaryColor}33`,
+          borderLeft: `3px solid ${primaryColor}`,
+          borderRadius: 8,
+          padding: '10px 12px',
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: primaryColor, marginBottom: 4 }}>
+            Fun Fact
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--fg)', fontStyle: 'italic', lineHeight: 1.45 }}>
+            „{player.fun_fact}"
+          </div>
+        </div>
+      )}
+
       {/* ── vMix Overlay Controls ── */}
       {overlayMode && onOverlayPush && (
         <div style={{
@@ -679,16 +704,6 @@ function PlayerDetailPanel({
           <div style={{ marginTop: 8, fontSize: 12, color: 'var(--fg-muted)' }}>
             <span style={{ color: 'var(--fg-muted)', fontWeight: 600 }}>Erfahrung: </span>
             {player.football_experience}
-          </div>
-        )}
-        {player.fun_fact && (
-          <div style={{
-            marginTop: 8, background: 'var(--subtle)',
-            borderRadius: 6, padding: '8px 10px',
-            fontSize: 11, color: 'var(--fg-muted)', fontStyle: 'italic',
-            borderLeft: `2px solid ${primaryColor}`,
-          }}>
-            „{player.fun_fact}"
           </div>
         )}
       </Section>
