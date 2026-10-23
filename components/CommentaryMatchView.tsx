@@ -75,12 +75,12 @@ function TeamColumn({ team, players, coaches, mode, selectedId, onSelect, align 
   )
 }
 
-export default function CommentaryMatchView({ games, players, coaches }: { games: Game[]; players: Player[]; coaches: Coach[] }) {
+export default function CommentaryMatchView({ games, players, coaches, season }: { games: Game[]; players: Player[]; coaches: Coach[]; season?: number }) {
   const firstDefault = games.find(g => g.status === 'live') || games.find(g => g.status === 'scheduled') || games[0]
   const [gameId, setGameId] = useState<string>(firstDefault?.id ?? '')
   const [mode, setMode] = useState<'players' | 'coaches'>('players')
   const [selected, setSelected] = useState<Player | null>(null)
-  const { careerStats, loadingStats } = usePlayerSeasonStats(selected?.id ?? null)
+  const { careerStats, loadingStats } = usePlayerSeasonStats(selected?.id ?? null, season)
   const teamCoaches = (teamId?: string | null) => !teamId ? [] : coaches.filter(c => c.team_id === teamId).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999))
 
   const game = useMemo(() => games.find(g => g.id === gameId) ?? null, [games, gameId])

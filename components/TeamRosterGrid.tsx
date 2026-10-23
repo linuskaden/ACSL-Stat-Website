@@ -47,7 +47,7 @@ interface Props {
 /** Load a player's most-recent-season totals from tracked game_stats
     (career_stats is paused — season stats are derived live). Shared by the
     team roster grid and the commentary match view. */
-export function usePlayerSeasonStats(playerId: string | null) {
+export function usePlayerSeasonStats(playerId: string | null, seasonFilter?: number) {
   const [careerStats, setCareerStats] = useState<any>(null)
   const [loadingStats, setLoadingStats] = useState(false)
   useEffect(() => {
@@ -61,8 +61,9 @@ export function usePlayerSeasonStats(playerId: string | null) {
       .then(({ data }) => {
         const rows = (data ?? []) as any[]
         if (rows.length === 0) { setCareerStats(null); setLoadingStats(false); return }
-        const season = Math.max(...rows.map(r => r.game?.season ?? 0))
+        const season = seasonFilter ?? Math.max(...rows.map(r => r.game?.season ?? 0))
         const seasonRows = rows.filter(r => (r.game?.season ?? 0) === season)
+        if (seasonRows.length === 0) { setCareerStats(null); setLoadingStats(false); return }
         const totals: any = { season, games_played: new Set(seasonRows.map(r => r.game_id)).size }
         for (const r of seasonRows) {
           for (const [k, v] of Object.entries(r)) {
@@ -73,7 +74,7 @@ export function usePlayerSeasonStats(playerId: string | null) {
         }
         setCareerStats(totals); setLoadingStats(false)
       })
-  }, [playerId])
+  }, [playerId, seasonFilter])
   return { careerStats, loadingStats }
 }
 
@@ -94,7 +95,7 @@ export default function TeamRosterGrid({
   const [search, setSearch] = useState('')
   const [view, setView] = useState<'roster' | 'leaders'>('roster')
   const showTabs = !overlayMode && !!leaders && leaders.length > 0
-  const { careerStats, loadingStats } = usePlayerSeasonStats(selected?.id ?? null)
+  const { careerStats, loadingStats } = usePlayerSeasonStats(selected?.id ?? null, season)
 
   const jnum = (p: Player) => {
     const v = p.jersey_number
@@ -713,8 +714,8 @@ export function PlayerDetailPanel({
         )}
       </Section>
 
-      {/* ── Karrieredaten ── */}
-      <Section title="Karrieredaten">
+      {/* ── Saison-Stats (nur aktuelle Saison) ── */}
+      <Section title="Saison-Stats">
         {loadingStats ? (
           <div style={{ color: 'var(--fg-faint)', fontSize: 12 }}>Lade…</div>
         ) : careerStats ? (

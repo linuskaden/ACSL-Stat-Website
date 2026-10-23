@@ -33,7 +33,7 @@ export default async function CommentaryPage() {
           <span className="text-sm font-black text-slate-900 dark:text-white">Kommentatoren-Tool</span>
         </div>
       </div>
-      <CommentaryMatchView games={(games ?? []) as any} players={(players ?? []) as any} coaches={(coaches ?? []) as any} />
+      <CommentaryMatchView games={(games ?? []) as any} players={(players ?? []) as any} coaches={(coaches ?? []) as any} season={season} />
     </div>
   )
 }
