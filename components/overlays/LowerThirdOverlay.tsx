@@ -22,15 +22,15 @@ function lum(hex: string): number {
 function textOn(hex: string): string { return lum(hex) > 0.48 ? '#000000' : '#ffffff' }
 
 /* Stat categories a position contributes (primary position listed first wins
-   ordering). A player gets the union across all their positions, so a K/WR/RB
-   shows kicking AND receiving AND rushing. Overlapping columns are merged so the
-   value shows regardless of which column it was entered in. */
+   ordering). A player gets the union across all their positions, so a WR/RB
+   shows receiving AND rushing. Overlapping columns are merged so the value
+   shows regardless of which column it was entered in. (Kicking stats are not
+   tracked, so K/P contribute no stat columns.) */
 function positionCategories(pos: string): string[] {
   if (pos === 'QB') return ['pass', 'rush']
   if (pos === 'RB') return ['rush', 'rec']
   if (pos === 'WR' || pos === 'TE') return ['rec']
   if (['DB', 'DL', 'LB'].includes(pos)) return ['def']
-  if (pos === 'K' || pos === 'P') return ['kick']
   return []
 }
 
@@ -65,14 +65,10 @@ function buildStats(positions: string[], s: any): StatItem[] {
       { label: 'REC',     value: recs },
     )
     else if (c === 'def') items.push(
+      { label: 'TCKL',    value: s.def_total_tackles ?? 0 },
+      { label: 'TFL',     value: s.def_tfl ?? 0 },
       { label: 'SACKS',   value: s.sacks ?? 0 },
       { label: 'DEF INT', value: s.def_interceptions ?? 0 },
-      { label: 'TCKL',    value: s.def_tackles ?? 0 },
-    )
-    else if (c === 'kick') items.push(
-      { label: 'FG',  value: `${s.fg_made ?? 0}/${s.fg_attempts ?? 0}` },
-      { label: 'EP',  value: `${s.ep_made ?? 0}/${s.ep_attempts ?? 0}` },
-      { label: 'PTS', value: (s.fg_made ?? 0) * 3 + (s.ep_made ?? 0) },
     )
   })
 

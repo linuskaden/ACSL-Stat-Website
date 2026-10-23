@@ -2,14 +2,13 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-type Category = 'passing' | 'rushing' | 'receiving' | 'defense' | 'kicking'
+type Category = 'passing' | 'rushing' | 'receiving' | 'defense'
 
 const CATEGORY_LABELS: Record<string, string> = {
   passing: 'PASSING LEADERS',
   rushing: 'RUSHING LEADERS',
   receiving: 'RECEIVING LEADERS',
   defense: 'DEFENSIVE LEADERS',
-  kicking: 'KICKING LEADERS',
 }
 
 export default function LeadersOverlay({ params, searchParams }: {
@@ -39,7 +38,8 @@ export default function LeadersOverlay({ params, searchParams }: {
         else {
           const keys = ['pass_yards','pass_tds','pass_attempts','pass_completions','interceptions_thrown',
             'qb_rush_yards','qb_rush_tds','rush_yards','rush_carries','rush_tds','rb_rec_yards','rb_receptions',
-            'rec_yards','receptions','rec_tds','sacks','def_interceptions','fg_made','fg_attempts','ep_made','ep_attempts']
+            'rec_yards','receptions','rec_tds','sacks','def_interceptions','fg_made','fg_attempts','ep_made','ep_attempts',
+            'def_total_tackles','def_solo','def_assist','def_tfl','def_forced_fumbles','def_fumble_recovered','def_tds','def_pbu','def_return_yards']
           keys.forEach(k => { byPlayer[pid][k] = (byPlayer[pid][k]??0) + (s[k]??0) })
         }
       })
@@ -50,8 +50,7 @@ export default function LeadersOverlay({ params, searchParams }: {
       if (cat === 'passing') sorted = all.filter(s => s.pass_yards > 0).sort((a,b) => b.pass_yards - a.pass_yards)
       else if (cat === 'rushing') sorted = all.filter(s => s.rush_yards > 0 || s.qb_rush_yards > 0).sort((a,b) => (b.rush_yards+b.qb_rush_yards) - (a.rush_yards+a.qb_rush_yards))
       else if (cat === 'receiving') sorted = all.filter(s => s.rec_yards > 0 || s.rb_rec_yards > 0).sort((a,b) => (b.rec_yards+b.rb_rec_yards) - (a.rec_yards+a.rb_rec_yards))
-      else if (cat === 'defense') sorted = all.filter(s => s.sacks > 0 || s.def_interceptions > 0).sort((a,b) => (b.sacks+b.def_interceptions*2) - (a.sacks+a.def_interceptions*2))
-      else if (cat === 'kicking') sorted = all.filter(s => s.fg_attempts > 0 || s.ep_attempts > 0).sort((a,b) => (b.fg_made*3+b.ep_made) - (a.fg_made*3+a.ep_made))
+      else if (cat === 'defense') sorted = all.filter(s => (s.def_total_tackles ?? 0) > 0 || s.sacks > 0 || s.def_interceptions > 0).sort((a,b) => ((b.def_total_tackles ?? 0) - (a.def_total_tackles ?? 0)) || (b.sacks - a.sacks))
 
       setLeaders(sorted.slice(0, limit))
     }
@@ -81,8 +80,7 @@ export default function LeadersOverlay({ params, searchParams }: {
             const val = cat === 'passing' ? `${s.pass_yards} YDS · ${s.pass_tds} TD`
               : cat === 'rushing' ? `${s.rush_yards + s.qb_rush_yards} YDS · ${s.rush_tds + s.qb_rush_tds} TD`
               : cat === 'receiving' ? `${s.rec_yards + s.rb_rec_yards} YDS · ${s.rec_tds} TD`
-              : cat === 'defense' ? `${s.sacks} SCK · ${s.def_interceptions} INT`
-              : `${s.fg_made}/${s.fg_attempts} FG · ${s.eg_made}/${s.ep_attempts} EP`
+              : `${s.def_total_tackles ?? 0} TCK · ${s.sacks} SCK · ${s.def_interceptions} INT`
 
             return (
               <div key={s.player_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 16px', borderBottom: i < leaders.length-1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>

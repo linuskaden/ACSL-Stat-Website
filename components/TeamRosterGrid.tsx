@@ -362,7 +362,7 @@ export default function TeamRosterGrid({
    Team Leaders board (grouped Top-3 per category)
 ───────────────────────────────────────────── */
 function LeadersBoard({ leaders, team, season }: { leaders: LeaderCat[]; team: Team; season?: number }) {
-  const groups = ['Passing', 'Rushing', 'Receiving', 'Defense', 'Kicking']
+  const groups = ['Passing', 'Rushing', 'Receiving', 'Defense']
   const byGroup = groups
     .map(g => ({ group: g, cats: leaders.filter(l => l.group === g) }))
     .filter(g => g.cats.length > 0)
