@@ -25,7 +25,7 @@ type KeyPlayerOverlayState = { game_id: string | null; player_ids: string[]; rot
 const KEY_PLAYER_POSITIONS = ['QB', 'WR', 'TE', 'RB']
 const MAX_KEY_PER_TEAM = 4
 
-const SEASON = 2026
+const SEASON = 2027
 type LineupStyle = 'band' | 'full'
 type LineupOverlayState = { team_id: string | null; side: LineupSide; rotation_seconds: number; visible: boolean; display_style: LineupStyle }
 type TeamStarters = { offense: string[]; defense: string[] }
@@ -103,7 +103,7 @@ export default function OverlayControlPage() {
     const supabase = createClient()
     async function init() {
       const [{ data: gs }, { data: os }, { data: tos }, { data: kps }, { data: los }] = await Promise.all([
-        supabase.from('games').select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)').eq('season', 2026).order('scheduled_at', { ascending: false }),
+        supabase.from('games').select('*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*)').eq('season', SEASON).order('scheduled_at', { ascending: false }),
         supabase.from('overlay_state').select('*').eq('id', 1).single(),
         supabase.from('team_overlay_state').select('*').eq('id', 1).single(),
         supabase.from('key_player_overlay_state').select('*').eq('id', 1).single(),

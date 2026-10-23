@@ -100,6 +100,12 @@ export default async function AdminDashboard() {
           href="/admin/roster"
           icon="📇"
         />
+        <AdminCard
+          title="Kommentatoren-Tool"
+          desc="Pick a match, see both teams side by side as player tiles — click a player for stats and fun facts."
+          href="/admin/commentary"
+          icon="🎙️"
+        />
       </div>
     </div>
   )

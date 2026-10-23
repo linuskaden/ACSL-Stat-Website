@@ -6,13 +6,13 @@ import { seasonLabel } from '@/lib/utils'
 
 const POSITIONS = ['All', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
-type Team = {
+export type Team = {
   id: string; name: string; short_name: string; slug: string
   primary_color: string; secondary_color: string; logo_url: string | null
   university: string | null
 }
 
-type Player = {
+export type Player = {
   id: string; first_name: string; last_name: string; nickname: string | null
   jersey_number: string | null; positions: string[]; team_id: string
   is_active: boolean; height_cm: number | null; weight_kg: number | null
@@ -44,36 +44,20 @@ interface Props {
   basePath?: string
 }
 
-export default function TeamRosterGrid({
-  team,
-  players,
-  allTeams,
-  leaders,
-  season,
-  overlayMode = false,
-  onOverlayPush,
-  overlayActiveId,
-  overlayVisible,
-  basePath = '/teams',
-}: Props) {
-  const [selected, setSelected] = useState<Player | null>(null)
+/** Load a player's most-recent-season totals from tracked game_stats
+    (career_stats is paused — season stats are derived live). Shared by the
+    team roster grid and the commentary match view. */
+export function usePlayerSeasonStats(playerId: string | null) {
   const [careerStats, setCareerStats] = useState<any>(null)
   const [loadingStats, setLoadingStats] = useState(false)
-  const [filter, setFilter] = useState('All')
-  const [search, setSearch] = useState('')
-  const [view, setView] = useState<'roster' | 'leaders'>('roster')
-  const showTabs = !overlayMode && !!leaders && leaders.length > 0
-
-  // Load the player's most-recent-season totals from tracked game_stats
-  // (career_stats is paused — season stats are derived live).
   useEffect(() => {
-    if (!selected) { setCareerStats(null); return }
+    if (!playerId) { setCareerStats(null); return }
     setLoadingStats(true)
     const supabase = createClient()
     supabase
       .from('game_stats')
       .select('*, game:games(season)')
-      .eq('player_id', selected.id)
+      .eq('player_id', playerId)
       .then(({ data }) => {
         const rows = (data ?? []) as any[]
         if (rows.length === 0) { setCareerStats(null); setLoadingStats(false); return }
@@ -89,7 +73,28 @@ export default function TeamRosterGrid({
         }
         setCareerStats(totals); setLoadingStats(false)
       })
-  }, [selected?.id])
+  }, [playerId])
+  return { careerStats, loadingStats }
+}
+
+export default function TeamRosterGrid({
+  team,
+  players,
+  allTeams,
+  leaders,
+  season,
+  overlayMode = false,
+  onOverlayPush,
+  overlayActiveId,
+  overlayVisible,
+  basePath = '/teams',
+}: Props) {
+  const [selected, setSelected] = useState<Player | null>(null)
+  const [filter, setFilter] = useState('All')
+  const [search, setSearch] = useState('')
+  const [view, setView] = useState<'roster' | 'leaders'>('roster')
+  const showTabs = !overlayMode && !!leaders && leaders.length > 0
+  const { careerStats, loadingStats } = usePlayerSeasonStats(selected?.id ?? null)
 
   const jnum = (p: Player) => {
     const v = p.jersey_number
@@ -418,7 +423,7 @@ function LeadersBoard({ leaders, team, season }: { leaders: LeaderCat[]; team: T
 /* ─────────────────────────────────────────────
    Player Card
 ───────────────────────────────────────────── */
-function PlayerCard({
+export function PlayerCard({
   player, team, isSelected, isOnAir, onClick,
 }: {
   player: Player; team: Team; isSelected: boolean; isOnAir: boolean; onClick: () => void
@@ -507,7 +512,7 @@ function PlayerCard({
 /* ─────────────────────────────────────────────
    Player Detail Panel
 ───────────────────────────────────────────── */
-function PlayerDetailPanel({
+export function PlayerDetailPanel({
   player, team, careerStats, loadingStats,
   overlayMode, overlayActiveId, overlayVisible,
   onClose, onOverlayPush,
@@ -818,8 +823,12 @@ function CareerStatsDisplay({ cs, positions }: { cs: any; positions: string[] })
     )
   } else {
     items.push(
+      { label: 'Tackles', value: cs.def_total_tackles ?? 0 },
+      { label: 'TFL', value: cs.def_tfl ?? 0 },
       { label: 'Sacks', value: cs.sacks ?? 0 },
       { label: 'INT', value: cs.def_interceptions ?? 0 },
+      { label: 'FF', value: cs.def_forced_fumbles ?? 0 },
+      { label: 'Def TD', value: cs.def_tds ?? 0 },
     )
   }
 
