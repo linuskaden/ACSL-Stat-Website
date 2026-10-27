@@ -15,7 +15,7 @@ export default function FantasyLogin() {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: `${location.origin}/auth/callback?next=/fantasy` },
+      options: { emailRedirectTo: `${location.origin}/auth/callback` },
     })
     setLoading(false)
     if (error) { setError(error.message); return }
