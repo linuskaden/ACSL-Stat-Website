@@ -106,6 +106,12 @@ export default async function AdminDashboard() {
           href="/admin/commentary"
           icon="🎙️"
         />
+        <AdminCard
+          title="Fantasy"
+          desc="Rounds öffnen/sperren, Spiele zuordnen, Deadline setzen und auf Abgeschlossen stellen (Scoring)."
+          href="/admin/fantasy"
+          icon="🏆"
+        />
       </div>
     </div>
   )
