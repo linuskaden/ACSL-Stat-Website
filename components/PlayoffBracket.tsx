@@ -70,8 +70,34 @@ export default function PlayoffBracket({ games, bracket, sport }: { games: any[]
     )
   }
 
+  const roundLabel: Record<string, string> = { wildcard: 'Wildcard', semifinal: 'Semifinals', third_place: '3rd Place', final: finalTitle }
   return (
-    <div className="pf-scroll">
+    <>
+      {/* Mobile: rounds stacked vertically (no horizontal scroll) */}
+      <div className="sm:hidden space-y-6">
+        {ROUND_ORDER.filter((r) => byRound[r]?.length).map((round) => (
+          <div key={round}>
+            <h2 className="text-[10px] font-bold tracking-widest text-slate-400 dark:text-[#555] uppercase mb-3">{roundLabel[round] ?? round.replace('_', ' ')}</h2>
+            <div className="space-y-3">
+              {byRound[round].map((g: any) => (
+                <MatchBox key={g.id} game={g} be={bracketByGameId[g.id]}
+                  highlight={round === 'final'}
+                  title={round === 'final' ? (g.notes || finalTitle) : round === 'third_place' ? '3rd Place' : undefined} />
+              ))}
+            </div>
+          </div>
+        ))}
+        {champTeam && (
+          <div>
+            <h2 className="text-[10px] font-bold tracking-widest text-slate-400 dark:text-[#555] uppercase mb-3">Champion</h2>
+            <div className="max-w-[220px]"><ChampionBox team={champTeam} /></div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: horizontal bracket */}
+      <div className="hidden sm:block">
+      <div className="pf-scroll">
       <div className="pf-inner">
         <div className="pf-heads">
           {!isFourTeam && (
@@ -133,6 +159,8 @@ export default function PlayoffBracket({ games, bracket, sport }: { games: any[]
         </div>
       </div>
     </div>
+      </div>
+    </>
   )
 }
 

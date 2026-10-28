@@ -67,7 +67,7 @@ export default function StandingsTable({ standings, formByTeam = {} }: {
               <SortTh label="#"      sk="rank"   active={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
               <SortTh label="Team"   sk="team"   active={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
               <SortTh label="Record" sk="record" active={sortKey} dir={sortDir} onSort={toggleSort} />
-              <th className="text-center px-3 py-3.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs uppercase tracking-wider">Form</th>
+              <th className="hidden sm:table-cell text-center px-3 py-3.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs uppercase tracking-wider">Form</th>
               <SortTh label="PF"     sk="pf"     active={sortKey} dir={sortDir} onSort={toggleSort} hideMobile />
               <SortTh label="PA"     sk="pa"     active={sortKey} dir={sortDir} onSort={toggleSort} hideMobile />
               <SortTh label="Diff"   sk="diff"   active={sortKey} dir={sortDir} onSort={toggleSort} />
@@ -87,7 +87,7 @@ export default function StandingsTable({ standings, formByTeam = {} }: {
                     </Link>
                   </td>
                   <td className="text-center px-2 sm:px-3 py-3 sm:py-4 font-bold text-slate-900 dark:text-white tabular-nums">{s.wins ?? 0}-{s.losses ?? 0}</td>
-                  <td className="px-2 sm:px-3 py-3 sm:py-4">
+                  <td className="hidden sm:table-cell px-2 sm:px-3 py-3 sm:py-4">
                     <div className="flex items-center justify-center gap-1">
                       {form.length === 0
                         ? <span className="text-slate-300 dark:text-[#555] text-sm">—</span>

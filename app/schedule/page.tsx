@@ -77,7 +77,7 @@ function GameList({ games, gamesWithStats, recordByTeam }: {
               const bothTeams = game.home_team && game.away_team
               return (
                 <div key={game.id}
-                  className={`bg-white dark:bg-[#111] border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 shadow-sm ${isLive ? 'border-[#16163f]/40' : 'border-black/[0.07] dark:border-white/5'}`}>
+                  className={`bg-white dark:bg-[#111] border rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 shadow-sm ${isLive ? 'border-[#16163f]/40' : 'border-black/[0.07] dark:border-white/5'}`}>
                   {/* Kickoff + matchup */}
                   <div className="flex items-center gap-3 sm:gap-4 w-full sm:flex-1 min-w-0">
                     <div className="w-12 sm:w-14 text-center shrink-0">

@@ -104,7 +104,7 @@ export default function PlayersPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name, #, position, study..."
-          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#7a7a7a] focus:outline-none focus:border-[#16163f] w-64"
+          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#7a7a7a] focus:outline-none focus:border-[#16163f] w-full sm:w-64"
         />
         <select
           value={selectedTeam}
@@ -122,33 +122,32 @@ export default function PlayersPage() {
           <option value="all">All Countries</option>
           {countries.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        <div className="flex gap-1">
+        <select
+          value={selectedPos}
+          onChange={e => setSelectedPos(e.target.value)}
+          className="bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#16163f]"
+        >
           {positions.map(pos => (
-            <button key={pos} onClick={() => setSelectedPos(pos)}
-              className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
-                selectedPos === pos ? 'bg-[#16163f] text-white' : 'bg-white dark:bg-[#111] text-slate-500 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white border border-black/[0.07] dark:border-white/5'
-              }`}>
-              {pos}
-            </button>
+            <option key={pos} value={pos}>{pos === 'All' ? 'All Positions' : pos}</option>
           ))}
-        </div>
+        </select>
       </div>
 
       {loading ? (
         <div className="text-slate-500 dark:text-[#7a7a7a] text-sm py-8 text-center">Loading...</div>
       ) : (
-        <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl overflow-x-auto shadow-sm">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-black/[0.07] dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
-                <SortHeader label="#"      sk="num"   active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4" />
-                <SortHeader label="Player" sk="name"  active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4" />
-                <SortHeader label="Pos"    sk="pos"   active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4" />
-                <SortHeader label="Team"   sk="team"  active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4 hidden md:table-cell" />
-                <SortHeader label="Study"  sk="study" active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4 hidden lg:table-cell" />
+                <SortHeader label="#"      sk="num"   active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-3 sm:px-4" />
+                <SortHeader label="Player" sk="name"  active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-3 sm:px-4" />
+                <SortHeader label="Pos"    sk="pos"   active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-3 sm:px-4" />
+                <SortHeader label="Team"   sk="team"  active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-3 sm:px-4 hidden md:table-cell" />
+                <SortHeader label="Study"  sk="study" active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-3 sm:px-4 hidden lg:table-cell" />
                 <SortHeader label="Ht"     sk="ht"    active={sortKey} dir={sortDir} onSort={toggleSort} className="text-center px-3 hidden md:table-cell" center />
                 <SortHeader label="Wt"     sk="wt"    active={sortKey} dir={sortDir} onSort={toggleSort} className="text-center px-3 hidden md:table-cell" center />
-                <SortHeader label="From"   sk="from"  active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-4 hidden md:table-cell" />
+                <SortHeader label="From"   sk="from"  active={sortKey} dir={sortDir} onSort={toggleSort} className="text-left px-3 sm:px-4 hidden md:table-cell" />
               </tr>
             </thead>
             <tbody>
@@ -156,23 +155,23 @@ export default function PlayersPage() {
                 <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400 dark:text-[#7a7a7a] text-sm">No players found.</td></tr>
               ) : sorted.map(p => (
                 <tr key={p.id} className="border-b border-black/[0.05] dark:border-white/5 last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
-                  <td className="px-4 py-2.5">
+                  <td className="px-3 sm:px-4 py-2.5">
                     <span className="font-mono text-xs text-slate-500 dark:text-[#7a7a7a]">{p.jersey_number ?? '—'}</span>
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-3 sm:px-4 py-2.5">
                     <Link href={`/players/${p.id}`} className="hover:text-[#16163f] transition-colors">
                       <span className="font-semibold text-slate-900 dark:text-white">{p.first_name} {p.last_name}</span>
                     </Link>
                     {p.nickname && <span className="text-slate-400 dark:text-[#7a7a7a] text-xs ml-1">"{p.nickname}"</span>}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a]">{p.positions.join('/')}</td>
-                  <td className="px-4 py-2.5 hidden md:table-cell">
+                  <td className="px-3 sm:px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a]">{p.positions.join('/')}</td>
+                  <td className="px-3 sm:px-4 py-2.5 hidden md:table-cell">
                     {p.team && <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ background: p.team.primary_color }} />
                       <span className="text-xs text-slate-500 dark:text-[#7a7a7a]">{p.team.short_name}</span>
                     </div>}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden lg:table-cell max-w-[180px] truncate">
+                  <td className="px-3 sm:px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden lg:table-cell max-w-[180px] truncate">
                     {p.field_of_study ?? '—'}
                   </td>
                   <td className="text-center px-3 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden md:table-cell">
@@ -181,7 +180,7 @@ export default function PlayersPage() {
                   <td className="text-center px-3 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden md:table-cell">
                     {p.weight_kg ?? '—'}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden md:table-cell">
+                  <td className="px-3 sm:px-4 py-2.5 text-xs text-slate-500 dark:text-[#7a7a7a] hidden md:table-cell">
                     {p.hometown ? `${p.hometown}${p.country ? `, ${p.country}` : ''}` : '—'}
                   </td>
                 </tr>
