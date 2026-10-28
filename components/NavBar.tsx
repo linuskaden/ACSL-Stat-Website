@@ -268,7 +268,7 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-black/[0.08] dark:border-white/10 bg-white dark:bg-black px-4 py-1">
+        <div className="md:hidden border-t border-black/[0.08] dark:border-white/10 bg-white dark:bg-black px-4 py-1 max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain">
           {!isAdmin && links.map(l => {
             // "Teams" is a dropdown on desktop; on mobile, list the teams inline.
             if (l.href === '/teams') {
@@ -312,6 +312,21 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
               {label}
             </Link>
           ))}
+          {/* Herren/Damen division switch (basketball only) */}
+          {isBasketball && !isAdmin && (
+            <div className="flex gap-0.5 p-0.5 bg-black/[0.05] dark:bg-white/[0.06] rounded-lg w-max mt-3">
+              {([['basketball_women', 'Damen'], ['basketball_men', 'Herren']] as const).map(([key, label]) => {
+                const active = competition?.key === key
+                return (
+                  <button key={key} onClick={() => { setDivision(key); setMobileOpen(false) }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${active ? 'bg-white dark:bg-[#222] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-[#7a7a7a]'}`}>
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-3 py-3">
             {!isAdmin && competition && (
               <button onClick={() => { toggleSport(); setMobileOpen(false) }}
