@@ -61,15 +61,15 @@ export default function StandingsTable({ standings, formByTeam = {} }: {
   return (
     <div className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full text-base">
+        <table className="w-full text-sm sm:text-base">
           <thead>
             <tr className="border-b border-black/[0.07] dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02]">
               <SortTh label="#"      sk="rank"   active={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
               <SortTh label="Team"   sk="team"   active={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
               <SortTh label="Record" sk="record" active={sortKey} dir={sortDir} onSort={toggleSort} />
               <th className="text-center px-3 py-3.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs uppercase tracking-wider">Form</th>
-              <SortTh label="PF"     sk="pf"     active={sortKey} dir={sortDir} onSort={toggleSort} />
-              <SortTh label="PA"     sk="pa"     active={sortKey} dir={sortDir} onSort={toggleSort} />
+              <SortTh label="PF"     sk="pf"     active={sortKey} dir={sortDir} onSort={toggleSort} hideMobile />
+              <SortTh label="PA"     sk="pa"     active={sortKey} dir={sortDir} onSort={toggleSort} hideMobile />
               <SortTh label="Diff"   sk="diff"   active={sortKey} dir={sortDir} onSort={toggleSort} />
             </tr>
           </thead>
@@ -79,24 +79,24 @@ export default function StandingsTable({ standings, formByTeam = {} }: {
               const form = s.team ? (formByTeam[s.team.id] ?? []) : []
               return (
                 <tr key={s.id} className="border-b border-black/[0.05] dark:border-white/5 last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] group">
-                  <td className="px-4 py-4 text-slate-400 dark:text-[#7a7a7a] text-sm tabular-nums">{s.playoff_seed ?? '—'}</td>
-                  <td className="px-4 py-4">
+                  <td className="px-3 sm:px-4 py-3 sm:py-4 text-slate-400 dark:text-[#7a7a7a] text-sm tabular-nums">{s.playoff_seed ?? '—'}</td>
+                  <td className="px-3 sm:px-4 py-3 sm:py-4">
                     <Link href={`/teams/${s.team?.slug ?? ''}`} className="flex items-center gap-3">
                       <TeamBadge team={s.team} size="md" />
                       <span className="font-bold text-slate-900 dark:text-white group-hover:text-[#16163f] transition-colors">{s.team?.short_name}</span>
                     </Link>
                   </td>
-                  <td className="text-center px-3 py-4 font-bold text-slate-900 dark:text-white tabular-nums">{s.wins ?? 0}-{s.losses ?? 0}</td>
-                  <td className="px-3 py-4">
+                  <td className="text-center px-2 sm:px-3 py-3 sm:py-4 font-bold text-slate-900 dark:text-white tabular-nums">{s.wins ?? 0}-{s.losses ?? 0}</td>
+                  <td className="px-2 sm:px-3 py-3 sm:py-4">
                     <div className="flex items-center justify-center gap-1">
                       {form.length === 0
                         ? <span className="text-slate-300 dark:text-[#555] text-sm">—</span>
                         : form.map((r, i) => <FormBadge key={i} result={r} />)}
                     </div>
                   </td>
-                  <td className="text-center px-3 py-4 text-slate-500 dark:text-[#7a7a7a] tabular-nums">{s.points_for}</td>
-                  <td className="text-center px-3 py-4 text-slate-500 dark:text-[#7a7a7a] tabular-nums">{s.points_against}</td>
-                  <td className={`text-center px-3 py-4 font-semibold tabular-nums ${diff > 0 ? 'text-[#04a550]' : diff < 0 ? 'text-[#16163f]' : 'text-slate-500 dark:text-[#7a7a7a]'}`}>
+                  <td className="hidden sm:table-cell text-center px-2 sm:px-3 py-3 sm:py-4 text-slate-500 dark:text-[#7a7a7a] tabular-nums">{s.points_for}</td>
+                  <td className="hidden sm:table-cell text-center px-2 sm:px-3 py-3 sm:py-4 text-slate-500 dark:text-[#7a7a7a] tabular-nums">{s.points_against}</td>
+                  <td className={`text-center px-2 sm:px-3 py-3 sm:py-4 font-semibold tabular-nums ${diff > 0 ? 'text-[#04a550]' : diff < 0 ? 'text-[#16163f]' : 'text-slate-500 dark:text-[#7a7a7a]'}`}>
                     {diff > 0 ? `+${diff}` : diff}
                   </td>
                 </tr>
@@ -121,17 +121,18 @@ function FormBadge({ result }: { result: FormResult }) {
   )
 }
 
-function SortTh({ label, sk, active, dir, onSort, align = 'center' }: {
+function SortTh({ label, sk, active, dir, onSort, align = 'center', hideMobile = false }: {
   label: string
   sk: SortKey
   active: SortKey
   dir: 'asc' | 'desc'
   onSort: (k: SortKey) => void
   align?: 'left' | 'center'
+  hideMobile?: boolean
 }) {
   const isActive = active === sk
   return (
-    <th className={`${align === 'left' ? 'text-left px-4' : 'text-center px-3'} py-3.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs uppercase tracking-wider`}>
+    <th className={`${hideMobile ? 'hidden sm:table-cell ' : ''}${align === 'left' ? 'text-left px-4' : 'text-center px-3'} py-3.5 text-slate-400 dark:text-[#7a7a7a] font-semibold text-xs uppercase tracking-wider`}>
       <button
         type="button"
         onClick={() => onSort(sk)}

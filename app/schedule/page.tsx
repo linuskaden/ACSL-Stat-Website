@@ -77,50 +77,51 @@ function GameList({ games, gamesWithStats, recordByTeam }: {
               const bothTeams = game.home_team && game.away_team
               return (
                 <div key={game.id}
-                  className={`bg-white dark:bg-[#111] border rounded-xl p-4 flex items-center gap-4 shadow-sm ${isLive ? 'border-[#16163f]/40' : 'border-black/[0.07] dark:border-white/5'}`}>
-                  {/* Kickoff */}
-                  <div className="w-14 text-center shrink-0">
-                    <div className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
-                      {game.scheduled_at
-                        ? new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Vienna' })
-                        : 'TBD'}
-                    </div>
-                  </div>
-
-                  {/* Matchup */}
-                  {bothTeams ? (
-                    <div className="flex-1 flex items-center gap-3">
-                      <div className="flex items-center gap-2 flex-1 justify-end">
-                        <TeamBadge team={game.home_team} size="sm" />
-                        <span className="font-semibold text-sm text-slate-900 dark:text-white">{game.home_team?.short_name ?? '—'}</span>
-                        <span className="text-[11px] text-slate-400 dark:text-[#7a7a7a] tabular-nums">{recordByTeam[game.home_team_id] ?? '0-0'}</span>
+                  className={`bg-white dark:bg-[#111] border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 shadow-sm ${isLive ? 'border-[#16163f]/40' : 'border-black/[0.07] dark:border-white/5'}`}>
+                  {/* Kickoff + matchup */}
+                  <div className="flex items-center gap-3 sm:gap-4 w-full sm:flex-1 min-w-0">
+                    <div className="w-12 sm:w-14 text-center shrink-0">
+                      <div className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
+                        {game.scheduled_at
+                          ? new Date(game.scheduled_at).toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Vienna' })
+                          : 'TBD'}
                       </div>
-                      <div className="text-center min-w-[76px]">
-                        {isFinal || isLive ? (
-                          <div className="font-black text-lg text-slate-900 dark:text-white">
-                            {game.home_score ?? 0}<span className="text-slate-400 dark:text-[#7a7a7a] mx-1">–</span>{game.away_score ?? 0}
+                    </div>
+
+                    {bothTeams ? (
+                      <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-3">
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-end">
+                          <TeamBadge team={game.home_team} size="sm" />
+                          <span className="font-semibold text-sm text-slate-900 dark:text-white truncate">{game.home_team?.short_name ?? '—'}</span>
+                          <span className="hidden sm:inline text-[11px] text-slate-400 dark:text-[#7a7a7a] tabular-nums">{recordByTeam[game.home_team_id] ?? '0-0'}</span>
+                        </div>
+                        <div className="text-center shrink-0 min-w-[64px] sm:min-w-[76px]">
+                          {isFinal || isLive ? (
+                            <div className="font-black text-base sm:text-lg text-slate-900 dark:text-white">
+                              {game.home_score ?? 0}<span className="text-slate-400 dark:text-[#7a7a7a] mx-1">–</span>{game.away_score ?? 0}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 dark:text-[#7a7a7a] text-xs">vs</span>
+                          )}
+                          <div className="text-xs font-semibold" style={{ color: status.color }}>
+                            {isLive && <span className="animate-pulse mr-1">●</span>}{status.label}
                           </div>
-                        ) : (
-                          <span className="text-slate-400 dark:text-[#7a7a7a] text-xs">vs</span>
-                        )}
-                        <div className="text-xs font-semibold" style={{ color: status.color }}>
-                          {isLive && <span className="animate-pulse mr-1">●</span>}{status.label}
+                        </div>
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
+                          <span className="hidden sm:inline text-[11px] text-slate-400 dark:text-[#7a7a7a] tabular-nums">{recordByTeam[game.away_team_id] ?? '0-0'}</span>
+                          <span className="font-semibold text-sm text-slate-900 dark:text-white truncate">{game.away_team?.short_name ?? '—'}</span>
+                          <TeamBadge team={game.away_team} size="sm" />
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-1">
-                        <span className="text-[11px] text-slate-400 dark:text-[#7a7a7a] tabular-nums">{recordByTeam[game.away_team_id] ?? '0-0'}</span>
-                        <span className="font-semibold text-sm text-slate-900 dark:text-white">{game.away_team?.short_name ?? '—'}</span>
-                        <TeamBadge team={game.away_team} size="sm" />
+                    ) : (
+                      <div className="flex-1 text-center font-bold text-sm text-slate-700 dark:text-[#bbb]">
+                        {game.notes ?? 'TBD'}
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 text-center font-bold text-sm text-slate-700 dark:text-[#bbb]">
-                      {game.notes ?? 'TBD'}
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Actions */}
-                  <div className="shrink-0 flex items-center gap-2">
+                  <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto justify-end">
                     {/* Live → live view (greyed unless the game is live) */}
                     {isLive ? (
                       <Link href="/live"

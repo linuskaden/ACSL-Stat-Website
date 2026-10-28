@@ -47,10 +47,11 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
 
   const [theme, setTheme] = useState<'dark' | 'light'>('light')
   const [teamsOpen, setTeamsOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const teamsRef = useRef<HTMLDivElement>(null)
 
-  // Close the teams dropdown on navigation
-  useEffect(() => { setTeamsOpen(false) }, [pathname])
+  // Close the dropdown / mobile menu on navigation
+  useEffect(() => { setTeamsOpen(false); setMobileOpen(false) }, [pathname])
 
   // Close the teams dropdown on outside click
   useEffect(() => {
@@ -91,7 +92,7 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
 
   return (
     <nav className="sticky top-0 z-50 bg-white/90 dark:bg-black/90 backdrop-blur border-b border-black/[0.08] dark:border-white/10 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 flex items-center gap-6 h-16">
+      <div className="max-w-7xl mx-auto px-4 flex items-center gap-3 md:gap-6 h-16">
         {/* Logo — black ACSL wordmark; inverted to white in dark mode */}
         <Link href="/" className="flex items-center shrink-0">
           <Image
@@ -119,9 +120,9 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
           </span>
         )}
 
-        {/* Nav links */}
+        {/* Nav links (desktop) */}
         {!isAdmin && (
-          <div className="flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1">
             {links.map(l => {
               // "Teams" is a dropdown of all teams, not a page link
               if (l.href === '/teams') {
@@ -193,7 +194,7 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
         )}
 
         {isAdmin && (
-          <div className="flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1">
             <Link href="/admin"         className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">Dashboard</Link>
             <Link href="/admin/players" className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">Players</Link>
             <Link href="/admin/games"   className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-[#7a7a7a] hover:text-slate-900 dark:hover:text-white">Games</Link>
@@ -203,8 +204,8 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
           </div>
         )}
 
-        {/* Right side */}
-        <div className="ml-auto flex items-center gap-2">
+        {/* Right side (desktop) */}
+        <div className="ml-auto hidden md:flex items-center gap-2">
           {/* Herren/Damen division switch (basketball only) */}
           {isBasketball && !isAdmin && (
             <div className="flex gap-0.5 p-0.5 bg-black/[0.05] dark:bg-white/[0.06] rounded-lg">
@@ -251,7 +252,77 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
             </>
           )}
         </div>
+
+        {/* Hamburger (mobile) */}
+        <button
+          onClick={() => setMobileOpen(o => !o)}
+          aria-label="Menü"
+          aria-expanded={mobileOpen}
+          className="ml-auto md:hidden w-10 h-10 -mr-2 flex items-center justify-center text-slate-700 dark:text-white"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {mobileOpen ? <path d="M18 6 6 18M6 6l12 12" /> : <path d="M3 12h18M3 6h18M3 18h18" />}
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-black/[0.08] dark:border-white/10 bg-white dark:bg-black px-4 py-1">
+          {!isAdmin && links.map(l => {
+            // "Teams" is a dropdown on desktop; on mobile, list the teams inline.
+            if (l.href === '/teams') {
+              return (
+                <div key={l.href} className="border-b border-black/[0.05] dark:border-white/[0.06] py-2">
+                  <div className="px-1 py-1 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-[#7a7a7a]">Teams</div>
+                  {teams.length === 0 ? (
+                    <div className="px-1 py-2 text-sm text-slate-400 dark:text-[#7a7a7a]">Keine Teams</div>
+                  ) : teams.map(t => (
+                    <Link key={t.slug} href={`/teams/${t.slug}`} onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2.5 px-1 py-2 text-sm font-semibold text-slate-700 dark:text-[#cfcfcf]">
+                      {t.logo_url
+                        ? <img src={t.logo_url} alt="" className="w-6 h-6 object-contain shrink-0" />
+                        : <span className="w-6 h-6 rounded shrink-0" style={{ background: t.primary_color }} />}
+                      <span className="truncate">{t.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              )
+            }
+            const active = pathname === l.href
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setMobileOpen(false)}
+                className={`block px-1 py-3 border-b border-black/[0.05] dark:border-white/[0.06] text-base font-semibold ${
+                  active ? 'text-[#16163f] dark:text-white' : 'text-slate-700 dark:text-[#cfcfcf]'
+                }`}
+              >
+                {l.label}
+              </Link>
+            )
+          })}
+          {isAdmin && ([
+            ['/admin', 'Dashboard'], ['/admin/players', 'Players'], ['/admin/games', 'Games'],
+            ['/admin/overlay', 'Overlay'], ['/admin/broadcast', 'Broadcast'], ['/admin/fantasy', 'Fantasy'], ['/', '← Public Site'],
+          ] as [string, string][]).map(([href, label]) => (
+            <Link key={href} href={href} onClick={() => setMobileOpen(false)}
+              className="block px-1 py-3 border-b border-black/[0.05] dark:border-white/[0.06] text-base font-semibold text-slate-700 dark:text-[#cfcfcf]">
+              {label}
+            </Link>
+          ))}
+          <div className="flex items-center justify-between gap-3 py-3">
+            {!isAdmin && competition && (
+              <button onClick={() => { toggleSport(); setMobileOpen(false) }}
+                className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#7a7a7a]">
+                Zu {isBasketball ? 'Football' : 'Basketball'} wechseln
+              </button>
+            )}
+            <div className="ml-auto"><SeasonSwitcher /></div>
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

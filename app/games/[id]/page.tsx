@@ -67,13 +67,49 @@ export default async function BoxScorePage({ params }: { params: Promise<{ id: s
           {g.location && <><span className="text-slate-300 dark:text-[#444]">·</span><span>{g.location}</span></>}
         </div>
 
-        <div className="flex items-center justify-between gap-4">
+        {/* Mobile: teams side by side, score below */}
+        <div className="sm:hidden">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col items-center text-center gap-2 min-w-0">
+              {g.home_team && <TeamBadge team={g.home_team} size="lg" />}
+              <div className="min-w-0 w-full">
+                <div className="font-black text-base text-slate-900 dark:text-white truncate">{g.home_team?.short_name ?? '—'}</div>
+                <div className="text-xs text-slate-400 dark:text-[#555] truncate">{g.home_team?.name ?? ''}</div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center text-center gap-2 min-w-0">
+              {g.away_team && <TeamBadge team={g.away_team} size="lg" />}
+              <div className="min-w-0 w-full">
+                <div className="font-black text-base text-slate-900 dark:text-white truncate">{g.away_team?.short_name ?? '—'}</div>
+                <div className="text-xs text-slate-400 dark:text-[#555] truncate">{g.away_team?.name ?? ''}</div>
+              </div>
+            </div>
+          </div>
+          <div className="text-center mt-4">
+            {(isFinal || isLive) ? (
+              <div className="flex items-center justify-center gap-3">
+                <span className="font-black text-4xl text-slate-900 dark:text-white tabular-nums">{g.home_score ?? 0}</span>
+                <span className="text-slate-300 dark:text-[#444] text-2xl font-light">–</span>
+                <span className="font-black text-4xl text-slate-900 dark:text-white tabular-nums">{g.away_score ?? 0}</span>
+              </div>
+            ) : (
+              <span className="text-slate-400 dark:text-[#555] font-semibold">vs</span>
+            )}
+            <div className="mt-1 text-xs font-semibold" style={{ color: isFinal ? '#04a550' : isLive ? '#16163f' : '#7a7a7a' }}>
+              {isLive && <span className="animate-pulse mr-1">●</span>}
+              {isFinal ? 'Final' : isLive ? 'LIVE' : 'Upcoming'}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop: single row */}
+        <div className="hidden sm:flex items-center justify-between gap-4">
           {/* Home team */}
-          <div className="flex items-center gap-3 flex-1">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             {g.home_team && <TeamBadge team={g.home_team} size="lg" />}
-            <div>
-              <div className="font-black text-xl text-slate-900 dark:text-white">{g.home_team?.short_name ?? '—'}</div>
-              <div className="text-xs text-slate-400 dark:text-[#555]">{g.home_team?.name ?? ''}</div>
+            <div className="min-w-0">
+              <div className="font-black text-xl text-slate-900 dark:text-white truncate">{g.home_team?.short_name ?? '—'}</div>
+              <div className="text-xs text-slate-400 dark:text-[#555] truncate">{g.home_team?.name ?? ''}</div>
             </div>
           </div>
 
@@ -95,10 +131,10 @@ export default async function BoxScorePage({ params }: { params: Promise<{ id: s
           </div>
 
           {/* Away team */}
-          <div className="flex items-center gap-3 flex-1 justify-end">
-            <div className="text-right">
-              <div className="font-black text-xl text-slate-900 dark:text-white">{g.away_team?.short_name ?? '—'}</div>
-              <div className="text-xs text-slate-400 dark:text-[#555]">{g.away_team?.name ?? ''}</div>
+          <div className="flex items-center gap-3 flex-1 min-w-0 justify-end">
+            <div className="text-right min-w-0">
+              <div className="font-black text-xl text-slate-900 dark:text-white truncate">{g.away_team?.short_name ?? '—'}</div>
+              <div className="text-xs text-slate-400 dark:text-[#555] truncate">{g.away_team?.name ?? ''}</div>
             </div>
             {g.away_team && <TeamBadge team={g.away_team} size="lg" />}
           </div>
