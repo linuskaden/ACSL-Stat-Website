@@ -47,6 +47,29 @@ export function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Vienna' })
 }
 
+/** Age in whole years from a date-only birthdate ("YYYY-MM-DD"), or null if unparseable. */
+export function calcAge(dob: string | null): number | null {
+  if (!dob) return null
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dob)
+  if (!m) return null
+  const y = +m[1], mo = +m[2], d = +m[3]
+  const now = new Date()
+  let age = now.getFullYear() - y
+  const beforeBirthday = now.getMonth() + 1 < mo || (now.getMonth() + 1 === mo && now.getDate() < d)
+  if (beforeBirthday) age--
+  return age >= 0 && age < 120 ? age : null
+}
+
+/** Format a date-only birthdate ("YYYY-MM-DD") as "DD.MM.YYYY (age)". Parsed by
+    parts to avoid timezone shifts on date-only values. */
+export function formatBirthdate(dob: string | null): string {
+  if (!dob) return '—'
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dob)
+  if (!m) return '—'
+  const age = calcAge(dob)
+  return `${m[3]}.${m[2]}.${m[1]}${age != null ? ` (${age})` : ''}`
+}
+
 export function formatGameTime(iso: string | null): string {
   if (!iso) return 'TBD'
   return new Date(iso).toLocaleString('de-AT', {

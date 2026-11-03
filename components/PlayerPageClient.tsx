@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import TeamBadge from '@/components/TeamBadge'
-import { seasonLabel } from '@/lib/utils'
+import { seasonLabel, formatBirthdate } from '@/lib/utils'
 
 /* ─── Stat helpers (merged columns + all of a player's positions) ─── */
 function positionCategories(positions: string[]): string[] {
@@ -161,6 +161,7 @@ export default function PlayerPageClient({
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+              {player.date_of_birth && <Stat label="Geburtstag" value={formatBirthdate(player.date_of_birth)} />}
               {player.height_cm   && <Stat label="Größe"      value={`${player.height_cm} cm`} />}
               {player.weight_kg   && <Stat label="Gewicht"    value={`${player.weight_kg} kg`} />}
               {player.country     && <Stat label="Herkunft"   value={player.country} />}

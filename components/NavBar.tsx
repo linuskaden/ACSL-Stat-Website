@@ -37,7 +37,10 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
     const parts = window.location.host.split('.')
     if (parts[0] === 'football' || parts[0] === 'basketball') {
       parts[0] = target
-      window.location.href = `${window.location.protocol}//${parts.join('.')}/`
+      // Admin routes are shared across sports — keep the current page so the
+      // switch doesn't bounce you back to the public homepage of the other sport.
+      const dest = isAdmin ? window.location.pathname : '/'
+      window.location.href = `${window.location.protocol}//${parts.join('.')}${dest}`
       return
     }
     const key = target === 'football' ? 'football' : 'basketball_women'
@@ -105,8 +108,8 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
           />
         </Link>
 
-        {/* Wordmark doubles as the Football/Basketball switcher */}
-        {!isAdmin && competition ? (
+        {/* Wordmark doubles as the Football/Basketball switcher (public + admin) */}
+        {competition ? (
           <button
             onClick={toggleSport}
             title={`Zu ${isBasketball ? 'Football' : 'Basketball'} wechseln`}
@@ -206,8 +209,8 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
 
         {/* Right side (desktop) */}
         <div className="ml-auto hidden md:flex items-center gap-2">
-          {/* Herren/Damen division switch (basketball only) */}
-          {isBasketball && !isAdmin && (
+          {/* Herren/Damen division switch (basketball only; public + admin) */}
+          {isBasketball && (
             <div className="flex gap-0.5 p-0.5 bg-black/[0.05] dark:bg-white/[0.06] rounded-lg">
               {([['basketball_women', 'Damen'], ['basketball_men', 'Herren']] as const).map(([key, label]) => {
                 const active = competition?.key === key
@@ -312,8 +315,8 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
               {label}
             </Link>
           ))}
-          {/* Herren/Damen division switch (basketball only) */}
-          {isBasketball && !isAdmin && (
+          {/* Herren/Damen division switch (basketball only; public + admin) */}
+          {isBasketball && (
             <div className="flex gap-0.5 p-0.5 bg-black/[0.05] dark:bg-white/[0.06] rounded-lg w-max mt-3">
               {([['basketball_women', 'Damen'], ['basketball_men', 'Herren']] as const).map(([key, label]) => {
                 const active = competition?.key === key
@@ -328,7 +331,7 @@ export default function NavBar({ teams = [], competition }: { teams?: NavTeam[];
           )}
 
           <div className="flex items-center justify-between gap-3 py-3">
-            {!isAdmin && competition && (
+            {competition && (
               <button onClick={() => { toggleSport(); setMobileOpen(false) }}
                 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#7a7a7a]">
                 Zu {isBasketball ? 'Football' : 'Basketball'} wechseln

@@ -64,6 +64,8 @@ function TeamColumn({ team, players, coaches, mode, selectedId, onSelect, align 
         coaches.length === 0
           ? <div style={{ color: 'var(--fg-faint)', fontSize: 12, fontStyle: 'italic', padding: '8px 4px' }}>Keine Coaches hinterlegt.</div>
           : <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{coaches.map(c => <CoachCard key={c.id} coach={c} color={color} />)}</div>
+      ) : players.length === 0 ? (
+        <div style={{ color: 'var(--fg-faint)', fontSize: 12, fontStyle: 'italic', padding: '8px 4px' }}>Keine Treffer.</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
           {players.map(p => (
@@ -79,9 +81,21 @@ export default function CommentaryMatchView({ games, players, coaches, season }:
   const firstDefault = games.find(g => g.status === 'live') || games.find(g => g.status === 'scheduled') || games[0]
   const [gameId, setGameId] = useState<string>(firstDefault?.id ?? '')
   const [mode, setMode] = useState<'players' | 'coaches'>('players')
+  const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Player | null>(null)
   const { careerStats, loadingStats } = usePlayerSeasonStats(selected?.id ?? null, season)
-  const teamCoaches = (teamId?: string | null) => !teamId ? [] : coaches.filter(c => c.team_id === teamId).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999))
+
+  // Search filters both match rosters (and coaches) by name/number/position/etc.
+  const q = search.trim().toLowerCase()
+  const matchesPlayer = (p: Player) => !q || [
+    p.first_name, p.last_name, String(p.jersey_number ?? ''),
+    ...(p.positions ?? []), p.nickname ?? '', p.field_of_study ?? '',
+  ].some(v => v?.toLowerCase().includes(q))
+  const matchesCoach = (c: Coach) => !q || [c.first_name, c.last_name, c.role ?? '']
+    .some(v => v?.toLowerCase().includes(q))
+
+  const teamCoaches = (teamId?: string | null) => !teamId ? [] : coaches.filter(c => c.team_id === teamId && matchesCoach(c)).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999))
+  const teamPlayers = (teamId?: string | null) => !teamId ? [] : players.filter(p => p.team_id === teamId && p.is_active && matchesPlayer(p)).sort((a, b) => jnum(a) - jnum(b))
 
   const game = useMemo(() => games.find(g => g.id === gameId) ?? null, [games, gameId])
   const teamsById = useMemo(() => {
@@ -89,21 +103,35 @@ export default function CommentaryMatchView({ games, players, coaches, season }:
     for (const g of games) { if (g.home_team) m[g.home_team.id] = g.home_team; if (g.away_team) m[g.away_team.id] = g.away_team }
     return m
   }, [games])
-  const teamPlayers = (teamId?: string | null) => !teamId ? [] : players.filter(p => p.team_id === teamId && p.is_active).sort((a, b) => jnum(a) - jnum(b))
 
   return (
     <div>
       {/* Match selector bar */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 5, display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
         <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--fg-faint)' }}>Match</span>
         <select
           value={gameId}
           onChange={e => { setGameId(e.target.value); setSelected(null) }}
-          style={{ flex: 1, maxWidth: 520, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--fg)', fontSize: 14, fontWeight: 600 }}
+          style={{ flex: 1, minWidth: 240, maxWidth: 520, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--fg)', fontSize: 14, fontWeight: 600 }}
         >
           {games.length === 0 && <option value="">Keine Spiele</option>}
           {games.map(g => <option key={g.id} value={g.id}>{gameLabel(g)}</option>)}
         </select>
+        <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 340 }}>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={mode === 'players' ? 'Suche: Name, Nummer, Position…' : 'Suche: Name, Rolle…'}
+            style={{ width: '100%', padding: '9px 30px 9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--fg)', fontSize: 14, outline: 'none' }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              title="Suche leeren"
+              style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'var(--subtle)', color: 'var(--fg-muted)', width: 20, height: 20, borderRadius: 5, cursor: 'pointer', fontSize: 13, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >×</button>
+          )}
+        </div>
         <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
           {(['players', 'coaches'] as const).map(m => (
             <button key={m} onClick={() => { setMode(m); setSelected(null) }}

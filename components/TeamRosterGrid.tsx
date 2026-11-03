@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { seasonLabel } from '@/lib/utils'
+import { seasonLabel, formatBirthdate } from '@/lib/utils'
 
 const POSITIONS = ['All', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'K', 'P']
 
@@ -18,7 +18,7 @@ export type Player = {
   is_active: boolean; height_cm: number | null; weight_kg: number | null
   country: string | null; hometown: string | null; field_of_study: string | null
   semester: string | null; acsl_since: string | null; fun_fact: string | null
-  football_experience: string | null
+  football_experience: string | null; date_of_birth: string | null
 }
 
 export type LeaderTop = { id: string; name: string; jersey: number | null; value: string }
@@ -698,6 +698,7 @@ export function PlayerDetailPanel({
       {/* ── Biografie ── */}
       <Section title="Biografie">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+          {player.date_of_birth && <BioCell label="Geburtstag" value={formatBirthdate(player.date_of_birth)} />}
           {player.height_cm && <BioCell label="Größe" value={`${player.height_cm} cm`} />}
           {player.weight_kg && <BioCell label="Gewicht" value={`${player.weight_kg} kg`} />}
           {player.country && <BioCell label="Herkunft" value={player.country} />}
