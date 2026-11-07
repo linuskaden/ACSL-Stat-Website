@@ -187,8 +187,10 @@ export default async function SchedulePage() {
 
   const allGames = (games ?? []) as any[]
   const gameIds = allGames.map(g => g.id as string)
+  // Basketball box scores live in bball_game_stats; football in game_stats.
+  const statsTable = competition.sport === 'basketball' ? 'bball_game_stats' : 'game_stats'
   const { data: statsRows } = gameIds.length > 0
-    ? await supabase.from('game_stats').select('game_id').in('game_id', gameIds)
+    ? await supabase.from(statsTable).select('game_id').in('game_id', gameIds)
     : { data: [] as any[] }
   const gamesWithStats = new Set((statsRows ?? []).map((r: any) => r.game_id as string))
 
