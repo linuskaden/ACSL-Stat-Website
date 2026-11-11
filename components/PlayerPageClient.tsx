@@ -72,6 +72,29 @@ function buildAverages(positions: string[], s: any, gp: number): Item[] {
   return items
 }
 
+/* ─── Basketball stat builders ─── */
+const bPts = (s: any) => 2 * (s.fg_made ?? 0) + (s.three_made ?? 0) + (s.ft_made ?? 0)
+
+function buildTotalsBball(s: any): Item[] {
+  return [
+    { label: 'PTS', value: bPts(s) },
+    { label: 'REB', value: s.reb ?? 0 },
+    { label: 'AST', value: s.assists ?? 0 },
+    { label: 'FG', value: `${s.fg_made ?? 0}/${s.fg_att ?? 0}` },
+    { label: '3P', value: `${s.three_made ?? 0}/${s.three_att ?? 0}` },
+    { label: 'FT', value: `${s.ft_made ?? 0}/${s.ft_att ?? 0}` },
+  ]
+}
+
+function buildAveragesBball(s: any, gp: number): Item[] {
+  const a = (v: number) => (gp ? (v / gp).toFixed(1) : '—')
+  return [
+    { label: 'PTS/G', value: a(bPts(s)) },
+    { label: 'REB/G', value: a(s.reb ?? 0) },
+    { label: 'AST/G', value: a(s.assists ?? 0) },
+  ]
+}
+
 const ROUND_LABEL: Record<string, string> = {
   regular_season: 'Regular Season', wildcard: 'Wildcard', semifinal: 'Semifinal',
   third_place: '3rd Place', final: 'ACSL Summer Bowl',
@@ -102,16 +125,20 @@ function StatGrid({ items }: { items: Item[] }) {
 
 /* ─── Main ─── */
 export default function PlayerPageClient({
-  player, team, career, gameLog,
+  player, team, career, gameLog, sport = 'football',
 }: {
   player: any
   team: any
   career: any[]
   gameLog: any[]
+  sport?: 'football' | 'basketball'
 }) {
   const [tab, setTab] = useState<'profile' | 'stats' | 'games'>('profile')
   const pos: string[] = player.positions ?? []
   const accent = team?.primary_color ?? '#16163f'
+  const isBball = sport === 'basketball'
+  const totalsOf = (s: any) => (isBball ? buildTotalsBball(s) : buildTotals(pos, s))
+  const avgsOf = (s: any, gp: number) => (isBball ? buildAveragesBball(s, gp) : buildAverages(pos, s, gp))
 
   const TABS: { id: typeof tab; label: string }[] = [
     { id: 'profile', label: 'Profil' },
@@ -196,15 +223,15 @@ export default function PlayerPageClient({
             {career.map((cs: any) => {
               const gp = cs.games_played ?? 0
               return (
-                <div key={cs.id} className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-5 shadow-sm">
+                <div key={cs.season} className="bg-white dark:bg-[#111] border border-black/[0.07] dark:border-white/5 rounded-xl p-5 shadow-sm">
                   <div className="flex items-baseline justify-between mb-4">
                     <h3 className="font-black text-sm text-slate-900 dark:text-white">Saison {seasonLabel(cs.season)}</h3>
                     <span className="text-xs text-slate-400 dark:text-[#7a7a7a]">{gp} Spiele</span>
                   </div>
                   <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-[#7a7a7a] mb-2">Total</div>
-                  <StatGrid items={buildTotals(pos, cs)} />
+                  <StatGrid items={totalsOf(cs)} />
                   <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-[#7a7a7a] mt-5 mb-2">Pro Spiel</div>
-                  <StatGrid items={buildAverages(pos, cs, gp)} />
+                  <StatGrid items={avgsOf(cs, gp)} />
                 </div>
               )
             })}
@@ -221,7 +248,7 @@ export default function PlayerPageClient({
         ) : (
           <div className="space-y-2">
             {gameLog.map((g: any) => {
-              const items = buildTotals(pos, g.stats)
+              const items = totalsOf(g.stats)
               const resultColor = g.result === 'W' ? '#04a550' : g.result === 'L' ? '#16163f' : 'var(--fg-muted)'
               const dateStr = g.date ? new Date(g.date).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Vienna' }) : ''
               return (

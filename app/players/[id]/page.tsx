@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PlayerPageClient from '@/components/PlayerPageClient'
+import { competitionById } from '@/lib/competition'
 
 export const revalidate = 30
 
@@ -17,8 +18,11 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
 
   if (!player) notFound()
 
+  const sport = competitionById((player as any).competition_id)?.sport ?? 'football'
+  const statsTable = sport === 'basketball' ? 'bball_game_stats' : 'game_stats'
+
   const { data: statRows } = await supabase
-    .from('game_stats')
+    .from(statsTable)
     .select('*, game:games(id, season, game_type, status, scheduled_at, home_team_id, away_team_id, home_score, away_score, home_team:teams!games_home_team_id_fkey(id, short_name, slug, primary_color, logo_url), away_team:teams!games_away_team_id_fkey(id, short_name, slug, primary_color, logo_url))')
     .eq('player_id', id)
 
@@ -83,6 +87,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
         team={team}
         career={career ?? []}
         gameLog={gameLog}
+        sport={sport}
       />
     </div>
   )
