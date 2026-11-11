@@ -48,6 +48,7 @@ const FOOTBALL_CATS: StatCat[] = [
 
 const BASKETBALL_CATS: StatCat[] = [
   { key: 'pts',         label: 'Points',           abbr: 'PTS', group: 'Scoring' },
+  { key: 'ppg',         label: 'Points per Game',  abbr: 'PPG', group: 'Scoring', decimals: 1, noPerGame: true },
   { key: 'reb',         label: 'Rebounds',         abbr: 'REB', group: 'Rebounding' },
   { key: 'assists',     label: 'Assists',          abbr: 'AST', group: 'Playmaking' },
   { key: 'fg_made',     label: 'Field Goals Made', abbr: 'FGM', group: 'Shooting' },

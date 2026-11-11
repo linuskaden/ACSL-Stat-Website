@@ -91,18 +91,24 @@ function bballPlayers(rows: any[]): LeaderEntry[] {
     e.gameIds.add(row.game_id)
     addBballRow(e.totals, row)
   }
-  return [...map.values()].map(({ player, gameIds, totals }) => playerEntry(player, gameIds.size, bballDerived(totals)))
+  return [...map.values()].map(({ player, gameIds, totals }) => playerEntry(player, gameIds.size, withPpg(bballDerived(totals), gameIds.size)))
+}
+
+function withPpg(s: Record<string, number | null>, games: number): Record<string, number | null> {
+  return { ...s, ppg: games > 0 ? Math.round(((s.pts ?? 0) / games) * 10) / 10 : null }
 }
 
 function bballTeams(rows: any[]): LeaderEntry[] {
-  const map = new Map<string, { team: Team; totals: Record<string, number> }>()
+  const map = new Map<string, { team: Team; gameIds: Set<string>; totals: Record<string, number> }>()
   for (const row of rows ?? []) {
     const t = row.player?.team as Team | undefined
     if (!t) continue
-    if (!map.has(t.id)) map.set(t.id, { team: t, totals: emptyBballTotals() })
-    addBballRow(map.get(t.id)!.totals, row)
+    if (!map.has(t.id)) map.set(t.id, { team: t, gameIds: new Set(), totals: emptyBballTotals() })
+    const e = map.get(t.id)!
+    e.gameIds.add(row.game_id)
+    addBballRow(e.totals, row)
   }
-  return [...map.values()].map(({ team, totals }) => teamEntry(team, bballDerived(totals)))
+  return [...map.values()].map(({ team, gameIds, totals }) => teamEntry(team, withPpg(bballDerived(totals), gameIds.size)))
 }
 
 // ── Shared entry builders ─────────────────────────────────────────────────────
