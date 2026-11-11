@@ -22,7 +22,7 @@ export default async function CommentaryPage() {
       .not('away_team_id', 'is', null)
       .order('scheduled_at', { ascending: true, nullsFirst: false }),
     supabase.from('players').select('*').eq('competition_id', competition.id),
-    supabase.from('coaches').select('*'),
+    supabase.from('coaches').select('*').eq('competition_id', competition.id),
   ])
 
   return (
