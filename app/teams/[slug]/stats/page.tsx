@@ -39,15 +39,21 @@ function footballS(t: Record<string, number>): Record<string, number | null> {
 }
 
 function aggregate(rows: any[], sport: string): PlayerRow[] {
-  const map = new Map<string, { player: any; totals: Record<string, number> }>()
+  const map = new Map<string, { player: any; gameIds: Set<string>; totals: Record<string, number> }>()
   for (const r of rows) {
     if (!r.player) continue
-    if (!map.has(r.player_id)) map.set(r.player_id, { player: r.player, totals: sport === 'basketball' ? emptyBballTotals() : Object.fromEntries(FB_FIELDS.map(k => [k, 0])) })
+    if (!map.has(r.player_id)) map.set(r.player_id, { player: r.player, gameIds: new Set(), totals: sport === 'basketball' ? emptyBballTotals() : Object.fromEntries(FB_FIELDS.map(k => [k, 0])) })
     const acc = map.get(r.player_id)!
+    acc.gameIds.add(r.game_id)
     if (sport === 'basketball') addBballRow(acc.totals, r)
     else for (const k of FB_FIELDS) acc.totals[k] = (acc.totals[k] ?? 0) + (r[k] ?? 0)
   }
-  return [...map.values()].map(({ player, totals }) => ({ player, s: sport === 'basketball' ? bballDerived(totals) : footballS(totals) }))
+  return [...map.values()].map(({ player, gameIds, totals }) => {
+    if (sport !== 'basketball') return { player, s: footballS(totals) }
+    const s = bballDerived(totals)
+    const gp = gameIds.size
+    return { player, s: { ...s, ppg: gp > 0 ? Math.round(((s.pts ?? 0) / gp) * 10) / 10 : null } }
+  })
 }
 
 function fmtVal(v: number, cat: StatCat): string {
